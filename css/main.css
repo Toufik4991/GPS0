@@ -5,42 +5,141 @@
   --gold: #FFD700;
   --ok: #69FF47;
   --danger: #FF6B6B;
-  --off: #555555;
+  --halo-rouge: #FF3333;
+  --halo-orange: #FF8C00;
+  --halo-vert: #69FF47;
+  --halo-bleu: #4FC3F7;
 }
-* { box-sizing: border-box; }
-body {
-  margin: 0;
-  min-height: 100vh;
-  font-family: "Trebuchet MS", sans-serif;
-  color: #fff;
-  background: radial-gradient(circle at 20% 20%, #13203a, var(--bg));
-}
-.screen { display: none; }
-.screen.visible { display: grid; place-items: center; min-height: 100vh; }
-.hud {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  display: flex;
-  justify-content: space-around;
-  padding: 12px;
-  background: rgba(0,0,0,0.6);
-}
-.compass-panel { padding-top: 80px; text-align: center; }
-.asteroide {
-  margin: 24px auto;
-  width: 200px;
-  height: 200px;
-  border-radius: 42% 58% 48% 52% / 46% 40% 60% 54%;
-  background: linear-gradient(140deg, #5a5a6e, #3a3a4e);
-  box-shadow: 0 0 24px rgba(79,195,247,0.3);
-}
-#menu-btn {
-  position: fixed;
-  right: 20px;
-  bottom: 20px;
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;font-family:"Trebuchet MS",sans-serif;color:#fff;background:var(--bg)}
+
+/* ── STARFIELD ── */
+.starfield{position:fixed;inset:0;z-index:0;background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 100%);overflow:hidden}
+.stars{position:absolute;inset:0}
+.s1{background-image:radial-gradient(circle,rgba(255,255,255,.3) 1px,transparent 1px);background-size:80px 80px;animation:drift1 60s linear infinite}
+.s2{background-image:radial-gradient(circle,rgba(255,255,255,.5) 1.5px,transparent 1.5px);background-size:150px 150px;animation:drift2 90s linear infinite}
+.s3{background-image:radial-gradient(circle,rgba(255,255,255,.2) 2px,transparent 2px);background-size:220px 220px;animation:drift3 120s linear infinite}
+.nuages{position:absolute;inset:0;background:radial-gradient(ellipse 60% 30% at 30% 40%,rgba(200,162,200,.05),transparent),radial-gradient(ellipse 50% 25% at 70% 60%,rgba(79,195,247,.03),transparent);animation:nuages 200s linear infinite}
+@keyframes drift1{to{transform:translateX(80px)}}
+@keyframes drift2{to{transform:translateX(-150px)}}
+@keyframes drift3{to{transform:translateX(200px)}}
+@keyframes nuages{to{transform:translateX(-200px)}}
+
+/* ── SCREENS ── */
+.screen{display:none;position:relative;z-index:10}
+.screen.visible{display:flex;flex-direction:column;min-height:100dvh}
+
+/* ── SPLASH ── */
+#splash{align-items:center;justify-content:center;animation:sfade 2s ease-in-out forwards}
+.logo-gps0{font-size:5rem;font-weight:900;letter-spacing:.12em;color:var(--accent);text-shadow:0 0 30px var(--accent),0 0 60px rgba(200,162,200,.4);animation:logo-pulse 1s ease-in-out infinite alternate}
+.logo-sub{color:var(--gold);letter-spacing:.3em;text-transform:uppercase;font-size:.9rem;margin-top:8px;text-align:center}
+@keyframes sfade{0%,70%{opacity:1}100%{opacity:0}}
+@keyframes logo-pulse{to{text-shadow:0 0 50px var(--accent),0 0 100px rgba(200,162,200,.5)}}
+
+/* ── FULLSCREEN GATE ── */
+#fullscreen-gate{align-items:center;justify-content:center;background:var(--bg)}
+
+/* ── APP ── */
+#app{height:100dvh;overflow:hidden}
+
+/* ── HUD ── */
+.hud{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-around;padding:10px 16px;background:rgba(0,0,0,.6);backdrop-filter:blur(10px);border-bottom:1px solid rgba(200,162,200,.15);font-weight:bold;font-size:.95rem;gap:8px;flex-shrink:0}
+.hud-item{display:flex;align-items:center;gap:5px}
+.hud-energie{width:64px;height:12px;background:rgba(255,255,255,.1);border-radius:6px;overflow:hidden;border:1px solid rgba(200,162,200,.3)}
+.energie-barre{height:100%;width:100%;background:var(--halo-bleu);border-radius:6px;transition:width .5s ease,background .5s ease}
+.energie-barre.critique{background:var(--danger);animation:ecrit .5s infinite alternate}
+@keyframes ecrit{to{opacity:.4}}
+
+/* ── HALO ── */
+.halo{position:fixed;inset:0;z-index:5;pointer-events:none;border-radius:0;opacity:0;transition:opacity .5s}
+.halo[data-etat="rouge"]{box-shadow:inset 0 0 80px rgba(255,51,51,.25);opacity:1;animation:hal 2s ease-in-out infinite}
+.halo[data-etat="orange"]{box-shadow:inset 0 0 80px rgba(255,140,0,.3);opacity:1;animation:hal 1.2s ease-in-out infinite}
+.halo[data-etat="vert"]{box-shadow:inset 0 0 90px rgba(105,255,71,.28);opacity:1;animation:hal .7s ease-in-out infinite}
+.halo[data-etat="bleu"]{box-shadow:inset 0 0 100px rgba(79,195,247,.4);opacity:1;animation:hal .35s ease-in-out infinite}
+@keyframes hal{0%,100%{opacity:.6}50%{opacity:1}}
+
+/* ── COMPASS PANEL ── */
+.compass-panel{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:16px;position:relative;z-index:10}
+
+/* ── LUNE BULLE ── */
+.lune-bulle{display:flex;align-items:flex-start;gap:10px;max-width:310px;background:rgba(200,162,200,.1);border:1px solid rgba(200,162,200,.35);border-radius:16px;padding:10px 14px;font-size:.85rem;min-height:48px;opacity:0;transform:translateY(-10px);transition:opacity .4s,transform .4s;pointer-events:none}
+.lune-bulle.visible{opacity:1;transform:translateY(0)}
+.lune-avatar{font-size:1.5rem;flex-shrink:0}
+.lune-texte{color:var(--accent);line-height:1.45;font-style:italic}
+
+/* ── ASTEROIDE ── */
+.asteroide-wrapper{position:relative;width:200px;height:200px;display:flex;align-items:center;justify-content:center}
+.asteroide-svg{position:absolute;animation:ast-glow 2s ease-in-out infinite;will-change:filter}
+.ast-body{transition:filter .5s}
+@keyframes ast-glow{0%,100%{filter:drop-shadow(0 0 8px rgba(79,195,247,.35))}50%{filter:drop-shadow(0 0 22px rgba(79,195,247,.8))}}
+.asteroide-wrapper[data-etat="off"] .asteroide-svg{animation-play-state:paused;filter:grayscale(.7) brightness(.6)}
+.asteroide-wrapper[data-etat="zone"] .asteroide-svg{animation-duration:.4s}
+.asteroide-wrapper[data-etat="zone"] .ast-jouer{opacity:1!important;animation:jouer-pulse .6s ease-in-out infinite alternate}
+@keyframes jouer-pulse{to{fill:#fff;font-size:16px}}
+
+/* ── FUSÉE ── */
+.fusee-wrapper{position:absolute;width:70px;height:70px;transform-origin:center center;transition:transform .4s cubic-bezier(.25,.46,.45,.94);will-change:transform}
+.fusee-wrapper.hidden{opacity:0;pointer-events:none}
+.flamme{transform-origin:40px 72px;animation:flame .3s ease-in-out infinite alternate}
+.flamme2{transform-origin:40px 76px;animation:flame .3s ease-in-out infinite alternate-reverse}
+@keyframes flame{from{transform:scaleY(.8);opacity:.6}to{transform:scaleY(1.2);opacity:1}}
+.distance-label{position:absolute;bottom:-30px;left:50%;transform:translateX(-50%);font-size:.82rem;color:var(--accent);font-weight:bold;white-space:nowrap}
+.btn-jouer{position:absolute;bottom:-62px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#4FC3F7,#C8A2C8);color:#0A0A1A;font-weight:bold;font-size:1rem;padding:10px 26px;border-radius:24px;border:none;cursor:pointer;animation:pjour .6s ease-in-out infinite alternate;white-space:nowrap}
+@keyframes pjour{to{transform:translateX(-50%) scale(1.05);box-shadow:0 0 24px rgba(79,195,247,.6)}}
+
+/* ── TOGGLE BOUSSOLE ── */
+.btn-toggle-boussole{display:flex;align-items:center;gap:8px;padding:12px 26px;background:rgba(200,162,200,.12);border:1px solid var(--accent);border-radius:24px;color:var(--accent);font-size:.95rem;cursor:pointer;transition:background .25s;margin-top:52px}
+.btn-toggle-boussole[data-active="true"]{background:rgba(200,162,200,.28);color:#fff}
+.btn-toggle-boussole[data-epuise="true"]{border-color:var(--danger);color:var(--danger)}
+
+/* ── OBJECTIF BAR ── */
+.objectif-bar{display:flex;align-items:center;gap:14px;padding:12px 20px;background:rgba(0,0,0,.5);backdrop-filter:blur(6px);border-top:1px solid rgba(200,162,200,.12);flex-shrink:0}
+.objectif-icon{font-size:1.4rem}
+.objectif-nom{font-weight:bold;font-size:.92rem}
+.objectif-sub{font-size:.7rem;color:var(--accent);opacity:.8}
+.objectif-progress{margin-left:auto;font-size:.85rem;color:var(--gold);font-weight:bold}
+
+/* ── MENU ── */
+.btn-menu{position:fixed;right:20px;bottom:80px;width:50px;height:50px;border-radius:50%;background:rgba(200,162,200,.18);border:1px solid var(--accent);color:#fff;font-size:1.2rem;cursor:pointer;z-index:200;transition:background .2s}
+.menu-panel{position:fixed;right:16px;bottom:140px;display:flex;flex-direction:column;gap:8px;z-index:200;background:rgba(10,10,26,.96);border:1px solid rgba(200,162,200,.3);border-radius:16px;padding:12px}
+.menu-item{background:none;border:1px solid rgba(200,162,200,.2);color:#fff;padding:10px 16px;border-radius:10px;cursor:pointer;text-align:left;font-size:.9rem;transition:background .2s}
+.menu-item:hover{background:rgba(200,162,200,.1)}
+
+/* ── DIALOG ── */
+dialog{border:1px solid rgba(200,162,200,.3);border-radius:20px;background:rgba(10,10,26,.97);color:#fff;padding:0;max-width:min(460px,95vw);width:100%;backdrop-filter:blur(20px);box-shadow:0 8px 40px rgba(0,0,0,.7)}
+dialog::backdrop{background:rgba(0,0,0,.72);backdrop-filter:blur(4px)}
+.modal-box{padding:28px 24px;display:flex;flex-direction:column;gap:16px}
+.modal-box h2{font-size:1.3rem;color:var(--accent)}
+.modal-box label{display:flex;flex-direction:column;gap:8px;font-size:.9rem;color:rgba(255,255,255,.8)}
+.modal-box input[type="text"]{padding:12px 16px;background:rgba(255,255,255,.07);border:1px solid rgba(200,162,200,.4);border-radius:10px;color:#fff;font-size:1rem}
+.modal-box input:focus{outline:none;border-color:var(--accent)}
+
+/* ── BUTTONS ── */
+.btn-primary{padding:14px;background:linear-gradient(135deg,var(--accent),#9a72c8);border:none;border-radius:12px;color:#0A0A1A;font-weight:bold;font-size:1rem;cursor:pointer;transition:opacity .2s,transform .1s}
+.btn-primary:disabled{opacity:.4;cursor:not-allowed}
+.btn-primary:not(:disabled):active{transform:scale(.97)}
+.btn-secondary{padding:12px;background:rgba(200,162,200,.1);border:1px solid var(--accent);border-radius:12px;color:var(--accent);font-size:.95rem;cursor:pointer}
+.btn-ghost{background:none;border:none;color:rgba(255,255,255,.5);font-size:.82rem;cursor:pointer;text-decoration:underline;align-self:center}
+.btn-close{position:absolute;top:12px;right:12px;background:none;border:none;color:rgba(255,255,255,.6);font-size:1.2rem;cursor:pointer;padding:4px 8px}
+
+/* ── CARTES DIFFICULTE ── */
+.difficulte-grille{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.diff-carte,.parcours-carte{display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px 10px;background:rgba(255,255,255,.04);border:1px solid rgba(200,162,200,.2);border-radius:14px;color:#fff;cursor:pointer;transition:background .2s,border-color .2s}
+.diff-carte:hover,.parcours-carte:hover{background:rgba(200,162,200,.1)}
+.diff-carte[aria-pressed="true"],.parcours-carte[aria-pressed="true"]{background:rgba(200,162,200,.2);border-color:var(--accent)}
+.diff-emoji,.parcours-emoji{font-size:1.8rem}
+.diff-nom,.parcours-nom{font-weight:bold;font-size:.85rem}
+.diff-desc,.parcours-desc{font-size:.72rem;color:rgba(255,255,255,.6);text-align:center}
+.parcours-grille{display:flex;flex-direction:column;gap:8px}
+
+/* ── CODE DÉFI ── */
+.code-defi-section{display:flex;flex-direction:column;align-items:center;gap:8px}
+.code-defi-toast{position:fixed;top:70px;left:50%;transform:translateX(-50%);background:rgba(10,10,26,.96);border:1px solid var(--gold);border-radius:12px;padding:12px 20px;text-align:center;z-index:300;color:#fff;white-space:nowrap}
+.code-defi-toast strong{color:var(--gold);display:block;font-size:1.1rem;margin-top:4px;letter-spacing:.1em}
+
+/* ── SELFIE ── */
+.selfie-box{align-items:center}
+.selfie-viewport{position:relative;width:200px;height:200px;border-radius:50%;overflow:hidden;border:3px solid var(--accent);background:#111;flex-shrink:0}
+#selfie-video,#selfie-preview{position:absolute;width:200px;height:200px;object-fit:cover;border-radius:50%;top:0;left:0}
+#selfie-preview{image-rendering:pixelated;z-index:2}
+.selfie-actions{display:flex;flex-direction:column;gap:8px;width:100%}

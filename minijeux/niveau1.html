@@ -2,14 +2,417 @@
 <html lang="fr">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <link rel="stylesheet" href="../css/minijeux.css">
-  <title>GPS0 Niveau 1</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+  <title>GPS0 - Niveau 1 Tutoriel</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; background: #0A0A1A; color: #fff; font-family: "Trebuchet MS", sans-serif; touch-action: none; }
+
+    /* HUD mini-jeu */
+    #mj-hud {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 8px 16px; background: rgba(0,0,0,0.7); backdrop-filter: blur(6px);
+      border-bottom: 1px solid rgba(200,162,200,0.2); font-weight: bold; font-size: 0.9rem;
+    }
+    #mj-etoiles { color: #FFD700; }
+    #mj-vie { color: #FF6B6B; letter-spacing: 2px; }
+    #btn-abandon { background: none; border: 1px solid rgba(255,255,255,0.3); color: rgba(255,255,255,0.6); padding: 4px 10px; border-radius: 8px; cursor: pointer; font-size: 0.8rem; }
+
+    /* Monde de jeu */
+    #monde {
+      position: fixed; inset: 0; overflow: hidden;
+      background: linear-gradient(180deg, #0A0A1A 0%, #0D1B2A 60%, #1a2a40 100%);
+    }
+
+    /* Fond étoiles */
+    #bg-etoiles {
+      position: absolute; inset: 0;
+      background-image: radial-gradient(circle, rgba(255,255,255,0.4) 1px, transparent 1px);
+      background-size: 60px 60px; animation: bg-drift 40s linear infinite; pointer-events: none;
+    }
+    @keyframes bg-drift { to { transform: translateX(60px); } }
+
+    /* Sol / Plateformes */
+    .plateforme {
+      position: absolute; border-radius: 8px;
+      background: linear-gradient(180deg, #5a5a6e, #3a3a4e);
+      border-top: 2px solid rgba(200,162,200,0.4);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    }
+    .plateforme.sol { background: linear-gradient(180deg, #4a4a5e, #2a2a3e); }
+
+    /* Joueur Cosmonaute */
+    #joueur {
+      position: absolute; width: 40px; height: 52px;
+      display: flex; flex-direction: column; align-items: center;
+      will-change: transform; pointer-events: none;
+      transition: transform 0.05s linear;
+    }
+    #casque {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: rgba(79,195,247,0.15);
+      border: 2px solid rgba(79,195,247,0.6);
+      position: relative; overflow: hidden; flex-shrink: 0;
+    }
+    #tete-selfie {
+      width: 100%; height: 100%;
+      image-rendering: pixelated;
+      background: var(--selfie-url, linear-gradient(135deg, #C8A2C8, #9a72c8));
+      background-size: cover; background-position: center;
+    }
+    #corps {
+      width: 28px; height: 20px; border-radius: 4px;
+      background: linear-gradient(180deg, #C8A2C8, #9a72c8);
+      display: flex; align-items: center; justify-content: center; margin-top: 1px;
+    }
+    #corps::after { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #FFD700; }
+    #jambes { display: flex; gap: 4px; margin-top: 1px; }
+    .jambe { width: 10px; height: 10px; border-radius: 2px; background: #9a72c8; }
+
+    /* Poussière d'étoile */
+    .poussiere {
+      position: absolute; width: 18px; height: 18px;
+      background: radial-gradient(circle, #FFD700, rgba(255,215,0,0.3));
+      border-radius: 50%; border: 1px solid rgba(255,215,0,0.8);
+      animation: scintille 1.2s ease-in-out infinite alternate;
+    }
+    @keyframes scintille { from { opacity: 0.7; transform: scale(0.9); } to { opacity: 1; transform: scale(1.1); } }
+
+    /* Contrôles tactiles */
+    #controles {
+      position: fixed; bottom: 0; left: 0; right: 0; height: 120px; z-index: 40;
+      display: flex; pointer-events: auto;
+    }
+    #zone-gauche { flex: 1; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.2); font-size: 2.5rem; }
+    #zone-saut { width: 100px; display: flex; align-items: center; justify-content: center; }
+    #zone-droite { flex: 1; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.2); font-size: 2.5rem; }
+    #btn-saut {
+      width: 72px; height: 72px; border-radius: 50%;
+      background: rgba(200,162,200,0.2); border: 2px solid rgba(200,162,200,0.5);
+      color: #fff; font-size: 1.5rem; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+    #btn-saut:active { background: rgba(200,162,200,0.4); }
+    #zone-gauche:active { color: rgba(200,162,200,0.8); }
+    #zone-droite:active { color: rgba(200,162,200,0.8); }
+
+    /* Instruction overlay */
+    #tuto-overlay {
+      position: fixed; inset: 0; z-index: 100;
+      background: rgba(10,10,26,0.92); backdrop-filter: blur(8px);
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; padding: 32px;
+    }
+    #tuto-overlay h2 { color: #C8A2C8; font-size: 1.4rem; text-align: center; }
+    #tuto-overlay p { color: rgba(255,255,255,0.8); text-align: center; font-size: 0.9rem; line-height: 1.6; max-width: 280px; }
+    .tuto-controle { display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,0.06); border-radius: 12px; padding: 10px 16px; width: 100%; max-width: 280px; font-size: 0.88rem; }
+    .tuto-controle span:first-child { font-size: 1.3rem; flex-shrink: 0; }
+    #btn-jouer-tuto { padding: 14px 32px; background: linear-gradient(135deg, #C8A2C8, #9a72c8); border: none; border-radius: 16px; color: #0A0A1A; font-weight: bold; font-size: 1rem; cursor: pointer; margin-top: 8px; }
+
+    /* Overlay victoire / defaite */
+    #overlay-fin {
+      position: fixed; inset: 0; z-index: 100; display: none;
+      background: rgba(10,10,26,0.93); backdrop-filter: blur(10px);
+      flex-direction: column; align-items: center; justify-content: center; gap: 20px;
+    }
+    #overlay-fin.visible { display: flex; }
+    #fin-titre { font-size: 2rem; font-weight: 900; }
+    #fin-titre.victoire { color: #69FF47; }
+    #fin-titre.defaite { color: #FF6B6B; }
+    #fin-sous { color: rgba(255,255,255,0.7); font-size: 0.9rem; }
+    #fin-poussieres { color: #FFD700; font-size: 1.1rem; font-weight: bold; }
+    .btn-fin { padding: 14px 32px; border: none; border-radius: 16px; font-weight: bold; font-size: 1rem; cursor: pointer; }
+    #btn-retour { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); color: #fff; }
+    #btn-retry { background: linear-gradient(135deg, #C8A2C8, #9a72c8); color: #0A0A1A; }
+
+    /* Lune taquine in-game */
+    #lune-ingame {
+      position: fixed; top: 56px; left: 50%; transform: translateX(-50%);
+      background: rgba(200,162,200,0.12); border: 1px solid rgba(200,162,200,0.3);
+      border-radius: 14px; padding: 8px 14px; font-size: 0.8rem; color: #C8A2C8;
+      font-style: italic; opacity: 0; transition: opacity 0.4s; white-space: nowrap; z-index: 60; pointer-events: none;
+    }
+    #lune-ingame.visible { opacity: 1; }
+  </style>
 </head>
 <body>
-  <div class="mini-root">
-    <h1>Niveau 1</h1>
-    <p>Placeholder mini-jeu CSS/HTML</p>
+
+<!-- HUD -->
+<div id="mj-hud">
+  <span>Niveau 1 - Tutoriel</span>
+  <span id="mj-etoiles">0 / 8 ✨</span>
+  <span id="mj-vie">❤️❤️❤️</span>
+  <button id="btn-abandon">Quitter</button>
+</div>
+
+<!-- Lune taquine in-game -->
+<div id="lune-ingame">🌙 Voici ton premier pas cosmique !</div>
+
+<!-- MONDE -->
+<div id="monde">
+  <div id="bg-etoiles"></div>
+  <!-- Plateformes et poussières générées par JS -->
+  <div id="joueur">
+    <div id="casque"><div id="tete-selfie"></div></div>
+    <div id="corps"></div>
+    <div id="jambes"><div class="jambe"></div><div class="jambe"></div></div>
   </div>
+</div>
+
+<!-- CONTROLES -->
+<div id="controles">
+  <div id="zone-gauche">◀</div>
+  <div id="zone-saut"><button id="btn-saut">↑</button></div>
+  <div id="zone-droite">▶</div>
+</div>
+
+<!-- TUTO OVERLAY -->
+<div id="tuto-overlay">
+  <h2>🚀 Niveau 1 — Tutoriel</h2>
+  <p>Collecte les <strong style="color:#FFD700">8 poussières d'étoiles</strong> pour terminer le niveau !</p>
+  <div class="tuto-controle"><span>◀ ▶</span><span>Touche gauche / droite de l'écran pour te déplacer</span></div>
+  <div class="tuto-controle"><span>↑</span><span>Bouton central pour sauter</span></div>
+  <div class="tuto-controle"><span>✨</span><span>Collecte toutes les poussières d'étoiles</span></div>
+  <button id="btn-jouer-tuto">C'est parti ! 🚀</button>
+</div>
+
+<!-- OVERLAY FIN -->
+<div id="overlay-fin">
+  <div id="fin-titre"></div>
+  <div id="fin-sous"></div>
+  <div id="fin-poussieres"></div>
+  <div style="display:flex;gap:12px;margin-top:8px">
+    <button class="btn-fin" id="btn-retry">🔄 Réessayer</button>
+    <button class="btn-fin" id="btn-retour">← Retour GPS</button>
+  </div>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  // === Selfie du parent ===
+  const selfieB64 = (() => {
+    try { return window.parent.GPS0_Avatar && window.parent.GPS0_Avatar.getSelfie(); } catch { return null; }
+  })();
+  if (selfieB64) {
+    const el = document.getElementById('tete-selfie');
+    el.style.backgroundImage = 'url(' + selfieB64 + ')';
+    el.style.backgroundSize = 'cover';
+  }
+
+  // === Config niveau (responsive) ===
+  const W = window.innerWidth, H = window.innerHeight;
+  const GRAVITE = 0.45, SAUT_FORCE = -11, VITESSE = 3.5;
+
+  // Plateformes [x%, y%, w, h] (% de largeur / hauteur fixe)
+  const PLATES_CONFIG = [
+    { x: 0,    y: H - 60, w: W,   h: 60,  sol: true  },  // Sol
+    { x: W*0.05, y: H - 180, w: 160, h: 18 },
+    { x: W*0.35, y: H - 250, w: 140, h: 18 },
+    { x: W*0.6,  y: H - 190, w: 130, h: 18 },
+    { x: W*0.15, y: H - 340, w: 150, h: 18 },
+    { x: W*0.5,  y: H - 380, w: 160, h: 18 },
+    { x: W*0.7,  y: H - 300, w: 120, h: 18 },
+    { x: W*0.3,  y: H - 460, w: 140, h: 18 },
+    { x: W*0.65, y: H - 490, w: 150, h: 18 },
+  ];
+
+  // Poussières [x, y] relatives à plateformes
+  const POUSSIERES_CONFIG = [
+    { px: 0, py: -28 }, // au dessus sol
+    { px: 1, py: -28 },
+    { px: 2, py: -28 },
+    { px: 3, py: -28 },
+    { px: 4, py: -28 },
+    { px: 5, py: -28 },
+    { px: 6, py: -28 },
+    { px: 7, py: -28 },
+  ];
+
+  let plates = [], poussieres = [];
+  let jx = 60, jy = H - 120;
+  let vx = 0, vy = 0;
+  let enAir = true;
+  let vies = 3, etoiles = 0, totalEtoiles = 8;
+  let gauche = false, droite = false, saut = false;
+  let running = false;
+  let lune_dit = false;
+
+  // === Build niveau ===
+  function buildNiveau() {
+    const monde = document.getElementById('monde');
+    plates = PLATES_CONFIG.map((p, i) => {
+      const el = document.createElement('div');
+      el.className = 'plateforme' + (p.sol ? ' sol' : '');
+      el.style.left = p.x + 'px'; el.style.top = p.y + 'px';
+      el.style.width = p.w + 'px'; el.style.height = p.h + 'px';
+      monde.appendChild(el);
+      return { el, x: p.x, y: p.y, w: p.w, h: p.h };
+    });
+
+    poussieres = POUSSIERES_CONFIG.map((c, i) => {
+      const pl = plates[c.px];
+      const px = pl.x + pl.w / 2 - 9, py = pl.y + c.py;
+      const el = document.createElement('div');
+      el.className = 'poussiere';
+      el.style.left = px + 'px'; el.style.top = py + 'px';
+      monde.appendChild(el);
+      return { el, x: px, y: py, w: 18, h: 18, collected: false };
+    });
+  }
+
+  // === Physics ===
+  function physique() {
+    if (gauche) { vx = -VITESSE; }
+    else if (droite) { vx = VITESSE; }
+    else { vx *= 0.7; }
+    if (saut && !enAir) { vy = SAUT_FORCE; enAir = true; try { window.parent.GPS0_Audio && window.parent.GPS0_Audio.playSFX('saut_cosmonaute'); } catch {} }
+    saut = false;
+
+    vy += GRAVITE;
+    jx += vx; jy += vy;
+
+    // Limites horizontales
+    jx = Math.max(0, Math.min(W - 40, jx));
+
+    // Collisions plateformes
+    enAir = true;
+    for (const p of plates) {
+      const pied = jy + 52, tete = jy;
+      const centerX = jx + 20;
+      if (centerX > p.x + 4 && centerX < p.x + p.w - 4) {
+        if (vy >= 0 && pied >= p.y && pied <= p.y + p.h + Math.abs(vy) + 2) {
+          jy = p.y - 52; vy = 0; enAir = false;
+        } else if (vy < 0 && tete <= p.y + p.h && tete >= p.y - 10) {
+          vy = 0;
+        }
+      }
+    }
+
+    // Chute dans le vide
+    if (jy > H + 80) { perdreVie(); return; }
+
+    // Collecte poussières
+    for (const p of poussieres) {
+      if (p.collected) continue;
+      const dx = (jx + 20) - (p.x + 9), dy = (jy + 26) - (p.y + 9);
+      if (Math.sqrt(dx*dx + dy*dy) < 28) {
+        p.collected = true; p.el.style.display = 'none'; etoiles++;
+        document.getElementById('mj-etoiles').textContent = etoiles + ' / ' + totalEtoiles + ' ✨';
+        try { window.parent.GPS0_Audio && window.parent.GPS0_Audio.playSFX('collecte_poussiere'); } catch {}
+        if (!lune_dit && etoiles === 4) {
+          afficherLune("Pas mal ! Tu as trouve la moitie. Continue !");
+          lune_dit = true;
+        }
+        if (etoiles >= totalEtoiles) { setTimeout(victoire, 400); running = false; }
+      }
+    }
+
+    // Rendu joueur
+    const j = document.getElementById('joueur');
+    j.style.left = jx + 'px'; j.style.top = jy + 'px';
+  }
+
+  function perdreVie() {
+    vies = Math.max(0, vies - 1);
+    const vieMap = ['', '❤️', '❤️❤️', '❤️❤️❤️'];
+    document.getElementById('mj-vie').textContent = vieMap[vies] || '';
+    if (vies <= 0) { running = false; setTimeout(defaite, 400); return; }
+    jx = 60; jy = H - 120; vx = 0; vy = 0;
+    afficherLune("Aie ! Fais attention, le sol c'est dur !");
+  }
+
+  // === Lune in-game ===
+  let luneTId = null;
+  function afficherLune(txt) {
+    const el = document.getElementById('lune-ingame');
+    el.textContent = '🌙 ' + txt;
+    el.classList.add('visible');
+    clearTimeout(luneTId);
+    luneTId = setTimeout(() => el.classList.remove('visible'), 4000);
+  }
+
+  // === Victoire / Défaite ===
+  function victoire() {
+    const ov = document.getElementById('overlay-fin');
+    document.getElementById('fin-titre').textContent = 'Victoire ! 🎉';
+    document.getElementById('fin-titre').className = 'victoire';
+    document.getElementById('fin-sous').textContent = 'Tu as collecté toutes les poussières !';
+    document.getElementById('fin-poussieres').textContent = '+ ' + totalEtoiles + ' ✨ Poussières d\'étoiles';
+    ov.classList.add('visible');
+    try {
+      window.parent.postMessage({ source: 'gps0_minijeu', success: true, niveau: 1, poussieres: totalEtoiles, etoiles: 3 }, '*');
+    } catch {}
+  }
+
+  function defaite() {
+    const ov = document.getElementById('overlay-fin');
+    document.getElementById('fin-titre').textContent = 'Perdu... 💫';
+    document.getElementById('fin-titre').className = 'defaite';
+    document.getElementById('fin-sous').textContent = 'La Lune compatit. Un peu.';
+    document.getElementById('fin-poussieres').textContent = etoiles + ' / ' + totalEtoiles + ' ✨ collectées';
+    ov.classList.add('visible');
+    try {
+      window.parent.postMessage({ source: 'gps0_minijeu', success: false, niveau: 1 }, '*');
+    } catch {}
+  }
+
+  // === Game Loop ===
+  function loop() {
+    if (running) physique();
+    requestAnimationFrame(loop);
+  }
+
+  // === Contrôles ===
+  function setupControles() {
+    const zG = document.getElementById('zone-gauche');
+    const zD = document.getElementById('zone-droite');
+    const bS = document.getElementById('btn-saut');
+
+    zG.addEventListener('touchstart', e => { e.preventDefault(); gauche = true; }, { passive: false });
+    zG.addEventListener('touchend', e => { e.preventDefault(); gauche = false; }, { passive: false });
+    zD.addEventListener('touchstart', e => { e.preventDefault(); droite = true; }, { passive: false });
+    zD.addEventListener('touchend', e => { e.preventDefault(); droite = false; }, { passive: false });
+    bS.addEventListener('touchstart', e => { e.preventDefault(); saut = true; }, { passive: false });
+
+    // Clavier (desktop test)
+    window.addEventListener('keydown', e => {
+      if (e.key === 'ArrowLeft' || e.key === 'q') gauche = true;
+      if (e.key === 'ArrowRight' || e.key === 'd') droite = true;
+      if ((e.key === 'ArrowUp' || e.key === ' ' || e.key === 'z') && !enAir) { saut = true; e.preventDefault(); }
+    });
+    window.addEventListener('keyup', e => {
+      if (e.key === 'ArrowLeft' || e.key === 'q') gauche = false;
+      if (e.key === 'ArrowRight' || e.key === 'd') droite = false;
+    });
+  }
+
+  // === Init ===
+  function start() {
+    document.getElementById('tuto-overlay').style.display = 'none';
+    running = true;
+    setTimeout(() => afficherLune("Saute sur les plateformes pour tout collecter !"), 1500);
+  }
+
+  document.getElementById('btn-jouer-tuto').addEventListener('click', start);
+
+  document.getElementById('btn-retour').addEventListener('click', () => {
+    try { window.parent.postMessage({ source: 'gps0_minijeu', success: false, niveau: 1 }, '*'); } catch {}
+  });
+  document.getElementById('btn-retry').addEventListener('click', () => location.reload());
+  document.getElementById('btn-abandon').addEventListener('click', () => {
+    if (confirm('Quitter ce niveau ?')) {
+      try { window.parent.postMessage({ source: 'gps0_minijeu', success: false, niveau: 1 }, '*'); } catch {}
+    }
+  });
+
+  buildNiveau();
+  setupControles();
+  loop();
+
+  // Correction handler postMessage dans app.js pour filtrer la source
+})();
+</script>
 </body>
 </html>

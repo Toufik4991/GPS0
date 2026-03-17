@@ -2,31 +2,197 @@
 <html lang="fr">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0A0A1A">
   <title>GPS0</title>
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="css/main.css">
 </head>
 <body>
-  <div id="splash" class="screen visible">
-    <h1>GPS0</h1>
+  <div class="starfield" aria-hidden="true">
+    <div class="stars s1"></div>
+    <div class="stars s2"></div>
+    <div class="stars s3"></div>
+    <div class="nuages"></div>
   </div>
-  <main id="app" class="screen">
-    <header class="hud">
-      <span id="chrono">00:00</span>
-      <span id="poussieres">0</span>
-      <span id="energie">100%</span>
+
+  <!-- SPLASH -->
+  <div id="splash" class="screen visible" role="status" aria-live="polite">
+    <div class="splash-content">
+      <h1 class="logo-gps0">GPS0</h1>
+      <p class="logo-sub">Aventure Cosmique</p>
+    </div>
+  </div>
+
+  <!-- FULLSCREEN GATE -->
+  <div id="fullscreen-gate" class="screen" role="dialog" aria-modal="true" aria-labelledby="fs-titre">
+    <div class="modal-box">
+      <h2 id="fs-titre">GPS0 🚀</h2>
+      <p>Pour une expérience optimale, entre en mode plein écran.</p>
+      <button id="btn-fullscreen" class="btn-primary">Entrer dans GPS0 🚀</button>
+    </div>
+    <button class="btn-close" id="btn-close-fs" aria-label="Fermer">✕</button>
+  </div>
+
+  <!-- APP PRINCIPALE -->
+  <main id="app" class="screen" role="main">
+    <header class="hud" role="banner">
+      <span class="hud-item"><span aria-hidden="true">⏱️</span> <span id="chrono" aria-label="Chronomètre">00:00</span></span>
+      <span class="hud-item"><span aria-hidden="true">✨</span> <span id="poussieres" aria-label="Poussières d'étoiles">0</span></span>
+      <div class="hud-energie" title="Énergie boussole" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100">
+        <div class="energie-barre" id="energie-barre"></div>
+      </div>
     </header>
-    <section class="compass-panel">
-      <div class="asteroide" id="asteroide"></div>
-      <button id="toggle-boussole">Boussole</button>
-      <p id="objectif">Chargement objectif...</p>
+
+    <div class="halo" id="halo" data-etat="off" aria-hidden="true"></div>
+
+    <section class="compass-panel" aria-label="Boussole cosmique">
+      <div class="lune-bulle" id="lune-bulle" role="status" aria-live="polite" aria-atomic="true">
+        <span class="lune-avatar" aria-hidden="true">🌙</span>
+        <span class="lune-texte" id="lune-texte"></span>
+      </div>
+
+      <div class="asteroide-wrapper" id="asteroide-wrapper" data-etat="off">
+        <svg class="asteroide-svg" viewBox="0 0 200 200" width="200" height="200" aria-hidden="true">
+          <defs>
+            <radialGradient id="astGrad" cx="38%" cy="32%" r="68%">
+              <stop offset="0%" stop-color="#8a8a9e"/>
+              <stop offset="55%" stop-color="#5a5a6e"/>
+              <stop offset="100%" stop-color="#3a3a4e"/>
+            </radialGradient>
+            <filter id="glow-ast" x="-25%" y="-25%" width="150%" height="150%">
+              <feGaussianBlur stdDeviation="5" result="b"/>
+              <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+          <path class="ast-body" d="M100,18 C128,12 162,33 176,64 C190,95 184,132 163,157 C142,182 112,192 82,183 C52,174 28,153 20,122 C12,91 24,57 47,40 C70,23 84,21 100,18 Z" fill="url(#astGrad)" filter="url(#glow-ast)"/>
+          <ellipse cx="73" cy="68" rx="15" ry="9" fill="#1a1a2e" opacity="0.75"/>
+          <ellipse cx="132" cy="118" rx="11" ry="7" fill="#1a1a2e" opacity="0.65"/>
+          <ellipse cx="96" cy="152" rx="9" ry="5" fill="#1a1a2e" opacity="0.55"/>
+          <ellipse cx="158" cy="72" rx="7" ry="4" fill="#1a1a2e" opacity="0.45"/>
+          <text class="ast-jouer" x="100" y="108" text-anchor="middle" font-size="14" fill="#4FC3F7" font-weight="bold" opacity="0" pointer-events="none">JOUER 🚀</text>
+        </svg>
+
+        <div class="fusee-wrapper hidden" id="fusee-wrapper" aria-hidden="true">
+          <svg viewBox="0 0 80 80" width="70" height="70">
+            <defs>
+              <radialGradient id="fGrad" cx="50%" cy="28%" r="72%">
+                <stop offset="0%" stop-color="#e8c8e8"/>
+                <stop offset="100%" stop-color="#9a72c8"/>
+              </radialGradient>
+            </defs>
+            <path d="M40,4 C49,4 58,18 58,35 L58,60 C58,64 54,67 50,67 L30,67 C26,67 22,64 22,60 L22,35 C22,18 31,4 40,4 Z" fill="url(#fGrad)"/>
+            <path d="M22,50 L9,70 L22,63 Z" fill="#C8A2C8"/>
+            <path d="M58,50 L71,70 L58,63 Z" fill="#C8A2C8"/>
+            <circle cx="40" cy="33" r="11" fill="#4FC3F7" opacity="0.9"/>
+            <circle cx="40" cy="33" r="7" fill="#061428"/>
+            <circle cx="43" cy="30" r="2" fill="#4FC3F7" opacity="0.5"/>
+            <!-- Selfie dans hublot -->
+            <image id="selfie-hublot" href="" x="29" y="22" width="22" height="22" clip-path="url(#hublot-clip)" style="image-rendering:pixelated"/>
+            <defs><clipPath id="hublot-clip"><circle cx="40" cy="33" r="10"/></clipPath></defs>
+            <ellipse class="flamme" cx="40" cy="72" rx="9" ry="13" fill="#FF8C00" opacity="0.8"/>
+            <ellipse class="flamme flamme2" cx="40" cy="76" rx="6" ry="9" fill="#FFD700" opacity="0.9"/>
+          </svg>
+        </div>
+
+        <div class="distance-label" id="distance-label" aria-live="polite">---</div>
+        <button class="btn-jouer" id="btn-jouer" hidden>JOUER 🚀</button>
+      </div>
+
+      <button class="btn-toggle-boussole" id="toggle-boussole" aria-pressed="false">
+        <span class="toggle-icon" aria-hidden="true">🔮</span>
+        <span class="toggle-label">Activer la boussole</span>
+      </button>
     </section>
-    <button id="menu-btn">Menu</button>
+
+    <footer class="objectif-bar" role="contentinfo">
+      <span class="objectif-icon" aria-hidden="true">🎯</span>
+      <div>
+        <div class="objectif-nom" id="objectif-nom">Chargement...</div>
+        <div class="objectif-sub">Prochain objectif</div>
+      </div>
+      <div class="objectif-progress"><span id="zones-progress" aria-label="Progression zones">0/9</span></div>
+    </footer>
   </main>
-  <dialog id="modal-pseudo"><form method="dialog"><label>Pseudo<input id="pseudo-input"></label><button id="pseudo-ok" value="ok">Confirmer</button></form></dialog>
-  <dialog id="modal-difficulte"><form method="dialog"><label>Difficulte<select id="difficulte-select"><option value="clair_de_lune">Clair de Lune</option><option value="face_cachee">Face Cachee</option><option value="eclipse_totale">Eclipse Totale</option><option value="trou_noir">Trou Noir</option></select></label><button value="ok">Suivant</button></form></dialog>
-  <dialog id="modal-parcours"><form method="dialog"><label>Parcours<select id="parcours-select"><option value="parcours_1">Papy</option><option value="parcours_2">Randonnee</option><option value="parcours_3">Funebre</option></select></label><button value="ok">Commencer</button></form></dialog>
+
+  <!-- MENU FLOTTANT -->
+  <button class="btn-menu" id="menu-btn" aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="menu-panel">☰</button>
+  <nav class="menu-panel" id="menu-panel" aria-label="Menu principal" hidden>
+    <button class="menu-item" id="menu-audio">🔊 Son</button>
+    <button class="menu-item" id="menu-difficulte">⚙️ Difficulté</button>
+    <button class="menu-item" id="menu-reset">🔄 Réinitialiser</button>
+  </nav>
+
+  <!-- MODAL PSEUDO -->
+  <dialog id="modal-pseudo" aria-modal="true" aria-labelledby="pseudo-titre">
+    <div class="modal-box">
+      <h2 id="pseudo-titre">🌙 Qui es-tu, explorateur ?</h2>
+      <form id="form-pseudo" method="dialog">
+        <label for="pseudo-input">Ton pseudo d'explorateur</label>
+        <input id="pseudo-input" type="text" maxlength="20" placeholder="Cosmonaute42" autocomplete="off">
+        <button type="submit" class="btn-primary">Confirmer ✨</button>
+      </form>
+    </div>
+  </dialog>
+
+  <!-- MODAL SELFIE -->
+  <dialog id="modal-selfie" aria-modal="true" aria-labelledby="selfie-titre">
+    <div class="modal-box selfie-box">
+      <h2 id="selfie-titre">📸 Ton visage, ta tête !</h2>
+      <p style="font-size:0.85rem;color:rgba(255,255,255,0.7)">Tu deviendras littéralement le héros du jeu.</p>
+      <div class="selfie-viewport">
+        <video id="selfie-video" playsinline muted autoplay aria-label="Aperçu caméra"></video>
+        <canvas id="selfie-preview" width="200" height="200" aria-label="Aperçu selfie pixelisé"></canvas>
+        <canvas id="selfie-canvas" width="32" height="32" style="display:none" aria-hidden="true"></canvas>
+      </div>
+      <div class="selfie-actions">
+        <button id="selfie-capture" class="btn-primary">📸 Capturer</button>
+        <button id="selfie-retake" class="btn-secondary" hidden>🔄 Reprendre</button>
+        <button id="selfie-confirm" class="btn-primary" hidden>✅ C'est moi !</button>
+        <button id="selfie-skip" class="btn-ghost">Passer (personnage générique)</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- MODAL DIFFICULTE -->
+  <dialog id="modal-difficulte" aria-modal="true" aria-labelledby="diff-titre">
+    <div class="modal-box">
+      <h2 id="diff-titre">⚙️ Choisis ta difficulté</h2>
+      <div class="difficulte-grille" role="group" aria-label="Niveaux de difficulté">
+        <button class="diff-carte" data-val="clair_de_lune" aria-pressed="false"><span class="diff-emoji" aria-hidden="true">🌙</span><span class="diff-nom">Clair de Lune</span><span class="diff-desc">-1% énergie / 10s</span></button>
+        <button class="diff-carte" data-val="face_cachee" aria-pressed="false"><span class="diff-emoji" aria-hidden="true">🌑</span><span class="diff-nom">Face Cachée</span><span class="diff-desc">-2% énergie / 10s</span></button>
+        <button class="diff-carte" data-val="eclipse_totale" aria-pressed="false"><span class="diff-emoji" aria-hidden="true">🌚</span><span class="diff-nom">Éclipse Totale</span><span class="diff-desc">-5% énergie / 10s</span></button>
+        <button class="diff-carte" data-val="trou_noir" aria-pressed="false"><span class="diff-emoji" aria-hidden="true">🕳️</span><span class="diff-nom">Trou Noir</span><span class="diff-desc">Cycle 10s ON / 170s OFF</span></button>
+      </div>
+      <button id="diff-suivant" class="btn-primary" disabled>Suivant ➡️</button>
+    </div>
+  </dialog>
+
+  <!-- MODAL PARCOURS -->
+  <dialog id="modal-parcours" aria-modal="true" aria-labelledby="parc-titre">
+    <div class="modal-box">
+      <h2 id="parc-titre">🗺️ Choisis ton parcours</h2>
+      <div class="parcours-grille" role="group" aria-label="Parcours disponibles">
+        <button class="parcours-carte" data-val="parcours_1" aria-pressed="false"><span class="parcours-emoji" aria-hidden="true">🧓</span><span class="parcours-nom">La Promenade du Papy</span><span class="parcours-desc">Parcours tranquille pour découvrir GPS0</span></button>
+        <button class="parcours-carte" data-val="parcours_2" aria-pressed="false"><span class="parcours-emoji" aria-hidden="true">🚶</span><span class="parcours-nom">La Randonnée</span><span class="parcours-desc">Exploration en étoile pour aventuriers</span></button>
+        <button class="parcours-carte" data-val="parcours_3" aria-pressed="false"><span class="parcours-emoji" aria-hidden="true">💀</span><span class="parcours-nom">La Marche Funèbre</span><span class="parcours-desc">Parcours difficile pour experts</span></button>
+      </div>
+      <div class="code-defi-section">
+        <button class="btn-ghost" id="btn-code-defi">Entrer un code défi</button>
+        <input id="code-defi-input" type="text" placeholder="LUNE-PP-170326-1430" hidden>
+      </div>
+      <button id="parcours-commencer" class="btn-primary" disabled>Commencer 🚀</button>
+    </div>
+  </dialog>
+
+  <!-- TOAST CODE DÉFI -->
+  <div class="code-defi-toast" id="code-toast" role="status" aria-live="polite" aria-atomic="true" hidden>
+    <span>Ton code défi :</span>
+    <strong id="code-defi-val"></strong>
+  </div>
+
   <script src="js/gps.js"></script>
   <script src="js/boussole.js"></script>
   <script src="js/avatar.js"></script>
