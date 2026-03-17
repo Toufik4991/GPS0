@@ -1,0 +1,40 @@
+﻿<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>GPS0</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+  <div id="splash" class="screen visible">
+    <h1>GPS0</h1>
+  </div>
+  <main id="app" class="screen">
+    <header class="hud">
+      <span id="chrono">00:00</span>
+      <span id="poussieres">0</span>
+      <span id="energie">100%</span>
+    </header>
+    <section class="compass-panel">
+      <div class="asteroide" id="asteroide"></div>
+      <button id="toggle-boussole">Boussole</button>
+      <p id="objectif">Chargement objectif...</p>
+    </section>
+    <button id="menu-btn">Menu</button>
+  </main>
+  <dialog id="modal-pseudo"><form method="dialog"><label>Pseudo<input id="pseudo-input"></label><button id="pseudo-ok" value="ok">Confirmer</button></form></dialog>
+  <dialog id="modal-difficulte"><form method="dialog"><label>Difficulte<select id="difficulte-select"><option value="clair_de_lune">Clair de Lune</option><option value="face_cachee">Face Cachee</option><option value="eclipse_totale">Eclipse Totale</option><option value="trou_noir">Trou Noir</option></select></label><button value="ok">Suivant</button></form></dialog>
+  <dialog id="modal-parcours"><form method="dialog"><label>Parcours<select id="parcours-select"><option value="parcours_1">Papy</option><option value="parcours_2">Randonnee</option><option value="parcours_3">Funebre</option></select></label><button value="ok">Commencer</button></form></dialog>
+  <script src="js/gps.js"></script>
+  <script src="js/boussole.js"></script>
+  <script src="js/avatar.js"></script>
+  <script src="js/economie.js"></script>
+  <script src="js/lune.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/minijeux.js"></script>
+  <script src="js/finale.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+  <defs>
+    <linearGradient id="asteroide-gradient" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#5a5a6e"/><stop offset="100%" stop-color="#3a3a4e"/></linearGradient>
+    <filter id="glow-soft"><feGaussianBlur stdDeviation="3"/></filter>
+  </defs>
+  <symbol id="sablier" viewBox="0 0 24 24"><path d="M6 2h12v4l-4 6 4 6v4H6v-4l4-6-4-6z" fill="#4FC3F7"/></symbol>
+</svg>

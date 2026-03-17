@@ -1,0 +1,10 @@
+﻿{
+  "name": "GPS0",
+  "short_name": "GPS0",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#0A0A1A",
+  "theme_color": "#0A0A1A",
+  "description": "Aventure GPS0",
+  "icons": []
+}

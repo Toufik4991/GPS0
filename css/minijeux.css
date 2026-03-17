@@ -1,0 +1,2 @@
+﻿body { margin: 0; font-family: "Trebuchet MS", sans-serif; }
+.mini-root { min-height: 100vh; display: grid; place-items: center; background: #0A0A1A; color: #fff; }
