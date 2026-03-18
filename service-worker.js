@@ -1,5 +1,5 @@
-﻿const CACHE = 'gps0-v2';
-const CORE = ['/', '/index.html', '/css/main.css', '/css/minijeux.css', '/js/app.js', '/js/gps.js', '/js/boussole.js', '/js/economie.js', '/js/lune.js', '/js/avatar.js', '/js/audio.js', '/js/minijeux.js', '/js/finale.js', '/gps_config.json', '/manifest.json'];
+const CACHE = 'gps0-v3';
+const CORE = ['/', '/index.html', '/css/main.css', '/css/minijeux.css', '/js/app.js', '/js/gps.js', '/js/boussole.js', '/js/economie.js', '/js/lune.js', '/js/avatar.js', '/js/audio.js', '/js/minijeux.js', '/js/moteur-minijeu.js', '/js/finale.js', '/gps_config.json', '/manifest.json'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE).catch(() => {}))); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))); });
 self.addEventListener('fetch', e => {

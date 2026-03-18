@@ -1,4 +1,4 @@
-﻿'use strict';
+'use strict';
 window.GPS0_App = (() => {
   let _parcoursId = null;
 
@@ -143,8 +143,26 @@ window.GPS0_App = (() => {
     _majObjectif();
     GPS0_GPS.demarrerSuivi();
 
+    let _navLastDist = null, _navStale = 0, _navLastBear = null, _navDirChg = 0, _navDirTimer = null;
     GPS0_GPS.on('position', d => {
       if (!GPS0_Economie.isEpuise()) GPS0_Boussole.updatePosition(d);
+      // Navigation lente : dist change < 5m sur ~2 min
+      if (_navLastDist !== null) {
+        if (Math.abs(d.dist - _navLastDist) < 5) {
+          if (++_navStale >= 12) { GPS0_Lune.parler('navigation_lente'); _navStale = 0; }
+        } else { _navStale = 0; }
+      }
+      _navLastDist = d.dist;
+      // Navigation erratique : 8+ changements direction en 1 min
+      if (_navLastBear !== null) {
+        const diff = Math.abs(d.bearing - _navLastBear);
+        if ((diff > 180 ? 360 - diff : diff) > 45) {
+          _navDirChg++;
+          if (!_navDirTimer) _navDirTimer = setTimeout(() => { _navDirChg = 0; _navDirTimer = null; }, 60000);
+          if (_navDirChg >= 8) { GPS0_Lune.parler('navigation_erratique'); _navDirChg = 0; clearTimeout(_navDirTimer); _navDirTimer = null; }
+        }
+      }
+      _navLastBear = d.bearing;
     });
     GPS0_GPS.on('zone_atteinte', zone => {
       GPS0_Lune.parler('arrivee_zone');
@@ -175,6 +193,7 @@ window.GPS0_App = (() => {
     const ne = document.getElementById('objectif-nom'), pe = document.getElementById('zones-progress');
     if (ne) ne.textContent = z ? z.nom : 'Tous les points visites !';
     if (pe) pe.textContent = GPS0_GPS.progressionStr();
+    if (z && z.final) setTimeout(() => GPS0_Lune.parler('avant_boss'), 2000);
   }
 
   function _bindUI() {
@@ -196,6 +215,29 @@ window.GPS0_App = (() => {
     document.getElementById('menu-audio')?.addEventListener('click', () => {
       const on = GPS0_Audio.toggle();
       document.getElementById('menu-audio').textContent = on ? 'Son' : 'Son coupe';
+    });
+
+    document.getElementById('menu-difficulte')?.addEventListener('click', () => {
+      mp.hidden = true; mb.setAttribute('aria-expanded', 'false');
+      const mdiff = document.getElementById('modal-difficulte');
+      const diff = localStorage.getItem('gps0_difficulte');
+      if (diff) {
+        document.querySelectorAll('.diff-carte').forEach(b => {
+          b.setAttribute('aria-pressed', b.dataset.val === diff ? 'true' : 'false');
+        });
+        document.getElementById('diff-suivant').disabled = false;
+      }
+      mdiff.showModal();
+      document.getElementById('diff-suivant').addEventListener('click', () => {
+        const choix = document.querySelector('.diff-carte[aria-pressed="true"]')?.dataset.val;
+        if (!choix) return;
+        localStorage.setItem('gps0_difficulte', choix);
+        GPS0_Economie.demarrerConsommation(choix, force => {
+          if (typeof force === 'boolean') { GPS0_Boussole.forceEtat(force ? 'on' : 'off'); return; }
+          return GPS0_Boussole.estActif();
+        });
+        mdiff.close();
+      }, { once: true });
     });
 
     document.getElementById('menu-reset')?.addEventListener('click', () => {
