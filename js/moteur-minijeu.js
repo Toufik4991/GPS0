@@ -12,7 +12,7 @@ const monde=document.getElementById('monde');
 const plates=[],slimes=[],pds=[],lasers=[],mobiles=[],fragiles=[],pics=[];
 
 // --- Selfie ---
-try{const b=window.parent.GPS0_Audio&&window.parent.GPS0_Avatar&&window.parent.GPS0_Avatar.getSelfie();if(b){const el=document.getElementById('ts');el.style.backgroundImage='url('+b+')';}else{try{const b2=window.parent.GPS0_Avatar.getSelfie();if(b2){document.getElementById('ts').style.backgroundImage='url('+b2+')';}}catch{}}}catch{}
+try{const b=window.parent.GPS0_Avatar&&window.parent.GPS0_Avatar.getSelfie();if(b){const el=document.getElementById('ts');el.style.backgroundImage='url('+b+')';}else{try{const b2=window.parent.GPS0_Avatar.getSelfie();if(b2){document.getElementById('ts').style.backgroundImage='url('+b2+')';}}catch{}}}catch{}
 
 // --- Construction ---
 function mkEl(cls,x,y,w,h,extra){
