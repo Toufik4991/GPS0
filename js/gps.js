@@ -1,4 +1,4 @@
-﻿'use strict';
+'use strict';
 window.GPS0_GPS = (() => {
   let config = null, zonesActives = [], zoneIndex = 0, watchId = null;
   const _l = {};
@@ -22,13 +22,17 @@ window.GPS0_GPS = (() => {
     config = await res.json();
     return config;
   }
+
+  // v3.1 : chaque parcours a ses propres zones
   function appliquerParcours(id) {
-    const ordre = config.parcours[id].ordre;
-    zonesActives = ordre.map(i => config.zones_fixes.find(z => z.id === i));
+    const p = config.parcours[id];
+    if (!p || !p.zones) { console.error('[GPS0] Parcours inconnu:', id); return []; }
+    zonesActives = [...p.zones];
     zoneIndex = 0;
     localStorage.setItem('gps0_zones_actives', JSON.stringify({ zones: zonesActives, index: 0, parcours: id }));
     return zonesActives;
   }
+
   function chargerProgression() {
     const s = localStorage.getItem('gps0_zones_actives');
     if (!s) return false;
@@ -54,6 +58,8 @@ window.GPS0_GPS = (() => {
     if (!navigator.geolocation) { emit('erreur', 'GPS non disponible sur cet appareil'); return; }
     watchId = navigator.geolocation.watchPosition(pos => {
       const zone = zoneActuelle(); if (!zone) return;
+      // Zone placeholder (coords 0,0) : ignorer
+      if (zone.lat === 0 && zone.lng === 0) { emit('position', { lat: 0, lng: 0, dist: 9999, bearing: 0, zone }); return; }
       const dist = Math.round(haversine(pos.coords.latitude, pos.coords.longitude, zone.lat, zone.lng));
       const bear = bearing(pos.coords.latitude, pos.coords.longitude, zone.lat, zone.lng);
       emit('position', { lat: pos.coords.latitude, lng: pos.coords.longitude, dist, bearing: bear, zone });

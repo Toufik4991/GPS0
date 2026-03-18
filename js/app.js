@@ -114,17 +114,53 @@ window.GPS0_App = (() => {
   function _parcours() {
     const m = document.getElementById('modal-parcours'); m.showModal();
     let choix = null;
+    const CODE_MAP = { PP: 'parcours_1', RD: 'parcours_2', MF: 'parcours_3' };
+
+    function _selectionnerParcours(id) {
+      document.querySelectorAll('.parcours-carte').forEach(b => {
+        b.setAttribute('aria-pressed', b.dataset.val === id ? 'true' : 'false');
+      });
+      choix = id;
+      document.getElementById('parcours-commencer').disabled = false;
+    }
+
     document.querySelectorAll('.parcours-carte').forEach(btn => {
       btn.addEventListener('click', () => {
-        document.querySelectorAll('.parcours-carte').forEach(b => b.setAttribute('aria-pressed','false'));
-        btn.setAttribute('aria-pressed','true'); choix = btn.dataset.val;
-        document.getElementById('parcours-commencer').disabled = false;
+        _selectionnerParcours(btn.dataset.val);
+        // Si code defi etait entre, le vider pour eviter confusion
+        const inp = document.getElementById('code-defi-input');
+        const err = document.getElementById('code-defi-err');
+        if (inp) inp.value = '';
+        if (err) err.textContent = '';
       });
     });
+
+    // Code defi : afficher/masquer
     document.getElementById('btn-code-defi').addEventListener('click', () => {
-      const inp = document.getElementById('code-defi-input');
-      inp.hidden = !inp.hidden;
+      const form = document.getElementById('code-defi-form');
+      if (form) form.hidden = !form.hidden;
     });
+
+    // Code defi : parser en temps reel
+    const codeInput = document.getElementById('code-defi-input');
+    const codeErr = document.getElementById('code-defi-err');
+    if (codeInput) {
+      codeInput.addEventListener('input', function() {
+        const val = this.value.trim().toUpperCase();
+        const match = val.match(/^LUNE-(PP|RD|MF)-\d{6}-\d{4}$/);
+        if (match) {
+          const id = CODE_MAP[match[1]];
+          _selectionnerParcours(id);
+          if (codeErr) { codeErr.textContent = '✅ Code valide ! Parcours chargé.'; codeErr.style.color = '#69FF47'; }
+          localStorage.setItem('gps0_code_defi_entre', val);
+        } else if (val.length > 5) {
+          if (codeErr) { codeErr.textContent = 'Format : LUNE-PP-180326-1430'; codeErr.style.color = '#FF6B6B'; }
+        } else {
+          if (codeErr) codeErr.textContent = '';
+        }
+      });
+    }
+
     return new Promise(r => {
       document.getElementById('parcours-commencer').addEventListener('click', () => {
         if (!choix) return; m.close(); r(choix);

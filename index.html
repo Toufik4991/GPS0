@@ -181,7 +181,10 @@
       </div>
       <div class="code-defi-section">
         <button class="btn-ghost" id="btn-code-defi">🔑 Entrer un code défi</button>
-        <input id="code-defi-input" type="text" placeholder="LUNE-PP-170326-1430" hidden>
+        <div id="code-defi-form" hidden style="display:flex;flex-direction:column;gap:6px;width:100%;margin-top:4px">
+          <input id="code-defi-input" type="text" placeholder="LUNE-PP-180326-1430" autocomplete="off" autocapitalize="characters" spellcheck="false" style="text-align:center;letter-spacing:0.08em">
+          <span id="code-defi-err" style="font-size:0.78rem;text-align:center;min-height:1.2em;display:block"></span>
+        </div>
       </div>
       <button id="parcours-commencer" class="btn-primary" disabled>Commencer 🚀</button>
     </div>

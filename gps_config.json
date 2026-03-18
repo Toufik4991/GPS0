@@ -1,19 +1,248 @@
 {
-  "version": "3.0",
-  "zones_fixes": [
-    { "id": 1, "nom": "Le Point GPS 1", "lat": 47.25865295634987, "lng": -0.07232092747517298, "rayon": 30, "mini_jeu": 1 },
-    { "id": 2, "nom": "Le Point GPS 2", "lat": 47.25922301993599, "lng": -0.07496422077580976, "rayon": 30, "mini_jeu": 2 },
-    { "id": 3, "nom": "Le Point GPS 3", "lat": 47.25957512835827, "lng": -0.07585838017127501, "rayon": 30, "mini_jeu": 3 },
-    { "id": 4, "nom": "Le Point GPS 4", "lat": 47.25855640527987, "lng": -0.07438732146623522, "rayon": 30, "mini_jeu": 4 },
-    { "id": 5, "nom": "Le Point GPS 5", "lat": 47.25777300506129, "lng": -0.07572423946778357, "rayon": 30, "mini_jeu": 5 },
-    { "id": 6, "nom": "Le Point GPS 6", "lat": 47.257047880177915, "lng": -0.07570440178130702, "rayon": 30, "mini_jeu": 6 },
-    { "id": 7, "nom": "Le Point GPS 7", "lat": 47.2566497660443, "lng": -0.0740386275036121, "rayon": 30, "mini_jeu": 7 },
-    { "id": 8, "nom": "Le Point GPS 8", "lat": 47.253662326392785, "lng": -0.07059828273820297, "rayon": 30, "mini_jeu": 8 },
-    { "id": 9, "nom": "Le Point GPS 9", "lat": 47.25564998079592, "lng": -0.068996433977779, "rayon": 30, "mini_jeu": 9, "final": true }
-  ],
+  "version": "3.1",
   "parcours": {
-    "parcours_1": { "nom": "La Promenade du Papy", "emoji": "🧓", "ordre": [1,2,3,4,5,6,7,8,9], "description": "Tranquille, pépère, pas de stress" },
-    "parcours_2": { "nom": "La Randonnée", "emoji": "🚶", "ordre": [1,4,7,2,5,8,3,6,9], "description": "Prépare tes jambes, ça marche" },
-    "parcours_3": { "nom": "La Marche Funèbre", "emoji": "💀", "ordre": [1,3,5,7,9,2,4,6,8], "description": "Peu en reviennent..." }
+    "parcours_1": {
+      "nom": "La Promenade du Papy",
+      "emoji": "🧓",
+      "code": "PP",
+      "description": "Tranquille, pepere, pas de stress",
+      "zones": [
+        {
+          "id": 1,
+          "nom": "Papy Point 1",
+          "lat": 47.25865295634987,
+          "lng": -0.07232092747517298,
+          "rayon": 30,
+          "mini_jeu": 1
+        },
+        {
+          "id": 2,
+          "nom": "Papy Point 2",
+          "lat": 47.25922301993599,
+          "lng": -0.07496422077580976,
+          "rayon": 30,
+          "mini_jeu": 2
+        },
+        {
+          "id": 3,
+          "nom": "Papy Point 3",
+          "lat": 47.25957512835827,
+          "lng": -0.07585838017127501,
+          "rayon": 30,
+          "mini_jeu": 3
+        },
+        {
+          "id": 4,
+          "nom": "Papy Point 4",
+          "lat": 47.25855640527987,
+          "lng": -0.07438732146623522,
+          "rayon": 30,
+          "mini_jeu": 4
+        },
+        {
+          "id": 5,
+          "nom": "Papy Point 5",
+          "lat": 47.25777300506129,
+          "lng": -0.07572423946778357,
+          "rayon": 30,
+          "mini_jeu": 5
+        },
+        {
+          "id": 6,
+          "nom": "Papy Point 6",
+          "lat": 47.257047880177915,
+          "lng": -0.07570440178130702,
+          "rayon": 30,
+          "mini_jeu": 6
+        },
+        {
+          "id": 7,
+          "nom": "Papy Point 7",
+          "lat": 47.2566497660443,
+          "lng": -0.0740386275036121,
+          "rayon": 30,
+          "mini_jeu": 7
+        },
+        {
+          "id": 8,
+          "nom": "Papy Point 8",
+          "lat": 47.253662326392785,
+          "lng": -0.07059828273820297,
+          "rayon": 30,
+          "mini_jeu": 8
+        },
+        {
+          "id": 9,
+          "nom": "Papy Point 9",
+          "lat": 47.25564998079592,
+          "lng": -0.068996433977779,
+          "rayon": 30,
+          "mini_jeu": 9,
+          "final": true
+        }
+      ]
+    },
+    "parcours_2": {
+      "nom": "La Randonnee",
+      "emoji": "🚶",
+      "code": "RD",
+      "description": "Prepare tes jambes, ca marche",
+      "zones": [
+        {
+          "id": 1,
+          "nom": "Rando Point 1",
+          "lat": 0.0,
+          "lng": 0.0,
+          "rayon": 30,
+          "mini_jeu": 1
+        },
+        {
+          "id": 2,
+          "nom": "Rando Point 2",
+          "lat": 0.0,
+          "lng": 0.0,
+          "rayon": 30,
+          "mini_jeu": 2
+        },
+        {
+          "id": 3,
+          "nom": "Rando Point 3",
+          "lat": 0.0,
+          "lng": 0.0,
+          "rayon": 30,
+          "mini_jeu": 3
+        },
+        {
+          "id": 4,
+          "nom": "Rando Point 4",
+          "lat": 0.0,
+          "lng": 0.0,
+          "rayon": 30,
+          "mini_jeu": 4
+        },
+        {
+          "id": 5,
+          "nom": "Rando Point 5",
+          "lat": 0.0,
+          "lng": 0.0,
+          "rayon": 30,
+          "mini_jeu": 5
+        },
+        {
+          "id": 6,
+          "nom": "Rando Point 6",
+          "lat": 0.0,
+          "lng": 0.0,
+          "rayon": 30,
+          "mini_jeu": 6
+        },
+        {
+          "id": 7,
+          "nom": "Rando Point 7",
+          "lat": 0.0,
+          "lng": 0.0,
+          "rayon": 30,
+          "mini_jeu": 7
+        },
+        {
+          "id": 8,
+          "nom": "Rando Point 8",
+          "lat": 0.0,
+          "lng": 0.0,
+          "rayon": 30,
+          "mini_jeu": 8
+        },
+        {
+          "id": 9,
+          "nom": "Rando Point 9",
+          "lat": 0.0,
+          "lng": 0.0,
+          "rayon": 30,
+          "mini_jeu": 9,
+          "final": true
+        }
+      ]
+    },
+    "parcours_3": {
+      "nom": "La Marche Funebre",
+      "emoji": "💀",
+      "code": "MF",
+      "description": "Peu en reviennent...",
+      "zones": [
+        {
+          "id": 1,
+          "nom": "Funebre Point 1",
+          "lat": 0.0,
+          "lng": 0.0,
+          "rayon": 30,
+          "mini_jeu": 1
+        },
+        {
+          "id": 2,
+          "nom": "Funebre Point 2",
+          "lat": 0.0,
+          "lng": 0.0,
+          "rayon": 30,
+          "mini_jeu": 2
+        },
+        {
+          "id": 3,
+          "nom": "Funebre Point 3",
+          "lat": 0.0,
+          "lng": 0.0,
+          "rayon": 30,
+          "mini_jeu": 3
+        },
+        {
+          "id": 4,
+          "nom": "Funebre Point 4",
+          "lat": 0.0,
+          "lng": 0.0,
+          "rayon": 30,
+          "mini_jeu": 4
+        },
+        {
+          "id": 5,
+          "nom": "Funebre Point 5",
+          "lat": 0.0,
+          "lng": 0.0,
+          "rayon": 30,
+          "mini_jeu": 5
+        },
+        {
+          "id": 6,
+          "nom": "Funebre Point 6",
+          "lat": 0.0,
+          "lng": 0.0,
+          "rayon": 30,
+          "mini_jeu": 6
+        },
+        {
+          "id": 7,
+          "nom": "Funebre Point 7",
+          "lat": 0.0,
+          "lng": 0.0,
+          "rayon": 30,
+          "mini_jeu": 7
+        },
+        {
+          "id": 8,
+          "nom": "Funebre Point 8",
+          "lat": 0.0,
+          "lng": 0.0,
+          "rayon": 30,
+          "mini_jeu": 8
+        },
+        {
+          "id": 9,
+          "nom": "Funebre Point 9",
+          "lat": 0.0,
+          "lng": 0.0,
+          "rayon": 30,
+          "mini_jeu": 9,
+          "final": true
+        }
+      ]
+    }
   }
 }
