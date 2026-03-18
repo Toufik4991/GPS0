@@ -12,8 +12,8 @@
     { "id": 9, "nom": "Le Point GPS 9", "lat": 47.25564998079592, "lng": -0.068996433977779, "rayon": 30, "mini_jeu": 9, "final": true }
   ],
   "parcours": {
-    "parcours_1": { "nom": "La Promenade du Papy", "emoji": "🧓", "ordre": [1,2,3,4,5,6,7,8,9], "description": "Parcours tranquille pour découvrir GPS0" },
-    "parcours_2": { "nom": "La Randonnée", "emoji": "🚶", "ordre": [1,4,7,2,5,8,3,6,9], "description": "Exploration en étoile pour aventuriers" },
-    "parcours_3": { "nom": "La Marche Funèbre", "emoji": "💀", "ordre": [1,3,5,7,9,2,4,6,8], "description": "Parcours difficile pour experts" }
+    "parcours_1": { "nom": "La Promenade du Papy", "emoji": "🧓", "ordre": [1,2,3,4,5,6,7,8,9], "description": "Tranquille, pépère, pas de stress" },
+    "parcours_2": { "nom": "La Randonnée", "emoji": "🚶", "ordre": [1,4,7,2,5,8,3,6,9], "description": "Prépare tes jambes, ça marche" },
+    "parcours_3": { "nom": "La Marche Funèbre", "emoji": "💀", "ordre": [1,3,5,7,9,2,4,6,8], "description": "Peu en reviennent..." }
   }
 }
