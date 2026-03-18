@@ -79,23 +79,10 @@
     }
     @keyframes scintille { from { opacity: 0.7; transform: scale(0.9); } to { opacity: 1; transform: scale(1.1); } }
 
-    /* Contrôles tactiles */
-    #controles {
-      position: fixed; bottom: 0; left: 0; right: 0; height: 120px; z-index: 40;
-      display: flex; pointer-events: auto;
-    }
-    #zone-gauche { flex: 1; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.2); font-size: 2.5rem; }
-    #zone-saut { width: 100px; display: flex; align-items: center; justify-content: center; }
-    #zone-droite { flex: 1; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.2); font-size: 2.5rem; }
-    #btn-saut {
-      width: 72px; height: 72px; border-radius: 50%;
-      background: rgba(200,162,200,0.2); border: 2px solid rgba(200,162,200,0.5);
-      color: #fff; font-size: 1.5rem; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-    }
-    #btn-saut:active { background: rgba(200,162,200,0.4); }
-    #zone-gauche:active { color: rgba(200,162,200,0.8); }
-    #zone-droite:active { color: rgba(200,162,200,0.8); }
+        #zone-gauche { position:fixed; top:48px; left:0; width:50%; bottom:80px; z-index:40; }
+    #zone-droite { position:fixed; top:48px; right:0; width:50%; bottom:80px; z-index:40; }
+    #btn-saut { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); width:72px; height:72px; border-radius:50%; background:rgba(200,162,200,0.2); border:2px solid rgba(200,162,200,0.5); color:#fff; font-size:1.5rem; cursor:pointer; z-index:40; display:flex; align-items:center; justify-content:center; }
+    #btn-saut:active { background:rgba(200,162,200,0.4); }
 
     /* Instruction overlay */
     #tuto-overlay {
@@ -160,11 +147,9 @@
 </div>
 
 <!-- CONTROLES -->
-<div id="controles">
-  <div id="zone-gauche">◀</div>
-  <div id="zone-saut"><button id="btn-saut">↑</button></div>
-  <div id="zone-droite">▶</div>
-</div>
+<div id="zone-gauche"></div>
+<div id="zone-droite"></div>
+<button id="btn-saut">&#8593;</button>
 
 <!-- TUTO OVERLAY -->
 <div id="tuto-overlay">
@@ -191,9 +176,8 @@
 (function() {
   'use strict';
 
-  // === Selfie du parent ===
   const selfieB64 = (() => {
-    try { return window.parent.GPS0_Avatar && window.parent.GPS0_Avatar.getSelfie(); } catch { return null; }
+    try { return window.parent.GPS0_Avatar && window.parent.GPS0_Avatar.getSelfie(); } catch(e) { return null; }
   })();
   if (selfieB64) {
     const el = document.getElementById('tete-selfie');
@@ -201,33 +185,31 @@
     el.style.backgroundSize = 'cover';
   }
 
-  // === Config niveau (responsive) ===
   const W = window.innerWidth, H = window.innerHeight;
+  const MONDE_W = W * 4;
   const GRAVITE = 0.45, SAUT_FORCE = -11, VITESSE = 3.5;
+  let camX = 0;
 
-  // Plateformes [x%, y%, w, h] (% de largeur / hauteur fixe)
   const PLATES_CONFIG = [
-    { x: 0,    y: H - 60, w: W,   h: 60,  sol: true  },  // Sol
-    { x: W*0.05, y: H - 180, w: 160, h: 18 },
-    { x: W*0.35, y: H - 250, w: 140, h: 18 },
-    { x: W*0.6,  y: H - 190, w: 130, h: 18 },
-    { x: W*0.15, y: H - 340, w: 150, h: 18 },
-    { x: W*0.5,  y: H - 380, w: 160, h: 18 },
-    { x: W*0.7,  y: H - 300, w: 120, h: 18 },
-    { x: W*0.3,  y: H - 460, w: 140, h: 18 },
-    { x: W*0.65, y: H - 490, w: 150, h: 18 },
+    { x: 0, y: H-60, w: Math.round(W*.50), h: 60, sol: true },
+    { x: Math.round(W*.80),  y: H-60, w: Math.round(W*.50), h: 60, sol: true },
+    { x: Math.round(W*1.60), y: H-60, w: Math.round(W*.50), h: 60, sol: true },
+    { x: Math.round(W*2.38), y: H-60, w: Math.round(W*.50), h: 60, sol: true },
+    { x: Math.round(W*3.15), y: H-60, w: Math.round(W*.85), h: 60, sol: true },
+    { x: Math.round(W*.28),  y: H-165, w: 95, h: 18 },
+    { x: Math.round(W*.62),  y: H-205, w: 95, h: 18 },
+    { x: Math.round(W*1.08), y: H-175, w: 90, h: 18 },
+    { x: Math.round(W*1.48), y: H-245, w: 90, h: 18 },
+    { x: Math.round(W*1.92), y: H-185, w: 90, h: 18 },
+    { x: Math.round(W*2.28), y: H-230, w: 90, h: 18 },
+    { x: Math.round(W*2.72), y: H-195, w: 90, h: 18 },
+    { x: Math.round(W*3.08), y: H-265, w: 90, h: 18 },
+    { x: Math.round(W*3.55), y: H-205, w: 90, h: 18 },
   ];
 
-  // Poussières [x, y] relatives à plateformes
   const POUSSIERES_CONFIG = [
-    { px: 0, py: -28 }, // au dessus sol
-    { px: 1, py: -28 },
-    { px: 2, py: -28 },
-    { px: 3, py: -28 },
-    { px: 4, py: -28 },
-    { px: 5, py: -28 },
-    { px: 6, py: -28 },
-    { px: 7, py: -28 },
+    { pi: 5 }, { pi: 6 }, { pi: 7 }, { pi: 8 },
+    { pi: 9 }, { pi: 10 }, { pi: 11 }, { pi: 12 },
   ];
 
   let plates = [], poussieres = [];
@@ -239,10 +221,11 @@
   let running = false;
   let lune_dit = false;
 
-  // === Build niveau ===
   function buildNiveau() {
     const monde = document.getElementById('monde');
-    plates = PLATES_CONFIG.map((p, i) => {
+    monde.style.width = MONDE_W + 'px';
+    monde.style.right = 'auto';
+    plates = PLATES_CONFIG.map((p) => {
       const el = document.createElement('div');
       el.className = 'plateforme' + (p.sol ? ' sol' : '');
       el.style.left = p.x + 'px'; el.style.top = p.y + 'px';
@@ -250,10 +233,9 @@
       monde.appendChild(el);
       return { el, x: p.x, y: p.y, w: p.w, h: p.h };
     });
-
-    poussieres = POUSSIERES_CONFIG.map((c, i) => {
-      const pl = plates[c.px];
-      const px = pl.x + pl.w / 2 - 9, py = pl.y + c.py;
+    poussieres = POUSSIERES_CONFIG.map((c) => {
+      const pl = plates[c.pi];
+      const px = pl.x + pl.w / 2 - 9, py = pl.y - 28;
       const el = document.createElement('div');
       el.className = 'poussiere';
       el.style.left = px + 'px'; el.style.top = py + 'px';
@@ -262,54 +244,38 @@
     });
   }
 
-  // === Physics ===
   function physique() {
     if (gauche) { vx = -VITESSE; }
     else if (droite) { vx = VITESSE; }
     else { vx *= 0.7; }
-    if (saut && !enAir) { vy = SAUT_FORCE; enAir = true; try { window.parent.GPS0_Audio && window.parent.GPS0_Audio.playSFX('saut_cosmonaute'); } catch {} }
+    if (saut && !enAir) { vy = SAUT_FORCE; enAir = true; try { window.parent.GPS0_Audio && window.parent.GPS0_Audio.playSFX('saut_cosmonaute'); } catch(e) {} }
     saut = false;
-
-    vy += GRAVITE;
-    jx += vx; jy += vy;
-
-    // Limites horizontales
-    jx = Math.max(0, Math.min(W - 40, jx));
-
-    // Collisions plateformes
+    vy += GRAVITE; jx += vx; jy += vy;
+    jx = Math.max(0, Math.min(MONDE_W - 40, jx));
     enAir = true;
     for (const p of plates) {
-      const pied = jy + 52, tete = jy;
-      const centerX = jx + 20;
+      const pied = jy + 52, tete = jy, centerX = jx + 20;
       if (centerX > p.x + 4 && centerX < p.x + p.w - 4) {
         if (vy >= 0 && pied >= p.y && pied <= p.y + p.h + Math.abs(vy) + 2) {
           jy = p.y - 52; vy = 0; enAir = false;
-        } else if (vy < 0 && tete <= p.y + p.h && tete >= p.y - 10) {
-          vy = 0;
-        }
+        } else if (vy < 0 && tete <= p.y + p.h && tete >= p.y - 10) { vy = 0; }
       }
     }
-
-    // Chute dans le vide
     if (jy > H + 80) { perdreVie(); return; }
-
-    // Collecte poussières
     for (const p of poussieres) {
       if (p.collected) continue;
       const dx = (jx + 20) - (p.x + 9), dy = (jy + 26) - (p.y + 9);
       if (Math.sqrt(dx*dx + dy*dy) < 28) {
         p.collected = true; p.el.style.display = 'none'; etoiles++;
         document.getElementById('mj-etoiles').textContent = etoiles + ' / ' + totalEtoiles + ' ✨';
-        try { window.parent.GPS0_Audio && window.parent.GPS0_Audio.playSFX('collecte_poussiere'); } catch {}
-        if (!lune_dit && etoiles === 4) {
-          afficherLune("Pas mal ! Tu as trouve la moitie. Continue !");
-          lune_dit = true;
-        }
+        try { window.parent.GPS0_Audio && window.parent.GPS0_Audio.playSFX('collecte_poussiere'); } catch(e) {}
+        if (!lune_dit && etoiles === 4) { afficherLune('Pas mal! Tu as trouve la moitie. Continue!'); lune_dit = true; }
         if (etoiles >= totalEtoiles) { setTimeout(victoire, 400); running = false; }
       }
     }
-
-    // Rendu joueur
+    const tgt = Math.max(0, Math.min(jx - W * 0.35, MONDE_W - W));
+    camX += (tgt - camX) * 0.12;
+    document.getElementById('monde').style.transform = 'translateX(' + (-Math.round(camX)) + 'px)';
     const j = document.getElementById('joueur');
     j.style.left = jx + 'px'; j.style.top = jy + 'px';
   }
@@ -320,63 +286,47 @@
     document.getElementById('mj-vie').textContent = vieMap[vies] || '';
     if (vies <= 0) { running = false; setTimeout(defaite, 400); return; }
     jx = 60; jy = H - 120; vx = 0; vy = 0;
-    afficherLune("Aie ! Fais attention, le sol c'est dur !");
+    camX = 0; document.getElementById('monde').style.transform = 'translateX(0px)';
+    afficherLune('Aie! Fais attention, le sol est dur!');
   }
 
-  // === Lune in-game ===
   let luneTId = null;
   function afficherLune(txt) {
     const el = document.getElementById('lune-ingame');
-    el.textContent = '🌙 ' + txt;
-    el.classList.add('visible');
+    el.textContent = '🌙 ' + txt; el.classList.add('visible');
     clearTimeout(luneTId);
     luneTId = setTimeout(() => el.classList.remove('visible'), 4000);
   }
 
-  // === Victoire / Défaite ===
   function victoire() {
-    const ov = document.getElementById('overlay-fin');
-    document.getElementById('fin-titre').textContent = 'Victoire ! 🎉';
+    document.getElementById('fin-titre').textContent = 'Victoire! 🎉';
     document.getElementById('fin-titre').className = 'victoire';
-    document.getElementById('fin-sous').textContent = 'Tu as collecté toutes les poussières !';
-    document.getElementById('fin-poussieres').textContent = '+ ' + totalEtoiles + ' ✨ Poussières d\'étoiles';
-    ov.classList.add('visible');
-    try {
-      window.parent.postMessage({ source: 'gps0_minijeu', success: true, niveau: 1, poussieres: totalEtoiles, etoiles: 3 }, '*');
-    } catch {}
+    document.getElementById('fin-sous').textContent = 'Tu as collecte toutes les poussieres!';
+    document.getElementById('fin-poussieres').textContent = '+ ' + totalEtoiles + ' ✨';
+    document.getElementById('overlay-fin').classList.add('visible');
+    try { window.parent.postMessage({ source: 'gps0_minijeu', success: true, niveau: 1, poussieres: totalEtoiles, etoiles: 3 }, '*'); } catch(e) {}
   }
 
   function defaite() {
-    const ov = document.getElementById('overlay-fin');
     document.getElementById('fin-titre').textContent = 'Perdu... 💫';
     document.getElementById('fin-titre').className = 'defaite';
     document.getElementById('fin-sous').textContent = 'La Lune compatit. Un peu.';
-    document.getElementById('fin-poussieres').textContent = etoiles + ' / ' + totalEtoiles + ' ✨ collectées';
-    ov.classList.add('visible');
-    try {
-      window.parent.postMessage({ source: 'gps0_minijeu', success: false, niveau: 1 }, '*');
-    } catch {}
+    document.getElementById('fin-poussieres').textContent = etoiles + ' / ' + totalEtoiles + ' ✨ collectees';
+    document.getElementById('overlay-fin').classList.add('visible');
+    try { window.parent.postMessage({ source: 'gps0_minijeu', success: false, niveau: 1 }, '*'); } catch(e) {}
   }
 
-  // === Game Loop ===
-  function loop() {
-    if (running) physique();
-    requestAnimationFrame(loop);
-  }
+  function loop() { if (running) physique(); requestAnimationFrame(loop); }
 
-  // === Contrôles ===
   function setupControles() {
     const zG = document.getElementById('zone-gauche');
     const zD = document.getElementById('zone-droite');
     const bS = document.getElementById('btn-saut');
-
     zG.addEventListener('touchstart', e => { e.preventDefault(); gauche = true; }, { passive: false });
     zG.addEventListener('touchend', e => { e.preventDefault(); gauche = false; }, { passive: false });
     zD.addEventListener('touchstart', e => { e.preventDefault(); droite = true; }, { passive: false });
     zD.addEventListener('touchend', e => { e.preventDefault(); droite = false; }, { passive: false });
     bS.addEventListener('touchstart', e => { e.preventDefault(); saut = true; }, { passive: false });
-
-    // Clavier (desktop test)
     window.addEventListener('keydown', e => {
       if (e.key === 'ArrowLeft' || e.key === 'q') gauche = true;
       if (e.key === 'ArrowRight' || e.key === 'd') droite = true;
@@ -388,30 +338,26 @@
     });
   }
 
-  // === Init ===
   function start() {
     document.getElementById('tuto-overlay').style.display = 'none';
     running = true;
-    setTimeout(() => afficherLune("Saute sur les plateformes pour tout collecter !"), 1500);
+    setTimeout(() => afficherLune('Saute sur les plateformes pour tout collecter!'), 1500);
   }
 
   document.getElementById('btn-jouer-tuto').addEventListener('click', start);
-
   document.getElementById('btn-retour').addEventListener('click', () => {
-    try { window.parent.postMessage({ source: 'gps0_minijeu', success: false, niveau: 1 }, '*'); } catch {}
+    try { window.parent.postMessage({ source: 'gps0_minijeu', success: false, niveau: 1 }, '*'); } catch(e) {}
   });
   document.getElementById('btn-retry').addEventListener('click', () => location.reload());
   document.getElementById('btn-abandon').addEventListener('click', () => {
-    if (confirm('Quitter ce niveau ?')) {
-      try { window.parent.postMessage({ source: 'gps0_minijeu', success: false, niveau: 1 }, '*'); } catch {}
+    if (confirm('Quitter ce niveau?')) {
+      try { window.parent.postMessage({ source: 'gps0_minijeu', success: false, niveau: 1 }, '*'); } catch(e) {}
     }
   });
 
   buildNiveau();
   setupControles();
   loop();
-
-  // Correction handler postMessage dans app.js pour filtrer la source
 })();
 </script>
 </body>

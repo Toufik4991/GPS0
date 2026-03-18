@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="fr">
 <head>
   <meta charset="utf-8">
@@ -123,6 +123,7 @@
     <button class="menu-item" id="menu-audio">🔊 Son</button>
     <button class="menu-item" id="menu-difficulte">⚙️ Difficulté</button>
     <button class="menu-item" id="menu-reset">🔄 Réinitialiser</button>
+    <button class="menu-item" id="menu-demo">&#127918; Tester un niveau</button>
   </nav>
 
   <!-- MODAL PSEUDO -->
@@ -190,6 +191,25 @@
     </div>
   </dialog>
 
+  <!-- MODAL DEMO -->
+  <dialog id="modal-demo" aria-modal="true" aria-labelledby="demo-titre">
+    <div class="modal-box">
+      <h2 id="demo-titre">&#127918; Tester un niveau</h2>
+      <p style="font-size:0.85rem;color:rgba(255,255,255,0.7);text-align:center">Mode demo sans GPS</p>
+      <div class="difficulte-grille" role="group" style="margin:12px 0">
+        <button class="diff-carte demo-niveau-btn" data-niveau="1"><span class="diff-emoji">&#127807;</span><span class="diff-nom">Niveau 1</span><span class="diff-desc">Tutoriel</span></button>
+        <button class="diff-carte demo-niveau-btn" data-niveau="2"><span class="diff-emoji">&#11088;</span><span class="diff-nom">Niveau 2</span><span class="diff-desc">Slimes</span></button>
+        <button class="diff-carte demo-niveau-btn" data-niveau="3"><span class="diff-emoji">&#11088;&#11088;</span><span class="diff-nom">Niveau 3</span><span class="diff-desc">Plus de slimes</span></button>
+        <button class="diff-carte demo-niveau-btn" data-niveau="4"><span class="diff-emoji">&#127744;</span><span class="diff-nom">Niveau 4</span><span class="diff-desc">Plateformes mobiles</span></button>
+        <button class="diff-carte demo-niveau-btn" data-niveau="5"><span class="diff-emoji">&#9889;</span><span class="diff-nom">Niveau 5</span><span class="diff-desc">Lasers</span></button>
+        <button class="diff-carte demo-niveau-btn" data-niveau="6"><span class="diff-emoji">&#128128;</span><span class="diff-nom">Niveau 6</span><span class="diff-desc">Slimes+Lasers+Pics</span></button>
+        <button class="diff-carte demo-niveau-btn" data-niveau="7"><span class="diff-emoji">&#128293;</span><span class="diff-nom">Niveau 7</span><span class="diff-desc">Champion</span></button>
+        <button class="diff-carte demo-niveau-btn" data-niveau="8"><span class="diff-emoji">&#128165;</span><span class="diff-nom">Niveau 8</span><span class="diff-desc">OMEGA</span></button>
+        <button class="diff-carte demo-niveau-btn" data-niveau="9"><span class="diff-emoji">&#127942;</span><span class="diff-nom">Niveau 9</span><span class="diff-desc">Final Boss</span></button>
+      </div>
+      <button id="demo-fermer" class="btn-ghost">Fermer</button>
+    </div>
+  </dialog>
   <!-- TOAST CODE DÉFI -->
   <div class="code-defi-toast" id="code-toast" role="status" aria-live="polite" aria-atomic="true" hidden>
     <span>Ton code défi :</span>

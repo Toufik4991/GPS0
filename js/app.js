@@ -1,4 +1,4 @@
-'use strict';
+﻿'use strict';
 window.GPS0_App = (() => {
   let _parcoursId = null;
 
@@ -65,7 +65,13 @@ window.GPS0_App = (() => {
     if (GPS0_Avatar.getSelfie()) { GPS0_Avatar.injecterDansJeux(GPS0_Avatar.getSelfie()); return; }
     const m = document.getElementById('modal-selfie'); m.showModal();
     const ok = await GPS0_Avatar.demarrerCamera();
-    if (!ok) { m.close(); return; }
+    if (!ok) {
+      document.getElementById('selfie-capture').hidden = true;
+      const errEl = document.createElement('p');
+      errEl.style.cssText = 'color:#FF6B6B;font-size:0.85rem;text-align:center;margin:8px 0';
+      errEl.textContent = 'Camera indisponible. Clique sur Passer pour continuer.';
+      m.querySelector('.selfie-actions').insertAdjacentElement('beforebegin', errEl);
+    }
     return new Promise(r => {
       let cap = null;
       document.getElementById('selfie-capture').addEventListener('click', () => {
@@ -289,6 +295,20 @@ window.GPS0_App = (() => {
       if (!confirm('Reinitialiser la progression ?')) return;
       ['gps0_zones_actives','gps0_economie','gps0_pseudo','gps0_difficulte','gps0_avatar_selfie_base64','gps0_minijeux_progression'].forEach(k => localStorage.removeItem(k));
       location.reload();
+    });
+
+    document.getElementById('menu-demo')?.addEventListener('click', () => {
+      mp.hidden = true; mb.setAttribute('aria-expanded', 'false');
+      document.getElementById('modal-demo').showModal();
+    });
+    document.querySelectorAll('.demo-niveau-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.getElementById('modal-demo').close();
+        _lancerMiniJeu(parseInt(btn.dataset.niveau));
+      });
+    });
+    document.getElementById('demo-fermer')?.addEventListener('click', () => {
+      document.getElementById('modal-demo').close();
     });
 
     document.addEventListener('minijeu:complete', e => {
