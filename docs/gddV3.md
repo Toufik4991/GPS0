@@ -1,9 +1,9 @@
 # 🌙 GPS0 — Game Design Document v3.0
 
-**Version :** 3.0 — Architecture Mini-jeux CSS Finalisée
-**Date :** 15/03/2026
+**Version :** 3.1 - Moteur Horizontal Refactore + Mode Demo
+**Date :** 18/03/2026
 **Auteur :** Toufik49
-**Statut :** ✅ Spécifications complètes — Prêt pour implémentation
+**Statut :** Implementation en cours - Moteur mini-jeux operationnel niveaux 1-8
 
 ---
 
@@ -19,6 +19,14 @@
 - 🎨 **SVG sophistiqués** avec effets cosmos avancés
 - 🎵 **Audio optimisé** (11 fichiers : 4+6+1)
 - ⚡ **Performance 8-bit** (pas d'optimisation complexe nécessaire)
+
+**Changements majeurs v3.1 :**
+- Moteur platformer horizontal style Mario (camera scrollante)
+- Monde plus large que lecran (MONDE_W configurable par niveau)
+- Controles full-screen : zone gauche 50pct / zone droite 50pct / bouton saut centre
+- Architecture hybride : 9 fichiers HTML + 1 moteur commun (moteur-minijeu.js)
+- Mode Demo protege par mot de passe developpeur
+- Service Worker v5
 
 ---
 
@@ -226,6 +234,22 @@ Visible uniquement si boussole ON (sauf gris = OFF/épuisé).
 
 ---
 
+### Menu Principal (Burger Menu)
+
+Le bouton burger (bas droite fixe) ouvre un panneau avec les options :
+- **Parametres** : modifier difficulte en cours de partie
+- **Reinitialiser** : efface toute la progression localStorage
+- **Mode Demo** : acces direct a un niveau (protege par mot de passe)
+
+#### Mode Demo Protege (Developpeur uniquement)
+
+Accessible depuis le menu burger. Demande un mot de passe avant d'ouvrir le modal.
+
+- **Mot de passe :** jules
+- Si correct : ouvre un modal avec 9 boutons (un par niveau)
+- Chaque bouton lance le mini-jeu directement sans validation GPS
+
+
 ## 6. SPA — Système de Difficulté (IDENTIQUE v2.0)
 
 **Fichier :** `js/difficulte.js`
@@ -298,103 +322,7 @@ Visible uniquement si boussole ON (sauf gris = OFF/épuisé).
 - XX = `PP` (Papy) / `RD` (Rando) / `MF` (Funèbre)
 - Exemple : `LUNE-PP-150326-1430`
 
----
-|---|---|
-| Fond principal (noir nuit) | `#0A0A1A` |
-| Accent primaire (lilas lune) | `#C8A2C8` |
-| Accent secondaire (or lunaire) | `#FFD700` |
-| Halo ROUGE (> 151m) | `#FF3333` |
-| Halo ORANGE (81–150m) | `#FF8C00` |
-| Halo VERT (31–80m) | `#69FF47` |
-| Halo BLEU (≤ 30m) | `#4FC3F7` |
-| Halo GRIS (boussole OFF) | `#555555` |
-| Succès | `#69FF47` |
-| Danger | `#FF6B6B` |
-
-### Style général
-- Thème : nuit mystérieuse, magie lunaire, aventure urbaine/cosmique
-- Graphismes : pixel art rétro + SVG sophistiqués
-- Texte sur fond sombre : `color: #fff; font-weight: bold`
-- Emoji spatiaux : ✨ poussières, ⚡ énergie, 🎯 zones, 🚀 jouer, 🛸 accueil, 🌟 classement
-
-### Fond animé (écran principal uniquement)
-- Dégradé : `#0A0A1A → #0D1B2A`
-- 3 couches d'étoiles CSS (particules `translateX` en boucle infinie)
-- 1 couche nuages très discrets (opacity 0.05), translateX 200s
-- Nébuleuses animées avec filtres SVG avancés
-
-### SVG Sophistiqués
-- Tous les SVG utilisent defs avec gradients radiaux/linéaires
-- Filtres SVG : `glow-soft`, `stellar-shimmer`, `casque-brillance`
-- Patterns : `surface-lunaire`, `metal-cristal`, `aurore-boreale`
-- Animations : `nebuleuse-respiration`, `scintillement-stellaire`
-
----
-
-## 4. SPA — Séquence de lancement (INCHANGÉE)
-
-```
-Ouverture app → Splash 2s → requestFullscreen() → Modale Pseudo
-→ Modale Difficulté → Modale Parcours → Génération points GPS (zones fixes)
-→ Affichage code défi → Init GPS, Boussole, Halo, Lune, Audio
-→ Préchargement mini-jeux CSS en arrière-plan → Afficher HUD → Écran principal
-```
-
-Chaque étape attend un tap "Suivant" ou "Commencer" — aucune transition automatique.
-
----
-
-## 5. SPA — Écran principal (Boussole + HUD) (INCHANGÉE)
-
-### HUD (bandeau haut, toujours visible)
-```
-┌───────────────────────────────────────────┐
-│  ⏱️ 12:34   ✨ 145   [sablier énergie]   │
-└───────────────────────────────────────────┘
-```
-
-### Boussole — Visuel & États (INCHANGÉ)
-- **Astéroïde SVG** avec cratères et glow pulsant
-- **Fusée SVG** avec flamme animée
-- États : OFF, ON, ÉPUISÉ, ZONE (≤ 30m)
-- Halo de proximité avec 5 couleurs
-
----
-
-## 6. SPA — Système GPS Simplifié
-
-**Fichier :** `js/gps.js` — **Révision majeure**
-**localStorage :** `gps0_zones_actives`
-
-### Zones GPS Fixes Uniquement
-
-```json
-{
-  "version": "3.0",
-  "zones_fixes": [
-    { "id": 1, "nom": "Le Point GPS 1", "lat": 47.25865295634987, "lng": -0.07232092747517298, "rayon": 30, "mini_jeu": 1 },
-    { "id": 2, "nom": "Le Point GPS 2", "lat": 47.25922301993599, "lng": -0.07496422077580976, "rayon": 30, "mini_jeu": 2 },
-    { "id": 3, "nom": "Le Point GPS 3", "lat": 47.25957512835827, "lng": -0.07585838017127501, "rayon": 30, "mini_jeu": 3 },
-    { "id": 4, "nom": "Le Point GPS 4", "lat": 47.25855640527987, "lng": -0.07438732146623522, "rayon": 30, "mini_jeu": 4 },
-    { "id": 5, "nom": "Le Point GPS 5", "lat": 47.257773005061290, "lng": -0.07572423946778357, "rayon": 30, "mini_jeu": 5 },
-    { "id": 6, "nom": "Le Point GPS 6", "lat": 47.257047880177915, "lng": -0.07570440178130702, "rayon": 30, "mini_jeu": 6 },
-    { "id": 7, "nom": "Le Point GPS 7", "lat": 47.256649766044300, "lng": -0.07403862750361210, "rayon": 30, "mini_jeu": 7 },
-    { "id": 8, "nom": "Le Point GPS 8", "lat": 47.253662326392785, "lng": -0.07059828273820297, "rayon": 30, "mini_jeu": 8 },
-    { "id": 9, "nom": "Le Point GPS 9", "lat": 47.255649980795920, "lng": -0.06899643397777900, "rayon": 30, "mini_jeu": 9, "boss": true }
-  ],
-  "parcours": {
-    "parcours_1": { "nom": "La Promenade du Papy", "emoji": "🧓", "ordre": [1,2,3,4,5,6,7,8,9] },
-    "parcours_2": { "nom": "La Randonnée", "emoji": "🚶", "ordre": [1,4,7,2,5,8,3,6,9] },
-    "parcours_3": { "nom": "La Marche Funèbre", "emoji": "💀", "ordre": [1,3,5,7,9,2,4,6,8] }
-  }
-}
-```
-
-**Règle simplifiée :** Un parcours = ordre différent des 9 mêmes zones fixes.
-
----
-
-## 7. Système Avatar Selfie Pixelisé
+## 8. Système Avatar Selfie Pixelisé
 
 **Fichier :** `js/avatar.js` — **NOUVEAU système v3.0**
 **localStorage :** `gps0_avatar_selfie_base64`
@@ -438,79 +366,181 @@ Chaque étape attend un tap "Suivant" ou "Commencer" — aucune transition autom
 
 ---
 
-## 8. Mini-jeux CSS/HTML — Architecture
+﻿## 9. Mini-jeux CSS/HTML — Architecture Réelle (v3.1)
 
-**Remplacement complet de Godot par 9 mini-jeux CSS natifs**
+**Architecture hybride : 9 fichiers HTML indépendants + 1 moteur JS commun**
 
-### Structure Technique
+### Fichiers
 
 ```
+js/
+└── moteur-minijeu.js    # Moteur platformer horizontal commun
+
 minijeux/
-├── niveau1/ → HTML + CSS : Tutoriel pur
-├── niveau2/ → Slimes spatiaux + trous simples
-├── niveau3/ → Multiple slimes + trous larges
-├── niveau4/ → Double saut débloqué + plateformes mobiles
-├── niveau5/ → Lasers temporisés + plateformes disparition
-├── niveau6/ → Mix complet temporel + pics rétractables
-├── niveau7/ → Tout combiné + vitesse accrue
-├── niveau8/ → Challenge complet (warm-up boss)
-└── niveau9/ → Boss CSS 3 phases avec SVG sophistiqué
+├── niveau1.html         # Tutoriel  (spawn simple, 0 ennemis)
+├── niveau2.html         # Slimes + trous
+├── niveau3.html         # Multi-slimes + trous larges
+├── niveau4.html         # Double saut + plateformes mobiles
+├── niveau5.html         # Lasers temporisés
+├── niveau6.html         # Mix + pics
+├── niveau7.html         # Tout combiné + vitesse accrue
+├── niveau8.html         # Challenge complet
+└── niveau9.html         # Niveau final très difficile
 ```
 
-### Mécaniques par Concept
+### Configuration par Niveau (GPS0_NIVEAU_CFG)
 
-#### 🚀 **Concept 1 : Platformer Spatial** (Niveaux 1-3)
-- **Avatar :** Selfie 32×32 + corps astronaute 8-bit
-- **Terrain :** SVG surface lunaire avec cratères
-- **Collectibles :** Poussières cosmiques avec animations orbitales
-- **Ennemis :** Slimes spatiaux avec aura énergétique
-- **Environnement :** Cosmos animé + étoiles scintillantes + nébuleuses
-
-#### ⚡ **Concept 2 : Mécaniques Temporelles** (Niveaux 4-7)
-- **Plateformes mobiles :** Transform CSS avec propulseurs animés
-- **Pièges rythmés :** Lasers avec cycles warning/activation
-- **Plateformes temporaires :** Apparition/disparition avec particules
-- **Timing critical :** Synchronisation 2-4s cycles
-
-#### 💥 **Concept 3 : Boss Multi-Phases** (Niveaux 8-9)
-- **Phase 1 :** Boss au sol, saut dessus pour hit
-- **Phase 2 :** Projectiles + esquive tactique
-- **Phase 3 :** Boss volant + plateformes flottantes
-- **Santé :** 9 coups (3 par phase) avec barre animée
-- **Effets :** Impact, aura, explosion énergétique
-
-### Communication Mini-jeux ↔ SPA
-
-**Remplacement du système postMessage Godot par événements natifs :**
+Chaque niveau.html définit window.GPS0_NIVEAU_CFG avant de charger moteur-minijeu.js :
 
 ```javascript
-// Démarrage mini-jeu
-window.GPS0_MiniJeu.demarrer(niveau, avatarBase64);
-
-// Événements natifs
-document.dispatchEvent(new CustomEvent('minijeu:ready'));
-document.dispatchEvent(new CustomEvent('minijeu:complete', {
-  detail: { niveau: 2, etoiles: 3, poussieres: 11 }
-}));
-document.dispatchEvent(new CustomEvent('minijeu:failed', {
-  detail: { niveau: 2 }
-}));
-document.dispatchEvent(new CustomEvent('boss:defeated', {
-  detail: { poussieres: 20 }
-}));
+window.GPS0_NIVEAU_CFG = {
+  niveau: 1,
+  monde_w: 1.0,       // facteur : monde largeur = écran x monde_w
+  gravite: 0.46,
+  saut_force: -11,
+  vitesse: 3.6,
+  vies: 3,
+  total_poussieres: 8,
+  double_saut: false, // activé au niveau 4+
+  spawn_x: 80,
+  plateformes: [      // {x, y, w, h, sol?, mobile?, fragile?, range?, speed?, axis?}
+    { x:0, y:h-40, w:monde_w, h:40, sol:true },
+    ...
+  ],
+  slimes: [           // {pi: index_plateforme, col?, speed?, dir?}
+  ],
+  poussieres: [       // {pi: index_plateforme}
+  ],
+  lasers: [           // {x, y, w, offset?, warn?, on?, off?}
+  ],
+  pics: [             // {pi? | x+y, h?, col?}
+  ],
+  lune_start: "Voici ton premier pas cosmique !",
+  msg_win: "Bien joué !",
+  msg_lose: "La Lune te juge."
+};
 ```
 
-**Avantages vs Godot :**
-- ✅ Même stack (HTML/CSS/JS)
-- ✅ Contrôle total du code
-- ✅ Plus léger (<500KB vs 5-10MB)
-- ✅ Pas de bridge complexe
-- ✅ Debug plus facile
-- ✅ Intégration avatar native
+### Caméra Scrollante (style Mario)
 
----
+```javascript
+// Monde div#monde de largeur MONDE_W pixels
+// Caméra suit le joueur avec lerp 12%
+if (MONDE_W > W) {
+  const tgt = Math.max(0, Math.min(jx - W * 0.35, MONDE_W - W));
+  camX += (tgt - camX) * 0.12;
+  monde.style.transform = "translateX(" + (-Math.round(camX)) + "px)";
+}
+```
 
-## 9. Lune Narratrice Taquine
+### Contrôles Full-Screen
+
+```
+┌─────────────────────────────────────────┐
+│ HUD (48px fixe)                         │
+├───────────────────────┬─────────────────┤
+│  Zone GAUCHE (50%)    │  Zone DROITE    │  ← touch pour se déplacer
+│                       │     (50%)       │
+│       Monde de jeu (scrollant)          │
+│                                         │
+├─────────────────────────────────────────┤
+│          [  ↑  SAUT  ]                  │  ← bouton cercle 72px
+└─────────────────────────────────────────┘
+```
+
+- **#zone-gauche** : fixed, top 48px, left 0, width 50%, bottom 80px
+- **#zone-droite** : fixed, top 48px, right 0, width 50%, bottom 80px
+- **#btn-saut** : fixed, bottom 20px, centré, cercle 72px lilas
+- **Clavier** : flèches / QZSD (debug desktop)
+
+### Structure HTML Fixée (niveau*.html)
+
+```html
+<div id="mj-hud">Niveau X | 0/8 ✨ | ❤️❤️❤️ | [Quitter]</div>
+<div id="lune-ingame"><!-- bulle Lune in-game --></div>
+<div id="monde">
+  <div id="bg-etoiles"></div>
+  <!-- plateformes, slimes, poussieres générés par JS -->
+  <div id="joueur">
+    <div id="casque"><div id="tete-selfie"></div></div>
+    <div id="corps"></div>
+    <div id="jambes"><div class="jambe"></div><div class="jambe"></div></div>
+  </div>
+</div>
+<div id="zone-gauche"></div>
+<div id="zone-droite"></div>
+<button id="btn-saut">↑</button>
+<div id="tuto-overlay"><!-- overlay tutoriel --></div>
+<div id="overlay-fin"><!-- victoire/défaite --></div>
+<script>window.GPS0_NIVEAU_CFG = { ... };</script>
+<script src="../js/moteur-minijeu.js"></script>
+```
+
+### Avatar Selfie dans les Mini-jeux
+
+```javascript
+// moteur-minijeu.js - injection automatique du selfie
+try {
+  const b64 = window.parent.GPS0_Avatar && window.parent.GPS0_Avatar.getSelfie();
+  if (b64) document.getElementById("tete-selfie").style.backgroundImage = "url(" + b64 + ")";
+} catch(e) {}
+```
+
+```css
+#tete-selfie {
+  image-rendering: pixelated;
+  background: var(--selfie-url, linear-gradient(135deg, #C8A2C8, #9a72c8));
+  background-size: cover;
+}
+```
+
+### Communication Mini-jeu ↔ SPA (via iframe)
+
+```javascript
+// SPA lance le mini-jeu dans un iframe (app.js)
+function _lancerMiniJeu(niveau) {
+  document.getElementById("app").classList.remove("visible");
+  const iframe = document.createElement("iframe");
+  iframe.src = "minijeux/niveau" + niveau + ".html";
+  document.body.appendChild(iframe);
+}
+
+// Mini-jeu → SPA (moteur-minijeu.js)
+window.parent.postMessage({
+  source: "gps0_minijeu",
+  success: true,          // ou false
+  niveau: cfg.niveau,
+  poussieres: TOTAL,      // ou etoiles collectées si échec
+  etoiles: 3              // ou 1 si échec
+}, "*");
+
+// SPA ← Mini-jeu (app.js)
+document.addEventListener("minijeu:complete", e => {
+  GPS0_Economie.ajouterPoussieres(e.detail?.poussieres || 10);
+  GPS0_GPS.zoneSuivante();
+  GPS0_Boussole.forceEtat("off");
+  document.getElementById("app").classList.add("visible");
+});
+document.addEventListener("minijeu:failed", () => {
+  document.getElementById("app").classList.add("visible");
+});
+```
+
+### Mécaniques par Niveau
+
+| Niveau | Nouveauté | monde_w | Slimes | Lasers | Pics | Double saut |
+|--------|-----------|---------|--------|--------|------|-------------|
+| 1 | Tutoriel | 1.0 | 0 | 0 | 0 | non |
+| 2 | Slimes + trous | 1.3 | 2 | 0 | 0 | non |
+| 3 | Multi-slimes | 1.5 | 4 | 0 | 0 | non |
+| 4 | Double saut + mobiles | 1.8 | 2 | 0 | 0 | **oui** |
+| 5 | Lasers temporisés | 2.0 | 2 | 2 | 0 | oui |
+| 6 | Mix + pics | 2.2 | 3 | 2 | 2 | oui |
+| 7 | Tout combiné | 2.5 | 4 | 3 | 3 | oui |
+| 8 | Challenge | 2.8 | 5 | 4 | 4 | oui |
+| 9 | Final très difficile | 3.0 | 6 | 5 | 5 | oui |
+
+## 10. Lune Narratrice Taquine
 
 **Fichier :** `js/lune.js` — **Répertoire élargi v3.0**
 
@@ -602,7 +632,7 @@ const luneRepliques = {
 
 ---
 
-## 10. Système Audio Optimisé
+## 11. Système Audio Optimisé
 
 **Fichier :** `js/audio.js` — **AudioManager v3.0**
 **Technologie :** Web Audio API (pas de balise `<audio>`)
@@ -653,7 +683,7 @@ GPS0_Audio.stopAll();     // Arrêt complet
 
 ---
 
-## 11. Architecture des Fichiers v3.0
+## 12. Architecture des Fichiers v3.0
 
 ```
 GPS0/
@@ -671,7 +701,7 @@ GPS0/
 │   ├── economie.js            # Poussières + énergie
 │   ├── lune.js                # Narratrice taquine élargie
 │   ├── audio.js               # AudioManager v3.0
-│   ├── minijeux.js            # Moteur CSS/HTML des 9 niveaux
+│   ├── moteur-minijeu.js      # Moteur platformer horizontal commun
 │   └── finale.js              # Animation finale inchangée
 ├── minijeux/
 │   ├── niveau1.html           # Tutoriel CSS
@@ -692,7 +722,7 @@ GPS0/
 
 ---
 
-## 12. Métriques de Performance v3.0
+## 13. Métriques de Performance v3.0
 
 ### Objectifs Techniques
 
@@ -716,7 +746,7 @@ GPS0/
 
 ---
 
-## 13. localStorage — Clés v3.0
+## 14. localStorage — Clés v3.0
 
 | Clé | Contenu |
 |---|---|
@@ -731,15 +761,15 @@ GPS0/
 
 ---
 
-## 14. Questions de Cohérence Future
+## 15. Questions de Cohérence Future
 
 ### 🔴 **CRITIQUES — Répondre MAINTENANT**
 
 #### A. Architecture Mini-jeux
 
-**Q1.** Les 9 mini-jeux CSS auront-ils **chacun leur propre fichier HTML** ou **un seul moteur JS dynamique** ?
-- Option A : 9 fichiers HTML séparés (plus simple, mais duplication)
-- Option B : 1 moteur + JSON configuration niveaux (plus optimisé)
+**Q1.** ~~Les 9 mini-jeux CSS auront-ils **chacun leur propre fichier HTML** ou **un seul moteur JS dynamique** ?~~
+
+> ✅ **Résolu v3.1 :** Hybride retenu — 9 fichiers HTML séparés + 1 moteur commun moteur-minijeu.js. Chaque niveau définit sa config dans window.GPS0_NIVEAU_CFG.
 
 **Q2.** **Performance mobile** : Les animations SVG + CSS complexes vont-elles **lag sur mobiles anciens** ?
 - Fallbacks nécessaires pour animations ?
@@ -789,7 +819,7 @@ GPS0/
 
 ---
 
-## 15. Roadmap Développement v3.0
+## 16. Roadmap Développement v3.0
 
 ### ✅ **Phase 1-4 : SPA Terminée** (selon v2.0)
 
