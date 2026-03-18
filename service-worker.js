@@ -1,4 +1,4 @@
-﻿const CACHE = 'gps0-v4';
+﻿const CACHE = 'gps0-v5';
 const CORE = [
   'index.html',
   'css/main.css', 'css/minijeux.css',

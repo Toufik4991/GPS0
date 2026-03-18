@@ -299,6 +299,8 @@ window.GPS0_App = (() => {
 
     document.getElementById('menu-demo')?.addEventListener('click', () => {
       mp.hidden = true; mb.setAttribute('aria-expanded', 'false');
+      const mdp = prompt('🔒 Mot de passe debug :');
+      if (mdp !== 'jules') { if (mdp !== null) alert('Mot de passe incorrect.'); return; }
       document.getElementById('modal-demo').showModal();
     });
     document.querySelectorAll('.demo-niveau-btn').forEach(btn => {
