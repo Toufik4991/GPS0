@@ -15,6 +15,12 @@ window.GPS0_App = (() => {
     _clock();
     GPS0_Economie.updateHUD();
     GPS0_Lune.demarrerSurveillance();
+    // iOS : resume AudioContext suspendu apres gestes utilisateur
+    try { if (window.AudioContext || window.webkitAudioContext) {
+      const tmpCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (tmpCtx.state === 'suspended') tmpCtx.resume().catch(() => {});
+      else tmpCtx.close().catch(() => {});
+    } } catch {}
     GPS0_Audio.playMusiqueExploration();
     document.getElementById('app').classList.add('visible');
   }
@@ -24,7 +30,10 @@ window.GPS0_App = (() => {
   }
 
   async function _fullscreen() {
-    try { await document.documentElement.requestFullscreen(); return true; } catch { return false; }
+    const el = document.documentElement;
+    const req = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen;
+    if (!req) return false;
+    try { await req.call(el); return true; } catch { return false; }
   }
 
   function _fullscreenGate() {

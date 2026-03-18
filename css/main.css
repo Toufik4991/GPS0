@@ -1,4 +1,4 @@
-﻿:root {
+:root {
   --bg: #0A0A1A;
   --bg2: #0D1B2A;
   --accent: #C8A2C8;
@@ -143,3 +143,21 @@ dialog::backdrop{background:rgba(0,0,0,.72);backdrop-filter:blur(4px)}
 #selfie-video,#selfie-preview{position:absolute;width:200px;height:200px;object-fit:cover;border-radius:50%;top:0;left:0}
 #selfie-preview{image-rendering:pixelated;z-index:2}
 .selfie-actions{display:flex;flex-direction:column;gap:8px;width:100%}
+
+/* ── iOS / MOBILE COMPAT ── */
+@supports not (height: 100dvh) {
+  .screen.visible { min-height: 100vh; min-height: -webkit-fill-available; }
+  #app { height: 100vh; height: -webkit-fill-available; }
+}
+/* Safe area pour iPhone avec notch/barre maison */
+.hud { padding-top: max(10px, env(safe-area-inset-top)); padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right)); }
+.objectif-bar { padding-bottom: max(12px, env(safe-area-inset-bottom)); }
+.btn-menu { bottom: max(20px, calc(env(safe-area-inset-bottom) + 20px)); }
+/* Empêche le double-tap zoom sur mobile */
+button, input { touch-action: manipulation; }
+/* Curseur tactile plus grand sur mobile */
+@media (pointer: coarse) {
+  .btn-primary, .btn-secondary, .btn-ghost, .btn-toggle-boussole { min-height: 48px; }
+  .diff-carte, .parcours-carte { min-height: 56px; }
+  .menu-item { min-height: 48px; }
+}

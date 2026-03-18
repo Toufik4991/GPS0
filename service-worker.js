@@ -1,11 +1,35 @@
 const CACHE = 'gps0-v3';
-const CORE = ['/', '/index.html', '/css/main.css', '/css/minijeux.css', '/js/app.js', '/js/gps.js', '/js/boussole.js', '/js/economie.js', '/js/lune.js', '/js/avatar.js', '/js/audio.js', '/js/minijeux.js', '/js/moteur-minijeu.js', '/js/finale.js', '/gps_config.json', '/manifest.json'];
-self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE).catch(() => {}))); });
-self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))); });
+const CORE = [
+  'index.html',
+  'css/main.css', 'css/minijeux.css',
+  'js/app.js', 'js/gps.js', 'js/boussole.js', 'js/economie.js',
+  'js/lune.js', 'js/avatar.js', 'js/audio.js', 'js/minijeux.js',
+  'js/moteur-minijeu.js', 'js/finale.js',
+  'gps_config.json', 'manifest.json',
+  'minijeux/niveau1.html', 'minijeux/niveau2.html', 'minijeux/niveau3.html',
+  'minijeux/niveau4.html', 'minijeux/niveau5.html', 'minijeux/niveau6.html',
+  'minijeux/niveau7.html', 'minijeux/niveau8.html', 'minijeux/niveau9.html'
+];
+self.addEventListener('install', e => {
+  e.waitUntil(
+    caches.open(CACHE).then(c => c.addAll(CORE).catch(() => {})).then(() => self.skipWaiting())
+  );
+});
+self.addEventListener('activate', e => {
+  e.waitUntil(
+    caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
+    .then(() => self.clients.claim())
+  );
+});
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
-  e.respondWith(caches.match(e.request).then(r => r || fetch(e.request).then(res => {
-    if (res.ok) { const c = res.clone(); caches.open(CACHE).then(cc => cc.put(e.request, c)); }
-    return res;
-  }).catch(() => new Response('', { status: 503 }))));
+  e.respondWith(
+    caches.match(e.request).then(r => r || fetch(e.request).then(res => {
+      if (res && res.ok) {
+        const c = res.clone();
+        caches.open(CACHE).then(cc => cc.put(e.request, c));
+      }
+      return res;
+    }).catch(() => caches.match('index.html')))
+  );
 });
