@@ -8,8 +8,8 @@ window.GPS0_App = (() => {
     if (!(await _fullscreen())) await _fullscreenGate();
     await _pseudo();
     await _selfie();
-    await _difficulte();
     _parcoursId = await _parcours();
+    await _difficulte();
     await _chargerJeu();
     _bindUI();
     _clock();
@@ -269,8 +269,9 @@ window.GPS0_App = (() => {
     });
 
     document.getElementById('menu-audio')?.addEventListener('click', () => {
+      mp.hidden = true; mb.setAttribute('aria-expanded', 'false');
       const on = GPS0_Audio.toggle();
-      document.getElementById('menu-audio').textContent = on ? 'Son' : 'Son coupe';
+      document.getElementById('menu-audio').textContent = on ? '🔊 Son' : '🔇 Son coup?';
     });
 
     document.getElementById('menu-difficulte')?.addEventListener('click', () => {
@@ -297,6 +298,7 @@ window.GPS0_App = (() => {
     });
 
     document.getElementById('menu-reset')?.addEventListener('click', () => {
+      mp.hidden = true; mb.setAttribute('aria-expanded', 'false');
       if (!confirm('Reinitialiser la progression ?')) return;
       ['gps0_zones_actives','gps0_economie','gps0_pseudo','gps0_difficulte','gps0_avatar_selfie_base64','gps0_minijeux_progression'].forEach(k => localStorage.removeItem(k));
       location.reload();
@@ -323,6 +325,12 @@ window.GPS0_App = (() => {
       document.getElementById('modal-boutique').close();
     });
     // HUD boutique + inventaire
+    // Fermer le menu si clic en dehors
+    document.addEventListener('click', e => {
+      if (!mp.hidden && !mp.contains(e.target) && e.target !== mb && !mb.contains(e.target)) {
+        mp.hidden = true; mb.setAttribute('aria-expanded', 'false');
+      }
+    });
     document.getElementById('hud-boutique')?.addEventListener('click', () => _ouvrirBoutique());
     document.getElementById('hud-inventaire')?.addEventListener('click', () => _ouvrirInventaire());
     document.getElementById('inventaire-fermer')?.addEventListener('click', () => {
