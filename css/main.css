@@ -100,8 +100,9 @@ html,body{height:100%;overflow:hidden;font-family:"Trebuchet MS",sans-serif;colo
 .objectif-progress{margin-left:auto;font-size:.85rem;color:var(--gold);font-weight:bold}
 
 /* ── MENU ── */
-.btn-menu{position:fixed;right:20px;bottom:80px;width:50px;height:50px;border-radius:50%;background:rgba(200,162,200,.18);border:1px solid var(--accent);color:#fff;font-size:1.2rem;cursor:pointer;z-index:200;transition:background .2s}
-.menu-panel{position:fixed;right:16px;bottom:140px;display:flex;flex-direction:column;gap:8px;z-index:200;background:rgba(10,10,26,.96);border:1px solid rgba(200,162,200,.3);border-radius:16px;padding:12px}
+.hud-menu-wrap{position:relative;margin-left:auto;flex-shrink:0}
+.btn-menu{width:36px;height:36px;border-radius:50%;background:rgba(200,162,200,.18);border:1px solid var(--accent);color:#fff;font-size:1.1rem;cursor:pointer;z-index:1;transition:background .2s;padding:0;line-height:1}
+.menu-panel{position:absolute;right:0;top:calc(100% + 6px);display:flex;flex-direction:column;gap:8px;z-index:300;background:rgba(10,10,26,.96);border:1px solid rgba(200,162,200,.3);border-radius:16px;padding:12px;min-width:200px}
 .menu-item{background:none;border:1px solid rgba(200,162,200,.2);color:#fff;padding:10px 16px;border-radius:10px;cursor:pointer;text-align:left;font-size:.9rem;transition:background .2s}
 .menu-item:hover{background:rgba(200,162,200,.1)}
 
@@ -152,7 +153,6 @@ dialog::backdrop{background:rgba(0,0,0,.72);backdrop-filter:blur(4px)}
 /* Safe area pour iPhone avec notch/barre maison */
 .hud { padding-top: max(10px, env(safe-area-inset-top)); padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right)); }
 .objectif-bar { padding-bottom: max(12px, env(safe-area-inset-bottom)); }
-.btn-menu { bottom: max(20px, calc(env(safe-area-inset-bottom) + 20px)); }
 /* Empêche le double-tap zoom sur mobile */
 button, input { touch-action: manipulation; }
 /* Curseur tactile plus grand sur mobile */

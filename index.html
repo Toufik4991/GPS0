@@ -44,6 +44,16 @@
       <div class="hud-energie" title="Énergie boussole" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100">
         <div class="energie-barre" id="energie-barre"></div>
       </div>
+      <div class="hud-menu-wrap">
+        <button class="btn-menu" id="menu-btn" aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="menu-panel">☰</button>
+        <nav class="menu-panel" id="menu-panel" aria-label="Menu principal" hidden>
+          <button class="menu-item" id="menu-audio">🔊 Son</button>
+          <button class="menu-item" id="menu-difficulte">⚙️ Difficulté</button>
+          <button class="menu-item" id="menu-reset">🔄 Réinitialiser</button>
+          <button class="menu-item" id="menu-boutique">💎 Boutique</button>
+          <button class="menu-item" id="menu-demo">&#127918; Tester un niveau</button>
+        </nav>
+      </div>
     </header>
 
     <div class="halo" id="halo" data-etat="off" aria-hidden="true"></div>
@@ -125,16 +135,6 @@
       <div class="objectif-progress"><span id="zones-progress" aria-label="Progression zones">0/9</span></div>
     </footer>
   </main>
-
-  <!-- MENU FLOTTANT -->
-  <button class="btn-menu" id="menu-btn" aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="menu-panel">☰</button>
-  <nav class="menu-panel" id="menu-panel" aria-label="Menu principal" hidden>
-    <button class="menu-item" id="menu-audio">🔊 Son</button>
-    <button class="menu-item" id="menu-difficulte">⚙️ Difficulté</button>
-    <button class="menu-item" id="menu-reset">🔄 Réinitialiser</button>
-    <button class="menu-item" id="menu-boutique">💎 Boutique</button>
-    <button class="menu-item" id="menu-demo">&#127918; Tester un niveau</button>
-  </nav>
 
   <!-- MODAL PSEUDO -->
   <dialog id="modal-pseudo" aria-modal="true" aria-labelledby="pseudo-titre">
