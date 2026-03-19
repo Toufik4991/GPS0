@@ -1,4 +1,4 @@
-'use strict';
+﻿'use strict';
 (function(cfg){
 const W=window.innerWidth,H=window.innerHeight;
 const MONDE_W=Math.round(W*(cfg.monde_w||1));
@@ -12,7 +12,7 @@ let vies=cfg.vies||3,etoiles=0,running=false,invincible=false;
 let camX=0;
 const monde=document.getElementById('monde');
 const plates=[],slimes=[],pds=[],lasers=[],pics=[];
-try{const b=window.parent.GPS0_Avatar&&window.parent.GPS0_Avatar.getSelfie();if(b){const el=document.getElementById('ts');if(el)el.style.backgroundImage='url('+b+')';}else{try{const b2=window.parent.GPS0_Avatar.getSelfie();if(b2&&document.getElementById('ts'))document.getElementById('ts').style.backgroundImage='url('+b2+')';}catch(e){}}}catch(e){}
+try{const b=window.parent.GPS0_Avatar&&window.parent.GPS0_Avatar.getSelfie();if(b){const el=document.getElementById('ts');if(el)el.style.backgroundImage='url('+b+')';}}catch(e){}
 function mkEl(cls,x,y,w,h){const e=document.createElement('div');e.className=cls;e.style.position='absolute';e.style.left=x+'px';e.style.top=y+'px';e.style.width=w+'px';e.style.height=h+'px';monde.appendChild(e);return e;}
 function mkPlate(c){const t='plate'+(c.sol?' sol':c.mobile?' mobile':c.fragile?' fragile':'');const e=mkEl(t,c.x,c.y,c.w,c.h);const obj=Object.assign({},c,{e,sol:!!c.sol,mobile:!!c.mobile,fragile:!!c.fragile,mx0:c.x,my0:c.y,mt:0,alpha:0,falling:false});plates.push(obj);return obj;}
 function build(){
@@ -47,7 +47,32 @@ function fisica(){
 let lt=0;
 function tickLasers(dt){lasers.forEach(l=>{l.t+=dt;const cycle=l.warn_dur+l.on_dur+l.off_dur,tp=l.t%cycle;const np=tp<l.warn_dur?'warn':tp<l.warn_dur+l.on_dur?'actif':'off';if(np!==l.phase){l.phase=np;l.e.className='laser-h '+(np!=='off'?np:'');if(np==='warn')sfx('laser_warning');}});}
 function perdre(){if(invincible)return;invincible=true;vies--;const vm=['','\u2764\uFE0F','\u2764\uFE0F\u2764\uFE0F','\u2764\uFE0F\u2764\uFE0F\u2764\uFE0F'];document.getElementById('mj-v').textContent=vm[Math.max(0,vies)]||'';lune(vies===1?'Derni\u00e8re chance !':(vies===0?'...':'Aie !'));if(vies<=0){running=false;setTimeout(()=>fin(false),400);return;}jx=cfg.spawn_x||80;jy=cfg.spawn_y||(H-120);vx=0;vy=0;camX=0;if(MONDE_W>W)monde.style.transform='translateX(0px)';setTimeout(()=>{invincible=false;},1200);}
-function fin(ok){const ov=document.getElementById('ov'),ot=document.getElementById('ot');ot.textContent=ok?'Victoire !':'Perdu...';ot.className=ok?'win':'lose';document.getElementById('os').textContent=ok?cfg.msg_win||'Bien jou\u00e9 !':cfg.msg_lose||'La Lune te juge.';document.getElementById('op').textContent=(ok?'+ '+TOTAL:etoiles)+' \u2728 Poussi\u00e8res';ov.classList.add('v');try{window.parent.postMessage({source:'gps0_minijeu',success:ok,niveau:cfg.niveau,poussieres:ok?TOTAL:etoiles,etoiles:ok?3:1},'*');}catch(e){}}
+// ── OVERLAY FIN: choix joueur ───────────────────────────────────
+function fin(ok){
+  const ov=document.getElementById('ov'),ot=document.getElementById('ot');
+  ot.textContent=ok?'Victoire !':'Perdu...';
+  ot.className=ok?'win':'lose';
+  document.getElementById('os').textContent=ok?cfg.msg_win||'Bien joy\u00e9 !':cfg.msg_lose||'La Lune te juge.';
+  const pEl=document.getElementById('op');
+  if(pEl)pEl.textContent=(ok?'+ '+TOTAL:etoiles)+' \u2728 Poussi\u00e8res';
+  // Afficher seulement les boutons pertinents
+  const btnRecommencer=document.getElementById('br');
+  const btnRecompense=document.getElementById('bc');
+  const btnAbandon=document.getElementById('bb');
+  if(btnRecommencer)btnRecommencer.style.display='inline-block';
+  if(btnAbandon)btnAbandon.style.display='inline-block';
+  // Bouton recompense = seulement si victoire
+  if(btnRecompense){
+    btnRecompense.style.display=ok?'inline-block':'none';
+    if(ok){
+      btnRecompense.textContent='\u2728 Prendre les '+TOTAL+' poussi\u00e8res';
+      btnRecompense.onclick=()=>{
+        try{window.parent.postMessage({source:'gps0_minijeu',success:true,niveau:cfg.niveau,poussieres:TOTAL,etoiles:3},'*');}catch(e){}
+      };
+    }
+  }
+  ov.classList.add('v');
+}
 function lune(txt){const e=document.getElementById('lune');if(e){e.textContent='\uD83C\uDF19 '+txt;e.classList.add('v');setTimeout(()=>e.classList.remove('v'),4500);}}
 function sfx(n){try{window.parent.GPS0_Audio&&window.parent.GPS0_Audio.playSFX(n);}catch(e){}}
 function ctls(){
@@ -62,8 +87,11 @@ let prev=0;
 function loop(ts){const dt=Math.min((ts-prev)||16,50);prev=ts;if(running){fisica();tickLasers(dt);}requestAnimationFrame(loop);}
 build();ctls();requestAnimationFrame(loop);
 document.getElementById('btn-st').addEventListener('click',()=>{document.getElementById('tuto').style.display='none';running=true;if(cfg.lune_start)setTimeout(()=>lune(cfg.lune_start),1500);});
-document.getElementById('bb').addEventListener('click',()=>{try{window.parent.postMessage({source:'gps0_minijeu',success:false,niveau:cfg.niveau},'*');}catch(e){}});
+// Recommencer = simple reload, SANS recompense
 document.getElementById('br').addEventListener('click',()=>location.reload());
+// Abandon = retour GPS sans recompense
+document.getElementById('bb').addEventListener('click',()=>{try{window.parent.postMessage({source:'gps0_minijeu',success:false,niveau:cfg.niveau},'*');}catch(e){}});
+// Quitter en cours de jeu
 document.getElementById('btn-q').addEventListener('click',()=>{if(confirm('Quitter ?'))try{window.parent.postMessage({source:'gps0_minijeu',success:false,niveau:cfg.niveau},'*');}catch(e){}});
 window.GPS0_MJ_LUNE=lune;
 })(window.GPS0_NIVEAU_CFG);

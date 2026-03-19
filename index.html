@@ -75,6 +75,15 @@
           <text class="ast-jouer" x="100" y="108" text-anchor="middle" font-size="14" fill="#4FC3F7" font-weight="bold" opacity="0" pointer-events="none">JOUER 🚀</text>
         </svg>
 
+        <!-- WIDGET ENERGIE -->
+        <div class="energie-ast-overlay" aria-hidden="true">
+          <svg class="energie-cercle-svg" viewBox="0 0 64 64" width="64" height="64">
+            <circle cx="32" cy="32" r="28" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="4"/>
+            <circle id="energie-cercle" cx="32" cy="32" r="28" fill="none" stroke="#4FC3F7" stroke-width="4" stroke-dasharray="175.9" stroke-dashoffset="0" stroke-linecap="round" transform="rotate(-90 32 32)" style="transition:stroke-dashoffset .6s ease,stroke .6s ease"/>
+          </svg>
+          <div class="energie-sable-wrap"><div id="energie-sable"></div></div>
+          <span id="energie-pct">100%</span>
+        </div>
         <div class="fusee-wrapper hidden" id="fusee-wrapper" aria-hidden="true">
           <svg viewBox="0 0 80 80" width="70" height="70">
             <defs>
@@ -123,6 +132,7 @@
     <button class="menu-item" id="menu-audio">🔊 Son</button>
     <button class="menu-item" id="menu-difficulte">⚙️ Difficulté</button>
     <button class="menu-item" id="menu-reset">🔄 Réinitialiser</button>
+    <button class="menu-item" id="menu-boutique">💎 Boutique</button>
     <button class="menu-item" id="menu-demo">&#127918; Tester un niveau</button>
   </nav>
 
@@ -207,7 +217,18 @@
         <button class="diff-carte demo-niveau-btn" data-niveau="8"><span class="diff-emoji">&#128165;</span><span class="diff-nom">Niveau 8</span><span class="diff-desc">OMEGA</span></button>
         <button class="diff-carte demo-niveau-btn" data-niveau="9"><span class="diff-emoji">&#127942;</span><span class="diff-nom">Niveau 9</span><span class="diff-desc">Final Boss</span></button>
       </div>
+      <p style="font-size:0.72rem;color:rgba(255,255,255,0.35);text-align:center;margin-top:4px"><span id="debug-version">v?</span></p>
       <button id="demo-fermer" class="btn-ghost">Fermer</button>
+    </div>
+  </dialog>
+  <!-- MODAL BOUTIQUE -->
+  <dialog id="modal-boutique" aria-modal="true" aria-labelledby="boutique-titre">
+    <div class="modal-box">
+      <h2 id="boutique-titre">💎 Boutique Cosmique</h2>
+      <p style="font-size:0.82rem;color:rgba(255,255,255,.7);text-align:center">Utilisez vos poussières pour booster votre énergie</p>
+      <div id="boutique-fragments" style="display:flex;flex-direction:column;gap:10px;margin:14px 0"></div>
+      <p style="font-size:0.8rem;text-align:center">Votre solde : <strong id="boutique-solde" style="color:#FFD700">0 ✨</strong></p>
+      <button id="boutique-fermer" class="btn-ghost">Fermer</button>
     </div>
   </dialog>
   <!-- TOAST CODE DÉFI -->

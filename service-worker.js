@@ -1,4 +1,5 @@
-﻿const CACHE = 'gps0-v5';
+﻿const CACHE = 'gps0-v6';
+const APP_VERSION = '3.1.1';
 const CORE = [
   'index.html',
   'css/main.css', 'css/minijeux.css',
@@ -24,12 +25,17 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   e.respondWith(
-    caches.match(e.request).then(r => r || fetch(e.request).then(res => {
+    fetch(e.request).then(res => {
       if (res && res.ok) {
         const c = res.clone();
         caches.open(CACHE).then(cc => cc.put(e.request, c));
       }
       return res;
-    }).catch(() => caches.match('index.html')))
+    }).catch(() => caches.match(e.request).then(r => r || caches.match('index.html')))
   );
+});
+self.addEventListener('message', e => {
+  if (e.data === 'GET_VERSION') {
+    e.source.postMessage({ type: 'VERSION', version: APP_VERSION, cache: CACHE });
+  }
 });

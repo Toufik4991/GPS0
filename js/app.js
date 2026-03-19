@@ -313,8 +313,17 @@ window.GPS0_App = (() => {
       document.getElementById('modal-demo').close();
     });
 
+    document.getElementById('menu-boutique')?.addEventListener('click', () => {
+      mp.hidden = true; mb.setAttribute('aria-expanded', 'false');
+      _ouvrirBoutique();
+    });
+    document.getElementById('boutique-fermer')?.addEventListener('click', () => {
+      document.getElementById('modal-boutique').close();
+    });
+
     document.addEventListener('minijeu:complete', e => {
       GPS0_Economie.ajouterPoussieres(e.detail?.poussieres || 10);
+      if (typeof GPS0_Economie.setCooldown === 'function') GPS0_Economie.setCooldown(e.detail?.niveau || 0);
       GPS0_GPS.zoneSuivante(); _majObjectif();
       GPS0_Boussole.forceEtat('off');
       document.getElementById('app').classList.add('visible');
@@ -326,6 +335,12 @@ window.GPS0_App = (() => {
   }
 
   function _lancerMiniJeu(niveau) {
+    if (typeof GPS0_Economie !== 'undefined' && typeof GPS0_Economie.isCooldown === 'function' && GPS0_Economie.isCooldown(niveau)) {
+      const r = GPS0_Economie.getCooldownRestant(niveau);
+      const btn = document.getElementById('btn-jouer');
+      if (btn) { btn.disabled = true; btn.textContent = '⏳ ' + GPS0_Economie.formatCooldown(r); setTimeout(() => { btn.disabled = false; btn.textContent = 'Jouer'; }, r); }
+      return;
+    }
     document.getElementById('app').classList.remove('visible');
     const iframe = document.createElement('iframe');
     iframe.src = 'minijeux/niveau' + niveau + '.html';
@@ -352,10 +367,61 @@ window.GPS0_App = (() => {
     requestAnimationFrame(tick);
   }
 
+  function _ouvrirBoutique() {
+    const modal = document.getElementById('modal-boutique');
+    if (!modal) return;
+    const container = document.getElementById('boutique-fragments');
+    const soldeEl = document.getElementById('boutique-solde');
+    if (!container) return;
+    const _frCat = window.GPS0_Economie_FRAGMENTS || {};
+    const frags = Object.values(_frCat);
+    const poussieres = (typeof GPS0_Economie !== 'undefined' && typeof GPS0_Economie.get === 'function') ? GPS0_Economie.get().poussieres : 0;
+    if (soldeEl) soldeEl.textContent = poussieres + ' ✨';
+    container.innerHTML = '';
+    frags.forEach(fr => {
+      const btn = document.createElement('button');
+      btn.className = 'fragment-carte';
+      btn.disabled = poussieres < fr.prix;
+      btn.innerHTML = '<span class="fragment-icone">' + (fr.emoji||fr.icone||'🌟') + '</span><span class="fragment-infos"><span class="fragment-nom">' + fr.nom + '</span><span class="fragment-desc">' + fr.desc + '</span></span><span class="fragment-prix">' + fr.prix + ' ✨</span>';
+      btn.onclick = () => {
+        if (typeof GPS0_Economie !== 'undefined' && typeof GPS0_Economie.acheterFragment === 'function') {
+          const ok = GPS0_Economie.acheterFragment(fr.id, fr.prix);
+          if (ok) { GPS0_Economie.utiliserFragment(fr.id); GPS0_Economie.updateHUD(); modal.close(); }
+          else { btn.classList.add('erreur'); setTimeout(() => btn.classList.remove('erreur'), 800); }
+        }
+      };
+      container.appendChild(btn);
+    });
+    modal.showModal();
+  }
+
   return { init };
 })();
 
 window.addEventListener('DOMContentLoaded', () => window.GPS0_App.init());
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => navigator.serviceWorker.register('service-worker.js').catch(() => {}));
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('service-worker.js').then(reg => {
+      reg.addEventListener('updatefound', () => {
+        const nw = reg.installing;
+        if (nw) nw.addEventListener('statechange', () => {
+          if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+            const t = document.createElement('div');
+            t.id = 'sw-toast'; t.textContent = '🌙 Nouvelle version ! Recharger';
+            t.onclick = () => window.location.reload();
+            document.body.appendChild(t);
+          }
+        });
+      });
+    }).catch(() => {});
+    if (navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage('GET_VERSION');
+      navigator.serviceWorker.addEventListener('message', ev => {
+        if (ev.data?.type === 'VERSION') {
+          const el = document.getElementById('debug-version');
+          if (el) el.textContent = 'v' + ev.data.version;
+        }
+      });
+    }
+  });
 }
