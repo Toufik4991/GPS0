@@ -254,7 +254,12 @@ window.GPS0_App = (() => {
       GPS0_Audio.playSFX(GPS0_Boussole.estActif() ? 'boussole_on' : 'boussole_off');
     });
 
-    document.getElementById('btn-jouer')?.addEventListener('click', () => {
+    // Astéroïde cliquable directement (flash + lancement)
+    document.getElementById('asteroide-wrapper')?.addEventListener('click', () => {
+      const w = document.getElementById('asteroide-wrapper');
+      if (!w || w.dataset.etat !== 'zone') return;
+      const svg = w.querySelector('.asteroide-svg');
+      if (svg) { svg.classList.add('flash'); setTimeout(() => svg.classList.remove('flash'), 420); }
       const z = GPS0_GPS.zoneActuelle(); if (z) _lancerMiniJeu(z.mini_jeu);
     });
 
@@ -313,12 +318,15 @@ window.GPS0_App = (() => {
       document.getElementById('modal-demo').close();
     });
 
-    document.getElementById('menu-boutique')?.addEventListener('click', () => {
-      mp.hidden = true; mb.setAttribute('aria-expanded', 'false');
-      _ouvrirBoutique();
-    });
+
     document.getElementById('boutique-fermer')?.addEventListener('click', () => {
       document.getElementById('modal-boutique').close();
+    });
+    // HUD boutique + inventaire
+    document.getElementById('hud-boutique')?.addEventListener('click', () => _ouvrirBoutique());
+    document.getElementById('hud-inventaire')?.addEventListener('click', () => _ouvrirInventaire());
+    document.getElementById('inventaire-fermer')?.addEventListener('click', () => {
+      document.getElementById('modal-inventaire').close();
     });
 
     document.addEventListener('minijeu:complete', e => {
@@ -334,11 +342,49 @@ window.GPS0_App = (() => {
     GPS0_GPS.on('zone_changee', () => _majObjectif());
   }
 
+  function _ouvrirInventaire() {
+    const modal = document.getElementById('modal-inventaire');
+    if (!modal) return;
+    const eco = GPS0_Economie.get();
+    const pc = GPS0_Economie.energiePC();
+    const elP = document.getElementById('inv-poussieres');
+    const elE = document.getElementById('inv-energie');
+    const elF = document.getElementById('inv-fragments');
+    if (elP) elP.textContent = eco.poussieres;
+    if (elE) elE.textContent = pc + '/100';
+    if (elF) {
+      elF.innerHTML = '';
+      const catalog = window.GPS0_Economie_FRAGMENTS || {};
+      Object.values(catalog).forEach(fr => {
+        const qty = (eco.fragments && eco.fragments[fr.id]) || 0;
+        const row = document.createElement('div');
+        row.className = 'inv-fragment-row';
+        const useBtn = document.createElement('button');
+        useBtn.className = 'inv-frag-use';
+        useBtn.textContent = 'Utiliser';
+        useBtn.disabled = qty <= 0;
+        useBtn.onclick = () => {
+          if (GPS0_Economie.utiliserFragment(fr.id)) {
+            GPS0_Economie.updateHUD();
+            _ouvrirInventaire();
+          }
+        };
+        row.innerHTML = '<span class="inv-frag-icone">' + (fr.emoji||'🌙') + '</span>'
+          + '<span class="inv-frag-infos"><span class="inv-frag-nom">' + fr.nom + '</span>'
+          + '<span class="inv-frag-qty">x' + qty + (qty === 0 ? ' — vide' : '') + '</span></span>';
+        row.appendChild(useBtn);
+        elF.appendChild(row);
+      });
+    }
+    modal.showModal();
+  }
+
+
   function _lancerMiniJeu(niveau) {
     if (typeof GPS0_Economie !== 'undefined' && typeof GPS0_Economie.isCooldown === 'function' && GPS0_Economie.isCooldown(niveau)) {
       const r = GPS0_Economie.getCooldownRestant(niveau);
-      const btn = document.getElementById('btn-jouer');
-      if (btn) { btn.disabled = true; btn.textContent = '⏳ ' + GPS0_Economie.formatCooldown(r); setTimeout(() => { btn.disabled = false; btn.textContent = 'Jouer'; }, r); }
+      const dl = document.getElementById('distance-label');
+      if (dl) { dl.textContent = '⏳ Cooldown: ' + GPS0_Economie.formatCooldown(r); setTimeout(() => { dl.textContent = '---'; }, 4000); }
       return;
     }
     document.getElementById('app').classList.remove('visible');
@@ -382,11 +428,11 @@ window.GPS0_App = (() => {
       const btn = document.createElement('button');
       btn.className = 'fragment-carte';
       btn.disabled = poussieres < fr.prix;
-      btn.innerHTML = '<span class="fragment-icone">' + (fr.emoji||fr.icone||'🌟') + '</span><span class="fragment-infos"><span class="fragment-nom">' + fr.nom + '</span><span class="fragment-desc">' + fr.desc + '</span></span><span class="fragment-prix">' + fr.prix + ' ✨</span>';
+            btn.innerHTML = '<span class="fragment-icone">' + (fr.emoji||'🌟') + '</span><span class="fragment-infos"><span class="fragment-nom">' + fr.nom + '</span><span class="fragment-desc">' + fr.desc + '</span></span><span class="fragment-prix">' + fr.prix + ' ✨</span><span class="fragment-acheter">ACHETER</span>';
       btn.onclick = () => {
         if (typeof GPS0_Economie !== 'undefined' && typeof GPS0_Economie.acheterFragment === 'function') {
           const ok = GPS0_Economie.acheterFragment(fr.id, fr.prix);
-          if (ok) { GPS0_Economie.utiliserFragment(fr.id); GPS0_Economie.updateHUD(); modal.close(); }
+          if (ok) { GPS0_Economie.updateHUD(); modal.close(); }
           else { btn.classList.add('erreur'); setTimeout(() => btn.classList.remove('erreur'), 800); }
         }
       };

@@ -26,7 +26,22 @@
 - Controles full-screen : zone gauche 50pct / zone droite 50pct / bouton saut centre
 - Architecture hybride : 9 fichiers HTML + 1 moteur commun (moteur-minijeu.js)
 - Mode Demo protege par mot de passe developpeur
-- Service Worker v5
+- Service Worker v7
+
+**Changements majeurs v3.2 :**
+- HUD refonte : [ ?? Timer ][ ? Poussi?res ][ ?? Boutique ][ ?? Inventaire ][ ? Menu ]
+- Menu ? hamburger integre dans le bandeau HUD (haut droite), dropdown
+- Boutique Lunaire accessible via icone ?? dans le HUD (4 articles)
+  - ?? ?clat de Lune : +10% energie ? 5 ?
+  - ???? Fragment Lunaire : +25% energie ? 15 ?
+  - ?? Gros Fragment : +50% energie ? 30 ?
+  - ???? Coeur de Lune : energie 100% complete ? 50 ?
+- Inventaire ?? accessible via icone dans HUD : voir fragments + utiliser
+- Asteroide cliquable directement (flash lumineux, pas de bouton JOUER separe)
+- Anneau energie SVG 240px entoure l'asteroide (hors limites 200px asteroid)
+- Asteriode grise + halo dim quand inactif (data-etat=off)
+- Assets fonds d'ecran mini-jeux : assets/backgrounds/fond_ecran1-9.jpeg
+- Service Worker v9 / APP_VERSION 3.1.4
 
 ---
 

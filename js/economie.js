@@ -59,7 +59,9 @@ window.GPS0_Economie = (() => {
     const fragment = GPS0_Economie_FRAGMENTS[id];
     if (!fragment) return false;
     e.fragments[id]--;
-    if (fragment.bonus_energie) {
+    if (fragment.full_recharge) {
+      e.energie.actuelle = e.energie.max;
+    } else if (fragment.bonus_energie) {
       e.energie.actuelle = Math.min(e.energie.max, e.energie.actuelle + (e.energie.max * fragment.bonus_energie / 100));
     }
     save(e); updateHUD(); return true;
@@ -109,7 +111,7 @@ window.GPS0_Economie = (() => {
     const pct = document.getElementById('energie-pct');
     const pd = document.getElementById('poussieres');
     if (cercle) {
-      const r = 28, circ = 2 * Math.PI * r;
+      const r = 108, circ = 2 * Math.PI * r; // anneau 240px SVG entourant asteroide
       cercle.style.strokeDasharray = circ;
       cercle.style.strokeDashoffset = circ * (1 - pc / 100);
       const col = pc > 50 ? '#4FC3F7' : pc > 20 ? '#FFD700' : '#FF3333';
@@ -137,7 +139,8 @@ window.GPS0_Economie = (() => {
 
 // Catalogue fragments — lu par la boutique et economie
 window.GPS0_Economie_FRAGMENTS = {
-  petit_fragment:  { id: 'petit_fragment',  nom: 'Petit Fragment de Lune',  emoji: '🌙', desc: '+25% énergie instantanément', bonus_energie: 25, prix: 30,  couleur: '#C8A2C8' },
-  gros_fragment:   { id: 'gros_fragment',   nom: 'Grand Fragment de Lune',  emoji: '🌕', desc: '+50% énergie instantanément', bonus_energie: 50, prix: 60,  couleur: '#FFD700' },
-  eclat_stellaire: { id: 'eclat_stellaire', nom: 'Éclat Stellaire',         emoji: '⭐', desc: '+75% énergie — réservé aux braves', bonus_energie: 75, prix: 100, couleur: '#69FF47' }
+  eclat_lune:    { id: 'eclat_lune',    nom: 'Éclat de Lune',   emoji: '🌙',    desc: '+10% énergie instantanément', bonus_energie: 10,  prix: 5,  couleur: '#C8A2C8' },
+  fragment_lune: { id: 'fragment_lune', nom: 'Fragment Lunaire', emoji: '🌙🌙', desc: '+25% énergie instantanément', bonus_energie: 25,  prix: 15, couleur: '#C8A2C8' },
+  gros_fragment: { id: 'gros_fragment', nom: 'Gros Fragment',    emoji: '🌕',   desc: '+50% énergie instantanément', bonus_energie: 50,  prix: 30, couleur: '#FFD700' },
+  coeur_lune:    { id: 'coeur_lune',    nom: 'Coeur de Lune',   emoji: '🌕🌕', desc: 'Energie 100% complete !',    full_recharge: true, prix: 50, couleur: '#FFD700' }
 };

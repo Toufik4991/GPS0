@@ -41,16 +41,14 @@
     <header class="hud" role="banner">
       <span class="hud-item"><span aria-hidden="true">⏱️</span> <span id="chrono" aria-label="Chronomètre">00:00</span></span>
       <span class="hud-item"><span aria-hidden="true">✨</span> <span id="poussieres" aria-label="Poussières d'étoiles">0</span></span>
-      <div class="hud-energie" title="Énergie boussole" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100">
-        <div class="energie-barre" id="energie-barre"></div>
-      </div>
+      <button class="hud-icon-btn" id="hud-boutique" aria-label="Boutique Lunaire">🏪</button>
+      <button class="hud-icon-btn" id="hud-inventaire" aria-label="Inventaire">🎒</button>
       <div class="hud-menu-wrap">
         <button class="btn-menu" id="menu-btn" aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="menu-panel">☰</button>
         <nav class="menu-panel" id="menu-panel" aria-label="Menu principal" hidden>
           <button class="menu-item" id="menu-audio">🔊 Son</button>
           <button class="menu-item" id="menu-difficulte">⚙️ Difficulté</button>
           <button class="menu-item" id="menu-reset">🔄 Réinitialiser</button>
-          <button class="menu-item" id="menu-boutique">💎 Boutique</button>
           <button class="menu-item" id="menu-demo">&#127918; Tester un niveau</button>
         </nav>
       </div>
@@ -87,11 +85,10 @@
 
         <!-- WIDGET ENERGIE -->
         <div class="energie-ast-overlay" aria-hidden="true">
-          <svg class="energie-cercle-svg" viewBox="0 0 64 64" width="64" height="64">
-            <circle cx="32" cy="32" r="28" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="4"/>
-            <circle id="energie-cercle" cx="32" cy="32" r="28" fill="none" stroke="#4FC3F7" stroke-width="4" stroke-dasharray="175.9" stroke-dashoffset="0" stroke-linecap="round" transform="rotate(-90 32 32)" style="transition:stroke-dashoffset .6s ease,stroke .6s ease"/>
+          <svg class="energie-cercle-svg" viewBox="0 0 240 240" width="240" height="240">
+            <circle cx="120" cy="120" r="108" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="6"/>
+            <circle id="energie-cercle" cx="120" cy="120" r="108" fill="none" stroke="#4FC3F7" stroke-width="6" stroke-dasharray="678.6" stroke-dashoffset="0" stroke-linecap="round" transform="rotate(-90 120 120)" style="transition:stroke-dashoffset .6s ease,stroke .6s ease"/>
           </svg>
-          <div class="energie-sable-wrap"><div id="energie-sable"></div></div>
           <span id="energie-pct">100%</span>
         </div>
         <div class="fusee-wrapper hidden" id="fusee-wrapper" aria-hidden="true">
@@ -117,7 +114,6 @@
         </div>
 
         <div class="distance-label" id="distance-label" aria-live="polite">---</div>
-        <button class="btn-jouer" id="btn-jouer" hidden>JOUER 🚀</button>
       </div>
 
       <button class="btn-toggle-boussole" id="toggle-boussole" aria-pressed="false">
@@ -224,11 +220,37 @@
   <!-- MODAL BOUTIQUE -->
   <dialog id="modal-boutique" aria-modal="true" aria-labelledby="boutique-titre">
     <div class="modal-box">
-      <h2 id="boutique-titre">💎 Boutique Cosmique</h2>
-      <p style="font-size:0.82rem;color:rgba(255,255,255,.7);text-align:center">Utilisez vos poussières pour booster votre énergie</p>
+      <h2 id="boutique-titre">🏪 Boutique Lunaire</h2>
+      <p style="font-size:0.82rem;color:rgba(255,255,255,.7);text-align:center">Dépense tes ✨ pour recharger ton énergie !</p>
       <div id="boutique-fragments" style="display:flex;flex-direction:column;gap:10px;margin:14px 0"></div>
       <p style="font-size:0.8rem;text-align:center">Votre solde : <strong id="boutique-solde" style="color:#FFD700">0 ✨</strong></p>
       <button id="boutique-fermer" class="btn-ghost">Fermer</button>
+    </div>
+  </dialog>
+  <!-- MODAL INVENTAIRE -->
+  <dialog id="modal-inventaire" aria-modal="true" aria-labelledby="inv-titre">
+    <div class="modal-box">
+      <h2 id="inv-titre">🎒 Inventaire</h2>
+      <div class="inv-stats">
+        <div class="inv-stat">✨ Poussières : <strong id="inv-poussieres">0</strong></div>
+        <div class="inv-stat">⚡ Énergie : <strong id="inv-energie">100/100</strong></div>
+      </div>
+      <hr class="inv-sep">
+      <div id="inv-fragments" style="display:flex;flex-direction:column;gap:10px;margin:8px 0"></div>
+      <button id="inventaire-fermer" class="btn-ghost">Fermer</button>
+    </div>
+  </dialog>
+  <!-- MODAL INVENTAIRE -->
+  <dialog id="modal-inventaire" aria-modal="true" aria-labelledby="inv-titre">
+    <div class="modal-box">
+      <h2 id="inv-titre">🎒 Inventaire</h2>
+      <div class="inv-stats">
+        <div class="inv-stat">✨ Poussières : <strong id="inv-poussieres">0</strong></div>
+        <div class="inv-stat">⚡ Énergie : <strong id="inv-energie">100/100</strong></div>
+      </div>
+      <hr class="inv-sep">
+      <div id="inv-fragments" style="display:flex;flex-direction:column;gap:10px;margin:8px 0"></div>
+      <button id="inventaire-fermer" class="btn-ghost">Fermer</button>
     </div>
   </dialog>
   <!-- TOAST CODE DÉFI -->

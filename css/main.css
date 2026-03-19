@@ -45,6 +45,10 @@ html,body{height:100%;overflow:hidden;font-family:"Trebuchet MS",sans-serif;colo
 /* ── HUD ── */
 .hud{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-around;padding:10px 16px;background:rgba(0,0,0,.6);backdrop-filter:blur(10px);border-bottom:1px solid rgba(200,162,200,.15);font-weight:bold;font-size:.95rem;gap:8px;flex-shrink:0}
 .hud-item{display:flex;align-items:center;gap:5px}
+.hud-icon-btn{background:rgba(200,162,200,.12);border:1px solid rgba(200,162,200,.3);border-radius:10px;color:#fff;font-size:1.15rem;cursor:pointer;padding:3px 8px;min-width:34px;text-align:center;transition:background .2s;line-height:1.4}
+.hud-icon-btn:hover,.hud-icon-btn:active{background:rgba(200,162,200,.3)}
+.hud-icon-btn{background:rgba(200,162,200,.12);border:1px solid rgba(200,162,200,.3);border-radius:10px;color:#fff;font-size:1.15rem;cursor:pointer;padding:3px 8px;min-width:34px;text-align:center;transition:background .2s;line-height:1.4}
+.hud-icon-btn:hover,.hud-icon-btn:active{background:rgba(200,162,200,.3)}
 .hud-energie{width:64px;height:12px;background:rgba(255,255,255,.1);border-radius:6px;overflow:hidden;border:1px solid rgba(200,162,200,.3)}
 .energie-barre{height:100%;width:100%;background:var(--halo-bleu);border-radius:6px;transition:width .5s ease,background .5s ease}
 .energie-barre.critique{background:var(--danger);animation:ecrit .5s infinite alternate}
@@ -73,8 +77,18 @@ html,body{height:100%;overflow:hidden;font-family:"Trebuchet MS",sans-serif;colo
 .ast-body{transition:filter .5s}
 @keyframes ast-glow{0%,100%{filter:drop-shadow(0 0 8px rgba(79,195,247,.35))}50%{filter:drop-shadow(0 0 22px rgba(79,195,247,.8))}}
 .asteroide-wrapper[data-etat="off"] .asteroide-svg{animation-play-state:paused;filter:grayscale(.7) brightness(.6)}
+.asteroide-wrapper[data-etat="off"] .energie-ast-overlay{opacity:.35}
+.asteroide-wrapper[data-etat="off"] .energie-ast-overlay{opacity:.35}
 .asteroide-wrapper[data-etat="zone"] .asteroide-svg{animation-duration:.4s}
 .asteroide-wrapper[data-etat="zone"] .ast-jouer{opacity:1!important;animation:jouer-pulse .6s ease-in-out infinite alternate}
+.asteroide-wrapper[data-etat="zone"]{cursor:pointer}
+.asteroide-wrapper[data-etat="off"]{cursor:default}
+@keyframes ast-flash{0%{filter:drop-shadow(0 0 8px rgba(79,195,247,.35))}45%{filter:brightness(2.8) drop-shadow(0 0 35px rgba(255,255,255,.9));transform:scale(1.07)}100%{filter:drop-shadow(0 0 8px rgba(79,195,247,.35));transform:scale(1)}}
+.asteroide-svg.flash{animation:ast-flash .42s ease-out forwards!important}
+.asteroide-wrapper[data-etat="zone"]{cursor:pointer}
+.asteroide-wrapper[data-etat="off"]{cursor:default}
+@keyframes ast-flash{0%{filter:drop-shadow(0 0 8px rgba(79,195,247,.35))}45%{filter:brightness(2.8) drop-shadow(0 0 35px rgba(255,255,255,.9));transform:scale(1.07)}100%{filter:drop-shadow(0 0 8px rgba(79,195,247,.35));transform:scale(1)}}
+.asteroide-svg.flash{animation:ast-flash .42s ease-out forwards!important}
 @keyframes jouer-pulse{to{fill:#fff;font-size:16px}}
 
 /* ── FUSÉE ── */
@@ -162,11 +176,11 @@ button, input { touch-action: manipulation; }
   .menu-item { min-height: 48px; }
 }
 /* ── WIDGET ENERGIE ASTEROIDE ── */
-.energie-ast-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:5}
-.energie-cercle-svg{position:absolute;width:170px;height:170px;top:50%;left:50%;transform:translate(-50%,-50%)}
-.energie-sable-wrap{position:absolute;width:100px;height:100px;border-radius:50%;overflow:hidden;bottom:36px;left:50%;transform:translateX(-50%)}
-#energie-sable{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(0deg,rgba(79,195,247,.35),rgba(200,162,200,.2));transition:height .6s ease;height:100%}
-#energie-pct{position:absolute;font-size:.82rem;font-weight:bold;color:#4FC3F7;text-shadow:0 0 8px rgba(79,195,247,.8);bottom:10px;left:50%;transform:translateX(-50%);white-space:nowrap}
+.energie-ast-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:5;overflow:visible}
+.energie-cercle-svg{position:absolute;width:240px;height:240px;top:50%;left:50%;transform:translate(-50%,-50%)}
+/* .energie-sable-wrap removed */
+/* #energie-sable removed */
+#energie-pct{position:absolute;font-size:.78rem;font-weight:bold;color:#4FC3F7;text-shadow:0 0 8px rgba(79,195,247,.8);top:50%;left:50%;transform:translate(-50%,-50%);white-space:nowrap;z-index:6;pointer-events:none}
 
 /* ── SW UPDATE TOAST ── */
 #sw-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:rgba(105,255,71,.15);border:1px solid #69FF47;color:#69FF47;padding:10px 22px;border-radius:24px;font-size:.88rem;font-weight:bold;cursor:pointer;z-index:9999;animation:toast-in .4s ease;backdrop-filter:blur(6px)}
@@ -181,3 +195,35 @@ button, input { touch-action: manipulation; }
 .fragment-nom{font-weight:bold;font-size:.92rem}
 .fragment-desc{font-size:.76rem;color:rgba(255,255,255,.6);margin-top:2px}
 .fragment-prix{font-size:.88rem;color:#FFD700;font-weight:bold;white-space:nowrap}
+
+/* ── FRAGMENT ACHETER ── */
+.fragment-acheter{background:linear-gradient(135deg,var(--accent),#9a72c8);color:#0A0A1A;font-weight:bold;font-size:.75rem;border-radius:8px;padding:5px 10px;white-space:nowrap;flex-shrink:0}
+
+/* ── INVENTAIRE ── */
+.inv-stats{display:flex;flex-direction:column;gap:8px;background:rgba(255,255,255,.05);border-radius:12px;padding:12px 16px}
+.inv-stat{font-size:.9rem;color:rgba(255,255,255,.85)}
+.inv-stat strong{color:var(--gold)}
+.inv-sep{border:none;border-top:1px solid rgba(200,162,200,.15);margin:4px 0}
+.inv-fragment-row{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:10px 14px}
+.inv-frag-icone{font-size:1.5rem;flex-shrink:0}
+.inv-frag-infos{flex:1;text-align:left}
+.inv-frag-nom{font-weight:bold;font-size:.88rem}
+.inv-frag-qty{font-size:.78rem;color:var(--accent)}
+.inv-frag-use{background:linear-gradient(135deg,var(--accent),#9a72c8);border:none;border-radius:8px;color:#0A0A1A;font-weight:bold;font-size:.8rem;cursor:pointer;padding:6px 12px;white-space:nowrap}
+.inv-frag-use:disabled{opacity:.35;cursor:not-allowed}
+
+/* ── FRAGMENT ACHETER ── */
+.fragment-acheter{background:linear-gradient(135deg,var(--accent),#9a72c8);color:#0A0A1A;font-weight:bold;font-size:.75rem;border-radius:8px;padding:5px 10px;white-space:nowrap;flex-shrink:0}
+
+/* ── INVENTAIRE ── */
+.inv-stats{display:flex;flex-direction:column;gap:8px;background:rgba(255,255,255,.05);border-radius:12px;padding:12px 16px}
+.inv-stat{font-size:.9rem;color:rgba(255,255,255,.85)}
+.inv-stat strong{color:var(--gold)}
+.inv-sep{border:none;border-top:1px solid rgba(200,162,200,.15);margin:4px 0}
+.inv-fragment-row{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:10px 14px}
+.inv-frag-icone{font-size:1.5rem;flex-shrink:0}
+.inv-frag-infos{flex:1;text-align:left}
+.inv-frag-nom{font-weight:bold;font-size:.88rem}
+.inv-frag-qty{font-size:.78rem;color:var(--accent)}
+.inv-frag-use{background:linear-gradient(135deg,var(--accent),#9a72c8);border:none;border-radius:8px;color:#0A0A1A;font-weight:bold;font-size:.8rem;cursor:pointer;padding:6px 12px;white-space:nowrap}
+.inv-frag-use:disabled{opacity:.35;cursor:not-allowed}
