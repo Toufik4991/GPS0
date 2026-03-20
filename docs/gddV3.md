@@ -131,48 +131,45 @@ Le Niveau 9 = Niveau final très difficile (pas de boss spécial)
 
 ---
 
-## 4. SPA — Séquence de lancement
+## 4. SPA — Séquence de lancement (ÉTAT RÉEL v3.5)
 
 ```
 Ouverture app
     ↓
-Splash 2s (logo GPS0 animé)
+Splash interactif (logo GPS0 animé + bouton)
+→ Bouton inject dynamiquement : « Commencer l'aventure 🚀 »
+→ Sur clic : requestFullscreen() + GPS0_Audio.playMusiqueExploration() + fade-out splash
     ↓
-requestFullscreen()
-→ Si refusé : bouton "Entrer dans GPS0 🚀"
-→ Croix ✕ en haut droite pour quitter le fullscreen
+requestPermissions() — géolocalisation + orientation
     ↓
 Modale Pseudo (si gps0_pseudo absent)
-→ Input "Ton pseudo d'explorateur"
-→ Bouton "Confirmer ✨" — sauvegarde gps0_pseudo
+→ Input « Ton pseudo d'explorateur »
+→ Bouton « Confirmer ✨ » — sauvegarde gps0_pseudo
     ↓
-⭐ NOUVEAU v3.0: Capture Selfie Avatar ⭐
-→ Caméra frontale 320×320 → Pixelisation 32×32
+Capture Selfie Avatar
+→ Caméra frontale 320×320 → pixelisation 32×32
 → Sauvegarde gps0_avatar_selfie_base64
-    ↓
-Modale Difficulté (showDifficulteModal)
-→ 4 cartes cliquables
-→ Bouton "Suivant ➡️" (pas de transition automatique)
+→ Pas d'explication textuelle — interface directe
     ↓
 Modale Parcours (showParcoursModal)
-→ 3 parcours + option "Entrer code défi"
-→ Bouton "Commencer 🚀"
+→ 3 parcours + option code défi
+→ Bouton « Commencer 🚀 »
     ↓
-⭐ MODIFIÉ v3.0: Chargement Zones Fixes ⭐
-→ Charge gps_config.json (9 zones fixes)
-→ Applique ordre du parcours choisi
+Modale Difficulté
+→ 4 cartes cliquables
     ↓
-Affichage code défi (LUNE-XX-DDMMYY-HHMM)
+Chargement Zones Fixes + Mini-jeux
     ↓
-Init GPS, Boussole, Halo, Indices, Lune, Audio (silencieux)
-⭐ NOUVEAU v3.0: Preload Mini-jeux CSS ⭐
-→ Préchargement moteur minijeux.js en arrière-plan
-Afficher HUD
+Init GPS, Boussole, Économie, Lune, HUD
     ↓
 Écran principal — La Boussole
 ```
 
-Chaque étape attend un tap "Suivant" ou "Commencer" — aucune transition automatique.
+**Règles absolues :**
+- La musique démarre UNIQUEMENT sur interaction utilisateur (clic bouton splash) — Web Audio API policy
+- `_tuto()` (guide cosmonaute) est NON BLOQUANT — accessible uniquement depuis menu ❓
+- Pas de chrono. Pas de fullscreen gate bloquant (fullscreen tenté silencieusement au clic splash)
+- Selfie : affiché directement après pseudo, pas d'écran d'explication préalable
 
 ---
 
@@ -181,39 +178,37 @@ Chaque étape attend un tap "Suivant" ou "Commencer" — aucune transition autom
 ### HUD (bandeau haut, toujours visible)
 
 ```
-┌───────────────────────────────────────────┐
-│  ⏱️ 12:34   ✨ 145   [sablier énergie]   │
-└───────────────────────────────────────────┘
+┌──────────────────────────────────────────────┐
+│  ✨ 145   ⚡ 78%   [🏪]   [🎒]   [☰]       │
+└──────────────────────────────────────────────┘
 ```
 
 - Fond : `rgba(0,0,0,0.6)`, `backdrop-filter: blur`
-- Texte blanc gras
-- **⏱️ Chrono** (MM:SS) : compte depuis le lancement de la session
-- **✨ Poussières d'étoiles** : nombre en temps réel
-- **Sablier énergie SVG** : voir section Économie
+- **✨ Poussières** (`#poussieres`) : nombre en temps réel
+- **⚡ Énergie** (`#hud-energie-val`) : pourcentage mis à jour par `GPS0_Economie.updateHUD()`
+- **🏪 Boutique** (`#hud-boutique`) : ouvre modal boutique
+- **🎒 Inventaire** (`#hud-inventaire`) : ouvre modal inventaire
+- **☰ Menu** (`#menu-btn`) : toggle panneau menu
+- ~~⏱️ Chrono~~ : **supprimé définitivement**
 
-### Bouton menu
+### Menu Principal (☰ Toggle)
 
-- Position fixe : bas droite (`position: fixed; bottom: 20px; right: 20px`)
-- Cercle 50px, fond `rgba(200,162,200,0.3)`, bordure `1px solid #C8A2C8`
-- Icône ☰ blanc
+**Comportement :**
+- `display:none` par défaut (`.menu-panel` CSS)
+- Clic sur `#menu-btn` → toggle classe `.open` → `display:flex`
+- Re-clic → ferme (retire `.open`)
+- Jamais ouvert par défaut, jamais visible sans action utilisateur
 
-### Boussole — Visuel
+**6 items :**
 
-**Fond = Astéroïde SVG**
-- Forme irrégulière rocheuse (path avec courbes)
-- Fill dégradé gris-brun `#5a5a6e → #3a3a4e`
-- Glow pulsant : filter drop-shadow animé (2s infini, opacity 0.4→0.8)
-- 3-4 cratères (ellipses sombres)
-- Taille : 200px
-
-**Aiguille = Fusée SVG**
-- Corps fuselé, couleur lilas `#C8A2C8`
-- Hublot rond bleu `#4FC3F7`
-- 2 ailettes latérales
-- Flamme arrière animée (scaleY 0.8→1.2, opacity 0.6→1, 0.3s infini)
-- Tourne selon le bearing GPS vers la destination
-- Taille fusée : ~80px
+| ID | Label | Action |
+|---|---|---|
+| `menu-audio` | 🔊 Son | Toggle audio ON/OFF |
+| `menu-difficulte` | ⚙️ Difficulté | Modal confirmation + reload |
+| `menu-reset` | 🔄 Réinitialiser | Efface localStorage + reload |
+| `menu-demo` | 🎮 Tester un niveau | Ouvre modal niveaux **sans mot de passe** |
+| `menu-debug` | 🐛 Mode Debug | Demande mot de passe `jules`, ouvre modal niveaux |
+| `menu-guide` | ❓ Guide du cosmonaute | Ouvre `_ouvrirTuto()` non bloquant |
 
 ### Boussole — États
 
@@ -251,18 +246,14 @@ Visible uniquement si boussole ON (sauf gris = OFF/épuisé).
 
 ### Menu Principal (Burger Menu)
 
-Le bouton burger (bas droite fixe) ouvre un panneau avec les options :
-- **Parametres** : modifier difficulte en cours de partie
-- **Reinitialiser** : efface toute la progression localStorage
-- **Mode Demo** : acces direct a un niveau (protege par mot de passe)
+Le bouton `☰` dans le HUD (haut droite) ouvre le menu par **toggle CSS** (`.open` class).
 
-#### Mode Demo Protege (Developpeur uniquement)
+- Caché par défaut : `display:none`
+- Clic → `.open` → `display:flex` en colonne
+- Re-clic → ferme
+- **6 items** : Son, Difficulté, Réinitialiser, Tester niveau, Mode Debug, Guide cosmonaute
 
-Accessible depuis le menu burger. Demande un mot de passe avant d'ouvrir le modal.
-
-- **Mot de passe :** jules
-- Si correct : ouvre un modal avec 9 boutons (un par niveau)
-- Chaque bouton lance le mini-jeu directement sans validation GPS
+Voir section 5 pour le détail complet.
 
 
 ## 6. SPA — Système de Difficulté (IDENTIQUE v2.0)
@@ -448,30 +439,48 @@ if (MONDE_W > W) {
 }
 ```
 
-### Contrôles Full-Screen
+### Contrôles Full-Screen (INVISIBLES)
 
 ```
 ┌─────────────────────────────────────────┐
 │ HUD (48px fixe)                         │
-├───────────────────────┬─────────────────┤
-│  Zone GAUCHE (50%)    │  Zone DROITE    │  ← touch pour se déplacer
-│                       │     (50%)       │
-│       Monde de jeu (scrollant)          │
-│                                         │
-├─────────────────────────────────────────┤
-│          [  ↑  SAUT  ]                  │  ← bouton cercle 72px
+├────────────────────────────────────────────┤
+│                                            │
+│       Monde de jeu (scrollant)            │
+│  [zone tactile G]  [zone saut]  [zone D]  │
+│  TRANSPARENTES — aucune flèche visible    │
 └─────────────────────────────────────────┘
 ```
 
-- **#zone-gauche** : fixed, top 48px, left 0, width 50%, bottom 80px
-- **#zone-droite** : fixed, top 48px, right 0, width 50%, bottom 80px
-- **#btn-saut** : fixed, bottom 20px, centré, cercle 72px lilas
+- Zones tactiles `background:transparent; border:none; color:transparent`
+- Aucun symbole ◀ ▲ ▶ affiché
+- Le joueur interagit par tâtonnement / feeling
+- Les plateformes avec leur halo lumineux guident visuellement
 - **Clavier** : flèches / QZSD (debug desktop)
 
-### Structure HTML Fixée (niveau*.html)
+### Plateformes — Visuels et Quantités
 
-```html
-<div id="mj-hud">Niveau X | 0/8 ✨ | ❤️❤️❤️ | [Quitter]</div>
+**Halo lumineux** : Toutes les plateformes flottantes (`.plate:not(.sol)` et `.plateforme:not(.sol)`) ont un glow CSS violet doux :
+```css
+box-shadow: 0 4px 12px rgba(0,0,0,0.5), 0 0 14px rgba(200,162,200,0.55), 0 0 30px rgba(200,162,200,0.25);
+```
+- Crée un contraste net sur le fond spatial sombre
+- Le joueur voit clairement où sauter sans aide textuelle
+
+**Densité** : Chaque niveau a ~20-26 plateformes (5 sols + 15-21 flottantes) sur un monde de 4 écrans de large.
+
+**Dispersion des poussières** : réparties sur toute la longueur — début, milieu, haut, fin. Exploration requise.
+
+### Overlay Fin de Mini-jeu
+
+**3 boutons verticaux** — ordre fixe :
+```
+🎁 Prendre les X poussières  ← visible seulement en victoire
+🔄 Recommencer
+❌ Abandonner
+```
+- `flex-direction: column`, `align-items: stretch`, `width: min(300px, 90vw)`
+- Bouton récompense en tête de liste si victoire, absent si défaite
 <div id="lune-ingame"><!-- bulle Lune in-game --></div>
 <div id="monde">
   <div id="bg-etoiles"></div>
@@ -541,19 +550,19 @@ document.addEventListener("minijeu:failed", () => {
 });
 ```
 
-### Mécaniques par Niveau
+### Mécaniques par Niveau (ÉTAT v3.5)
 
-| Niveau | Nouveauté | monde_w | Slimes | Lasers | Pics | Double saut |
-|--------|-----------|---------|--------|--------|------|-------------|
-| 1 | Tutoriel | 1.0 | 0 | 0 | 0 | non |
-| 2 | Slimes + trous | 1.3 | 2 | 0 | 0 | non |
-| 3 | Multi-slimes | 1.5 | 4 | 0 | 0 | non |
-| 4 | Double saut + mobiles | 1.8 | 2 | 0 | 0 | **oui** |
-| 5 | Lasers temporisés | 2.0 | 2 | 2 | 0 | oui |
-| 6 | Mix + pics | 2.2 | 3 | 2 | 2 | oui |
-| 7 | Tout combiné | 2.5 | 4 | 3 | 3 | oui |
-| 8 | Challenge | 2.8 | 5 | 4 | 4 | oui |
-| 9 | Final très difficile | 3.0 | 6 | 5 | 5 | oui |
+| Niveau | Nouveauté | monde_w | Etoiles | Slimes | Lasers | Pics | Double saut |
+|--------|-----------|---------|---------|--------|--------|------|-------------|
+| 1 | Tutoriel | 4× | 12 | 0 | 0 | 0 | non |
+| 2 | Slimes + trous | 4× | 16 | 5 | 0 | 0 | non |
+| 3 | Multi-slimes | 4× | 18 | 8 | 0 | 0 | non |
+| 4 | Double saut + mobiles | 4× | 18 | 0 | 0 | 0 | **oui** |
+| 5 | Lasers + fragiles | 4× | 16 | 0 | 4 | 0 | oui |
+| 6 | Mix + pics | 4× | 20 | 3 | 3 | 3 | oui |
+| 7 | Tout combiné + rapide | 4× | 22 | 4 | 4 | 4 | oui |
+| 8 | Challenge Oméga | 4× | 24 | 5 | 6 | 6 | oui (2 vies) |
+| 9 | Final | — | — | — | — | — | oui |
 
 ## 10. Lune Narratrice Taquine
 
@@ -861,9 +870,9 @@ GPS0/
 
 ---
 
-**📅 GDD v3.0 créé :** 15/03/2026
-**🎯 Status :** 🟡 Questions critiques à résoudre avant implémentation
-**✍️ Prochaine étape :** Répondre aux 13 questions + validation architecture
+**📅 GDD v3.5 mis à jour :** 20/03/2026
+**🎯 Status :** 🟢 Opérationnel — SW v16 / APP 3.5.0 en production
+**✍️ Prochaine étape :** Tests GPS terrain + Niveau 9 final
 
 ---
 
@@ -1221,11 +1230,10 @@ function detectPerformance() {
 
 ---
 
-**📅 GDD v3.0 FINALISÉ :** 15/03/2026
-**🎯 Status :** 🟢 COMPLET - Document de référence prêt
-**📏 Taille :** 1000+ lignes avec tous les détails techniques
-**✍️ Prochaine étape :** Implémentation selon ce document de référence unique
+**📅 GDD v3.5 mis à jour :** 20/03/2026
+**🎯 Status :** 🟢 Opérationnel — SW v16 / APP 3.5.0 en production
+**✍️ Prochaine étape :** Tests GPS terrain + Niveau 9 final
 
 ---
 
-*Ce GDD v3.0 est maintenant le document de référence UNIQUE et COMPLET pour GPS0. Il contient toutes les spécifications techniques, APIs, configurations et conventions nécessaires pour l'implémentation complète du projet.*
+*Ce GDD v3.5 reflète l'état EXACT du code en production. Toute modification du code doit être répercutée ici simultanément.*
