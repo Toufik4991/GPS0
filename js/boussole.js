@@ -33,10 +33,8 @@ window.GPS0_Boussole = (() => {
     const f = document.getElementById('fusee-wrapper');
     if (f) f.style.transform = `rotate(${bear}deg)`;
   }
-  function _distance(dist) {
-    const d = document.getElementById('distance-label');
-    if (d) d.textContent = dist < 1000 ? dist + 'm' : (dist / 1000).toFixed(1) + 'km';
-  }
+  // Pas d'affichage de distance en chiffres (design GPS0 v3.2)
+  function _distance() {}
 
   function _render() {
     const w = document.getElementById('asteroide-wrapper');

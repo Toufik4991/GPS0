@@ -18,6 +18,20 @@
     <div class="nuages"></div>
   </div>
 
+  <!-- MODAL PERMISSIONS (1er lancement) -->
+  <dialog id="modal-permissions" aria-modal="true" aria-labelledby="perm-titre">
+    <div class="modal-box">
+      <h2 id="perm-titre">&#128640; Prêt pour l'aventure ?</h2>
+      <p style="font-size:.88rem;color:rgba(255,255,255,.75);text-align:center">Pour vivre GPS0 pleinement, j'ai besoin de quelques accès :</p>
+      <div class="perm-list">
+        <div class="perm-item"><span class="perm-icon">&#128205;</span><div><strong>Localisation GPS</strong><p>Pour détecter les zones mystérieuses autour de toi.</p></div></div>
+        <div class="perm-item"><span class="perm-icon">&#128247;</span><div><strong>Caméra</strong><p>Pour personnaliser ton héros (tu verras comment 😉).</p></div></div>
+      </div>
+      <button id="perm-accepter" class="btn-primary">Allons-y &#128640;</button>
+      <button id="perm-passer" class="btn-ghost">Continuer sans</button>
+    </div>
+  </dialog>
+
   <!-- SPLASH -->
   <div id="splash" class="screen visible" role="status" aria-live="polite">
     <div class="splash-content">
@@ -116,7 +130,7 @@
         <div class="distance-label" id="distance-label" aria-live="polite">---</div>
       </div>
 
-      <button class="btn-toggle-boussole" id="toggle-boussole" aria-pressed="false">
+      <button class="btn-toggle-boussole" id="toggle-boussole" aria-pressed="false" style="display:none" aria-hidden="true">
         <span class="toggle-icon" aria-hidden="true">🔮</span>
         <span class="toggle-label">Activer la boussole</span>
       </button>
@@ -147,18 +161,17 @@
   <!-- MODAL SELFIE -->
   <dialog id="modal-selfie" aria-modal="true" aria-labelledby="selfie-titre">
     <div class="modal-box selfie-box">
-      <h2 id="selfie-titre">📸 Ton visage, ta tête !</h2>
-      <p style="font-size:0.85rem;color:rgba(255,255,255,0.7)">Tu deviendras littéralement le héros du jeu.</p>
+      <h2 id="selfie-titre" style="display:none" aria-hidden="true">Selfie</h2>
       <div class="selfie-viewport">
         <video id="selfie-video" playsinline muted autoplay aria-label="Aperçu caméra"></video>
         <canvas id="selfie-preview" width="200" height="200" aria-label="Aperçu selfie pixelisé"></canvas>
         <canvas id="selfie-canvas" width="32" height="32" style="display:none" aria-hidden="true"></canvas>
       </div>
       <div class="selfie-actions">
-        <button id="selfie-capture" class="btn-primary">📸 Capturer</button>
-        <button id="selfie-retake" class="btn-secondary" hidden>🔄 Reprendre</button>
-        <button id="selfie-confirm" class="btn-primary" hidden>✅ C'est moi !</button>
-        <button id="selfie-skip" class="btn-ghost">Passer (personnage générique)</button>
+        <button id="selfie-capture" class="btn-primary">&#128247;</button>
+        <button id="selfie-retake" class="btn-secondary" hidden>&#128260;</button>
+        <button id="selfie-confirm" class="btn-primary" hidden>&#9989;</button>
+        <button id="selfie-skip" class="btn-ghost">Passer</button>
       </div>
     </div>
   </dialog>

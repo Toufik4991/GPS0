@@ -6,6 +6,7 @@ window.GPS0_App = (() => {
     GPS0_Economie.rechargePassive();
     await _splash();
     if (!(await _fullscreen())) await _fullscreenGate();
+    await _requestPermissions();
     await _pseudo();
     await _selfie();
     await _tuto();
@@ -22,6 +23,30 @@ window.GPS0_App = (() => {
 
   function _splash() {
     return new Promise(r => setTimeout(() => { document.getElementById('splash').classList.remove('visible'); r(); }, 2000));
+  }
+
+  function _requestPermissions() {
+    if (localStorage.getItem('gps0_perms_asked')) return Promise.resolve();
+    const m = document.getElementById('modal-permissions');
+    if (!m) return Promise.resolve();
+    m.showModal();
+    const _doRequest = async () => {
+      // GPS : simple getCurrentPosition pour déclencher la demande native
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(() => {}, () => {}, { timeout: 3000 });
+      }
+      // Caméra : ouvrir puis fermer immédiatement pour obtenir la permission
+      try {
+        const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+        s.getTracks().forEach(t => t.stop());
+      } catch (e) { /* ignoré — l'utilisateur a refusé ou pas de caméra */ }
+      localStorage.setItem('gps0_perms_asked', '1');
+      m.close();
+    };
+    return new Promise(r => {
+      document.getElementById('perm-accepter').addEventListener('click', () => { _doRequest().then(r); }, { once: true });
+      document.getElementById('perm-passer').addEventListener('click', () => { localStorage.setItem('gps0_perms_asked', '1'); m.close(); r(); }, { once: true });
+    });
   }
 
   async function _fullscreen() {
@@ -250,19 +275,30 @@ window.GPS0_App = (() => {
   }
 
   function _bindUI() {
-    document.getElementById('toggle-boussole')?.addEventListener('click', () => {
-      if (GPS0_Economie.isEpuise()) return;
-      GPS0_Boussole.toggle();
-      GPS0_Audio.playSFX(GPS0_Boussole.estActif() ? 'boussole_on' : 'boussole_off');
-    });
+    // toggle-boussole button hidden — tout passe par l'astéroïde
 
-    // Astéroïde cliquable directement (flash + lancement)
+    // Astéroïde : toggle boussole (off/on) OU lancement mini-jeu (zone)
     document.getElementById('asteroide-wrapper')?.addEventListener('click', () => {
       const w = document.getElementById('asteroide-wrapper');
-      if (!w || w.dataset.etat !== 'zone') return;
+      if (!w) return;
+      const etat = w.dataset.etat;
       const svg = w.querySelector('.asteroide-svg');
-      if (svg) { svg.classList.add('flash'); setTimeout(() => svg.classList.remove('flash'), 420); }
-      const z = GPS0_GPS.zoneActuelle(); if (z) _lancerMiniJeu(z.mini_jeu);
+      const flash = () => { if (svg) { svg.classList.add('flash'); setTimeout(() => svg.classList.remove('flash'), 420); } };
+
+      if (etat === 'zone') {
+        flash();
+        const z = GPS0_GPS.zoneActuelle(); if (z) _lancerMiniJeu(z.mini_jeu);
+        return;
+      }
+      if (etat === 'epuise') {
+        GPS0_Lune.parler('energie_faible');
+        return;
+      }
+      // Toggle boussole on/off
+      if (GPS0_Economie.isEpuise()) return;
+      flash();
+      GPS0_Boussole.toggle();
+      GPS0_Audio.playSFX(GPS0_Boussole.estActif() ? 'boussole_on' : 'boussole_off');
     });
 
     const mb = document.getElementById('menu-btn'), mp = document.getElementById('menu-panel');
@@ -323,12 +359,7 @@ window.GPS0_App = (() => {
       document.getElementById('modal-boutique').close();
     });
     // HUD boutique + inventaire
-    // Fermer le menu si clic en dehors
-    document.addEventListener('click', e => {
-      if (!mp.hidden && !mp.contains(e.target) && e.target !== mb && !mb.contains(e.target)) {
-        mp.hidden = true; mb.setAttribute('aria-expanded', 'false');
-      }
-    });
+    // Menu : toggle strict — PAS de fermeture automatique au clic extérieur
     document.getElementById('hud-boutique')?.addEventListener('click', () => _ouvrirBoutique());
     document.getElementById('hud-inventaire')?.addEventListener('click', () => _ouvrirInventaire());
     document.getElementById('inventaire-fermer')?.addEventListener('click', () => {
@@ -483,15 +514,9 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('service-worker.js').then(reg => {
       reg.addEventListener('updatefound', () => {
+        // Mise à jour silencieuse — pas de toast visible
         const nw = reg.installing;
-        if (nw) nw.addEventListener('statechange', () => {
-          if (nw.state === 'installed' && navigator.serviceWorker.controller) {
-            const t = document.createElement('div');
-            t.id = 'sw-toast'; t.textContent = '🌙 Nouvelle version ! Recharger';
-            t.onclick = () => window.location.reload();
-            document.body.appendChild(t);
-          }
-        });
+        if (nw) nw.addEventListener('statechange', () => { /* silent update */ });
       });
     }).catch(() => {});
     if (navigator.serviceWorker.controller) {
