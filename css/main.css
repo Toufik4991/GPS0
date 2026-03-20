@@ -185,6 +185,23 @@ button, input { touch-action: manipulation; }
 #sw-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:rgba(105,255,71,.15);border:1px solid #69FF47;color:#69FF47;padding:10px 22px;border-radius:24px;font-size:.88rem;font-weight:bold;cursor:pointer;z-index:9999;animation:toast-in .4s ease;backdrop-filter:blur(6px)}
 @keyframes toast-in{from{opacity:0;transform:translateX(-50%) translateY(16px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
 
+/* ── COSMOS FLOTTANTS ── */
+.cosmos-floating{position:fixed;inset:0;z-index:2;pointer-events:none;overflow:hidden}
+.cf{position:absolute;opacity:.5;will-change:transform;line-height:1;font-style:normal}
+.cf-rocket{top:72%;left:-4%;font-size:1.3rem;animation:cf-rise 34s linear infinite}
+.cf-ufo{top:38%;right:-5%;font-size:1.5rem;animation:cf-slide-l 42s linear infinite;animation-delay:-16s}
+.cf-moon{top:16%;right:7%;font-size:1.2rem;animation:cf-bob 58s ease-in-out infinite;animation-delay:-25s;opacity:.4}
+.cf-star1{top:60%;left:7%;font-size:1rem;animation:cf-bob 44s ease-in-out infinite;animation-delay:-9s}
+.cf-star2{top:30%;left:52%;font-size:.9rem;animation:cf-bob 37s ease-in-out infinite;animation-delay:-19s;opacity:.35}
+.cf-cat{top:78%;right:10%;font-size:1.4rem;animation:cf-walk 50s linear infinite;animation-delay:-6s}
+.cf-planet{top:6%;left:62%;font-size:2rem;animation:cf-bob 75s ease-in-out infinite;animation-delay:-33s;opacity:.35}
+.cf-comet{top:4%;left:-14%;font-size:1.2rem;animation:cf-comet 20s linear infinite;animation-delay:-4s}
+@keyframes cf-rise{0%{transform:translate(0,20vh) rotate(45deg);opacity:0}8%{opacity:.55}92%{opacity:.55}100%{transform:translate(28vw,-120vh) rotate(45deg);opacity:0}}
+@keyframes cf-slide-l{0%{transform:translate(0,0);opacity:0}8%{opacity:.5}92%{opacity:.5}100%{transform:translate(-115vw,-10vh);opacity:0}}
+@keyframes cf-bob{0%,100%{transform:translate(0,0)}25%{transform:translate(7px,-13px)}50%{transform:translate(-5px,9px)}75%{transform:translate(10px,5px)}}
+@keyframes cf-walk{0%{transform:translateX(0);opacity:0}5%{opacity:.5}90%{opacity:.5}100%{transform:translateX(-140vw);opacity:0}}
+@keyframes cf-comet{0%{transform:translate(-8vw,0) rotate(-18deg);opacity:0}6%{opacity:.7}88%{opacity:.7}100%{transform:translate(120vw,38vh) rotate(-18deg);opacity:0}}
+
 /* ── BOUTIQUE ── */
 .fragment-carte{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:14px;padding:12px 16px;cursor:pointer;transition:background .2s}
 .fragment-carte:hover{background:rgba(200,162,200,.15)}

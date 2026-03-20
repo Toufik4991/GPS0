@@ -18,6 +18,18 @@
     <div class="nuages"></div>
   </div>
 
+  <!-- SVG FLOTTANTS SPATIAUX -->
+  <div class="cosmos-floating" aria-hidden="true">
+    <span class="cf cf-rocket">🚀</span>
+    <span class="cf cf-ufo">🛸</span>
+    <span class="cf cf-moon">🌙</span>
+    <span class="cf cf-star1">⭐</span>
+    <span class="cf cf-star2">✨</span>
+    <span class="cf cf-cat">🐱</span>
+    <span class="cf cf-planet">🪐</span>
+    <span class="cf cf-comet">💫</span>
+  </div>
+
   <!-- MODAL PERMISSIONS (1er lancement) -->
   <dialog id="modal-permissions" aria-modal="true" aria-labelledby="perm-titre">
     <div class="modal-box">
@@ -162,6 +174,7 @@
   <dialog id="modal-selfie" aria-modal="true" aria-labelledby="selfie-titre">
     <div class="modal-box selfie-box">
       <h2 id="selfie-titre" style="display:none" aria-hidden="true">Selfie</h2>
+      <p style="text-align:center;font-size:1.05rem;color:var(--accent);font-weight:bold;margin-bottom:4px">Montre-moi ton minois ! 🪸</p>
       <div class="selfie-viewport">
         <video id="selfie-video" playsinline muted autoplay aria-label="Aperçu caméra"></video>
         <canvas id="selfie-preview" width="200" height="200" aria-label="Aperçu selfie pixelisé"></canvas>
@@ -222,50 +235,31 @@
       <div class="intro-steps-wrap" id="intro-steps-wrap">
 
         <div class="intro-step active" data-step="0">
-          <div class="intro-step-icon">&#127758;</div>
-          <h3>Le concept</h3>
-          <p>GPS0 mélange <strong>le monde réel</strong> et des <strong>mini-jeux pixelisés</strong>.<br>
-          Tu te déplaces en ville pour trouver des <strong>zones GPS</strong> et déclencher des niveaux &nbsp;🎮.</p>
-          <div class="intro-flow">
-            <span>&#127757; Marche</span>
-            <span class="intro-arrow">→</span>
-            <span>&#127919; Zone</span>
-            <span class="intro-arrow">→</span>
-            <span>&#127918; Jeu</span>
-            <span class="intro-arrow">→</span>
-            <span>&#10024; Poussières</span>
-          </div>
+          <div class="intro-step-icon">&#127756;</div>
+          <h3>Bienvenue dans GPS0</h3>
+          <p>L'espace t'attend, cosmonaute. Prends l'air. Marche. Et ouvre l'&#x1F441;&#xFE0F;...<br>
+          <strong>Le reste ? Tu le découvriras toi-même.</strong></p>
         </div>
 
         <div class="intro-step" data-step="1">
           <div class="intro-step-icon">&#128302;</div>
-          <h3>La Boussole Cosmique</h3>
-          <p>Active la boussole pour qu'elle pointe vers ta prochaine zone. Elle <strong>consomme de l'énergie</strong> : éteins-la quand tu t'arrêtes !</p>
-          <div class="intro-halo-legende">
-            <span class="halo-dot" style="background:#FF3333">&#9679;</span><span>Loin (&gt;150m)</span>
-            <span class="halo-dot" style="background:#FF8C00">&#9679;</span><span>Proche (&lt;150m)</span>
-            <span class="halo-dot" style="background:#69FF47">&#9679;</span><span>Très proche (&lt;80m)</span>
-            <span class="halo-dot" style="background:#4FC3F7">&#9679;</span><span>Zone atteinte ! &#127919;</span>
-          </div>
+          <h3>Ton compagnon cosmique</h3>
+          <p>Observe <strong>l'astéroïde</strong> au centre de l'écran. Tape dessus.<br>
+          Les couleurs qui t'entourent te diront beaucoup de choses... &#127912;</p>
         </div>
 
         <div class="intro-step" data-step="2">
-          <div class="intro-step-icon">&#127918;</div>
-          <h3>Les Mini-Jeux</h3>
-          <p>Quand le halo devient <strong style="color:#4FC3F7">bleu</strong>, le mini-jeu se lance automatiquement.<br>
-          Tu incarnes un cosmonaute avec <strong>ton propre visage</strong> pixelisé comme tête !</p>
-          <p style="margin-top:8px;font-size:0.83rem;color:rgba(255,255,255,.65)">
-            ◀ ▶ Gauche / Droite de l'écran &nbsp;|&nbsp; &#8593; Bouton central pour sauter
-          </p>
-          <p style="font-size:0.83rem;color:#FFD700;margin-top:6px">Collecte toutes les &#10024; poussières pour gagner !</p>
+          <div class="intro-step-icon">&#9889;</div>
+          <h3>Gère bien ton énergie</h3>
+          <p>Surveille <strong>le cercle lumineux</strong> autour de l'astéroïde.<br>
+          Si ton énergie tombe à zéro... tu seras dans le noir cosmique &#127769;</p>
         </div>
 
         <div class="intro-step" data-step="3">
-          <div class="intro-step-icon">&#9889;</div>
-          <h3>Énergie &amp; Boutique</h3>
-          <p>Ton énergie diminue pendant ta marche. Si elle tombe à 0, la boussole s'éteint.<br>
-          Dépense tes &#10024; poussières en <strong>boutique 🏪</strong> pour acheter des Fragments Lunaires et te recharger !</p>
-          <p style="font-size:0.82rem;color:rgba(255,255,255,.6);margin-top:8px">Les poussières sont gagnées uniquement en <strong>complétant les mini-jeux</strong>.</p>
+          <div class="intro-step-icon">&#128640;</div>
+          <h3>L'aventure commence ici !</h3>
+          <p>GPS0 se joue <strong>dans le monde réel</strong>. Équipe ton casque, pars en exploration, et découvre le reste par toi-même &#127769;</p>
+          <p style="font-size:0.82rem;color:rgba(255,255,255,.55);margin-top:12px;font-style:italic">Astuce : les &#10024; poussières servent en boutique &#127987;&#65039;</p>
         </div>
 
       </div>
@@ -283,6 +277,7 @@
         <button id="intro-prev" class="btn-ghost" disabled>&#8592; Retour</button>
         <button id="intro-next" class="btn-primary">Suivant &#8594;</button>
       </div>
+      <button id="intro-skip" class="btn-ghost" style="font-size:.75rem;margin-top:2px">Je me lance tout de suite ! &#128640;</button>
     </div>
   </dialog>
   <!-- MODAL DEMO -->

@@ -23,10 +23,7 @@
     #monde {
       position: fixed; inset: 0; overflow: hidden;
       background: linear-gradient(180deg, #0A0A1A 0%, #0D1B2A 60%, #1a2a40 100%);
-      background-image: url('../assets/backgrounds/fond_ecran1.jpeg'), linear-gradient(180deg, #0A0A1A 0%, #0D1B2A 60%, #1a2a40 100%);
-      background-size: cover;
-      background-position: center;
-      background-blend-mode: multiply;
+      background: url('../assets/backgrounds/fond_ecran1.jpeg') center/cover no-repeat;
     }
 
     /* Fond étoiles */
@@ -83,10 +80,10 @@
     }
     @keyframes scintille { from { opacity: 0.7; transform: scale(0.9); } to { opacity: 1; transform: scale(1.1); } }
 
-        #zone-gauche { position:fixed; top:48px; left:0; width:50%; bottom:80px; z-index:40; }
-    #zone-droite { position:fixed; top:48px; right:0; width:50%; bottom:80px; z-index:40; }
-    #btn-saut { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); width:72px; height:72px; border-radius:50%; background:rgba(200,162,200,0.2); border:2px solid rgba(200,162,200,0.5); color:#fff; font-size:1.5rem; cursor:pointer; z-index:40; display:flex; align-items:center; justify-content:center; }
-    #btn-saut:active { background:rgba(200,162,200,0.4); }
+        #ctrl-bar { position:fixed; bottom:0; left:0; right:0; height:80px; z-index:45; display:flex; align-items:center; justify-content:space-between; padding:8px 16px; background:rgba(0,0,0,0.45); backdrop-filter:blur(4px); gap:10px; }
+    #zone-gauche, #zone-droite { flex:1; height:56px; border-radius:14px; border:2px solid rgba(200,162,200,0.5); background:rgba(200,162,200,0.15); color:#fff; font-size:2rem; cursor:pointer; display:flex; align-items:center; justify-content:center; touch-action:none; user-select:none; -webkit-user-select:none; }
+    #btn-saut { flex:1.2; height:56px; border-radius:14px; border:2px solid rgba(79,195,247,0.6); background:rgba(79,195,247,0.2); color:#fff; font-size:2rem; cursor:pointer; display:flex; align-items:center; justify-content:center; touch-action:none; user-select:none; -webkit-user-select:none; }
+    #zone-gauche:active, #zone-droite:active, #btn-saut:active { opacity:0.5; }
 
     /* Instruction overlay */
     #tuto-overlay {
@@ -153,9 +150,11 @@
 </div>
 
 <!-- CONTROLES -->
-<div id="zone-gauche"></div>
-<div id="zone-droite"></div>
-<button id="btn-saut">&#8593;</button>
+<div id="ctrl-bar">
+  <button id="zone-gauche">&#9664;</button>
+  <button id="btn-saut">&#9650;</button>
+  <button id="zone-droite">&#9654;</button>
+</div>
 
 <!-- TUTO OVERLAY -->
 <div id="tuto-overlay">

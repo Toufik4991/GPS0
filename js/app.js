@@ -307,13 +307,11 @@ window.GPS0_App = (() => {
     });
 
     document.getElementById('menu-audio')?.addEventListener('click', () => {
-      mp.hidden = true; mb.setAttribute('aria-expanded', 'false');
       const on = GPS0_Audio.toggle();
       document.getElementById('menu-audio').textContent = on ? '🔊 Son' : '🔇 Son OFF';
     });
 
     document.getElementById('menu-difficulte')?.addEventListener('click', () => {
-      mp.hidden = true; mb.setAttribute('aria-expanded', 'false');
       const diff = localStorage.getItem('gps0_difficulte');
       const _noms = { clair_de_lune: '\u{1F315} Clair de Lune', face_cachee: '\u{1F317} Face Cach\u00e9e', eclipse_totale: '\u{1F311} \u00c9clipse Totale', trou_noir: '\u{1F573}\uFE0F Trou Noir' };
       const actuel = _noms[diff] || diff || '?';
@@ -332,14 +330,12 @@ window.GPS0_App = (() => {
     });
 
     document.getElementById('menu-reset')?.addEventListener('click', () => {
-      mp.hidden = true; mb.setAttribute('aria-expanded', 'false');
       if (!confirm('Reinitialiser la progression ?')) return;
       ['gps0_zones_actives','gps0_economie','gps0_pseudo','gps0_difficulte','gps0_avatar_selfie_base64','gps0_minijeux_progression'].forEach(k => localStorage.removeItem(k));
       location.reload();
     });
 
     document.getElementById('menu-demo')?.addEventListener('click', () => {
-      mp.hidden = true; mb.setAttribute('aria-expanded', 'false');
       const mdp = prompt('🔒 Mot de passe debug :');
       if (mdp !== 'jules') { if (mdp !== null) alert('Mot de passe incorrect.'); return; }
       document.getElementById('modal-demo').showModal();
@@ -498,11 +494,13 @@ window.GPS0_App = (() => {
     }
 
     return new Promise(r => {
+      const _fin = () => { localStorage.setItem('gps0_tuto_vu', '1'); m.close(); r(); };
       prevBtn.addEventListener('click', () => { if (currentStep > 0) gotoStep(--currentStep); });
       nextBtn.addEventListener('click', () => {
         if (currentStep < totalSteps - 1) { gotoStep(++currentStep); }
-        else { localStorage.setItem('gps0_tuto_vu', '1'); m.close(); r(); }
+        else { _fin(); }
       });
+      document.getElementById('intro-skip')?.addEventListener('click', _fin, { once: true });
     });
   }
 
