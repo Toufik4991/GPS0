@@ -312,7 +312,8 @@ window.GPS0_App = (() => {
 
     const mb = document.getElementById('menu-btn'), mp = document.getElementById('menu-panel');
     mb?.addEventListener('click', () => {
-      const h = mp.hidden; mp.hidden = !h; mb.setAttribute('aria-expanded', !h ? 'true' : 'false');
+      const isOpen = mp.classList.toggle('open');
+      mb.setAttribute('aria-expanded', String(isOpen));
     });
 
     document.getElementById('menu-audio')?.addEventListener('click', () => {

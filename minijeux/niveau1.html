@@ -42,6 +42,7 @@
       box-shadow: 0 4px 12px rgba(0,0,0,0.5);
     }
     .plateforme.sol { background: linear-gradient(180deg, #4a4a5e, #2a2a3e); }
+    .plateforme:not(.sol) { box-shadow: 0 4px 12px rgba(0,0,0,0.5), 0 0 14px rgba(200,162,200,0.55), 0 0 30px rgba(200,162,200,0.25); }
 
     /* Joueur Cosmonaute */
     #joueur {
@@ -151,18 +152,17 @@
 
 <!-- CONTROLES -->
 <div id="ctrl-bar">
-  <button id="zone-gauche">&#9664;</button>
-  <button id="btn-saut">&#9650;</button>
-  <button id="zone-droite">&#9654;</button>
+  <button id="zone-gauche"></button>
+  <button id="btn-saut"></button>
+  <button id="zone-droite"></button>
 </div>
 
 <!-- TUTO OVERLAY -->
 <div id="tuto-overlay">
   <h2>🚀 Niveau 1 — Tutoriel</h2>
-  <p>Collecte les <strong style="color:#FFD700">8 poussières d'étoiles</strong> pour terminer le niveau !</p>
-  <div class="tuto-controle"><span>◀ ▶</span><span>Touche gauche / droite de l'écran pour te déplacer</span></div>
-  <div class="tuto-controle"><span>↑</span><span>Bouton central pour sauter</span></div>
+  <p>Collecte les <strong style="color:#FFD700">12 poussières d'étoiles</strong> pour terminer le niveau !</p>
   <div class="tuto-controle"><span>✨</span><span>Collecte toutes les poussières d'étoiles</span></div>
+  <div class="tuto-controle"><span>🌙</span><span>Explore tout le niveau pour les trouver !</span></div>
   <button id="btn-jouer-tuto">C'est parti ! 🚀</button>
 </div>
 
@@ -197,32 +197,45 @@
   let camX = 0;
 
   const PLATES_CONFIG = [
-    { x: 0, y: H-60, w: Math.round(W*.50), h: 60, sol: true },
-    { x: Math.round(W*.80),  y: H-60, w: Math.round(W*.50), h: 60, sol: true },
-    { x: Math.round(W*1.60), y: H-60, w: Math.round(W*.50), h: 60, sol: true },
-    { x: Math.round(W*2.38), y: H-60, w: Math.round(W*.50), h: 60, sol: true },
-    { x: Math.round(W*3.15), y: H-60, w: Math.round(W*.85), h: 60, sol: true },
-    { x: Math.round(W*.28),  y: H-165, w: 95, h: 18 },
-    { x: Math.round(W*.62),  y: H-205, w: 95, h: 18 },
-    { x: Math.round(W*1.08), y: H-175, w: 90, h: 18 },
-    { x: Math.round(W*1.48), y: H-245, w: 90, h: 18 },
-    { x: Math.round(W*1.92), y: H-185, w: 90, h: 18 },
-    { x: Math.round(W*2.28), y: H-230, w: 90, h: 18 },
-    { x: Math.round(W*2.72), y: H-195, w: 90, h: 18 },
-    { x: Math.round(W*3.08), y: H-265, w: 90, h: 18 },
-    { x: Math.round(W*3.55), y: H-205, w: 90, h: 18 },
+    { x: 0,                   y: H-60, w: Math.round(W*.50), h: 60, sol: true },
+    { x: Math.round(W*.80),   y: H-60, w: Math.round(W*.50), h: 60, sol: true },
+    { x: Math.round(W*1.60),  y: H-60, w: Math.round(W*.50), h: 60, sol: true },
+    { x: Math.round(W*2.38),  y: H-60, w: Math.round(W*.50), h: 60, sol: true },
+    { x: Math.round(W*3.15),  y: H-60, w: Math.round(W*.85), h: 60, sol: true },
+    { x: Math.round(W*.08),   y: H-140, w: 90, h: 18 },
+    { x: Math.round(W*.28),   y: H-165, w: 95, h: 18 },
+    { x: Math.round(W*.45),   y: H-260, w: 85, h: 18 },
+    { x: Math.round(W*.62),   y: H-205, w: 95, h: 18 },
+    { x: Math.round(W*.76),   y: H-175, w: 90, h: 18 },
+    { x: Math.round(W*1.08),  y: H-175, w: 90, h: 18 },
+    { x: Math.round(W*1.22),  y: H-305, w: 85, h: 18 },
+    { x: Math.round(W*1.38),  y: H-215, w: 90, h: 18 },
+    { x: Math.round(W*1.48),  y: H-245, w: 90, h: 18 },
+    { x: Math.round(W*1.72),  y: H-270, w: 85, h: 18 },
+    { x: Math.round(W*1.92),  y: H-185, w: 90, h: 18 },
+    { x: Math.round(W*2.05),  y: H-330, w: 80, h: 18 },
+    { x: Math.round(W*2.28),  y: H-230, w: 90, h: 18 },
+    { x: Math.round(W*2.45),  y: H-165, w: 95, h: 18 },
+    { x: Math.round(W*2.62),  y: H-305, w: 85, h: 18 },
+    { x: Math.round(W*2.72),  y: H-195, w: 90, h: 18 },
+    { x: Math.round(W*2.88),  y: H-165, w: 90, h: 18 },
+    { x: Math.round(W*3.08),  y: H-265, w: 90, h: 18 },
+    { x: Math.round(W*3.32),  y: H-240, w: 90, h: 18 },
+    { x: Math.round(W*3.55),  y: H-205, w: 90, h: 18 },
+    { x: Math.round(W*3.72),  y: H-315, w: 80, h: 18 },
   ];
 
   const POUSSIERES_CONFIG = [
-    { pi: 5 }, { pi: 6 }, { pi: 7 }, { pi: 8 },
-    { pi: 9 }, { pi: 10 }, { pi: 11 }, { pi: 12 },
+    { pi: 6  }, { pi: 8  }, { pi: 10 }, { pi: 13 },
+    { pi: 14 }, { pi: 15 }, { pi: 17 }, { pi: 19 },
+    { pi: 20 }, { pi: 22 }, { pi: 24 }, { pi: 25 },
   ];
 
   let plates = [], poussieres = [];
   let jx = 60, jy = H - 120;
   let vx = 0, vy = 0;
   let enAir = true;
-  let vies = 3, etoiles = 0, totalEtoiles = 8;
+  let vies = 3, etoiles = 0, totalEtoiles = 12;
   let gauche = false, droite = false, saut = false;
   let running = false;
   let lune_dit = false;

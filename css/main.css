@@ -116,7 +116,7 @@ html,body{height:100%;overflow:hidden;font-family:"Trebuchet MS",sans-serif;colo
 /* ── MENU ── */
 .hud-menu-wrap{position:relative;margin-left:auto;flex-shrink:0}
 .btn-menu{width:36px;height:36px;border-radius:50%;background:rgba(200,162,200,.18);border:1px solid var(--accent);color:#fff;font-size:1.1rem;cursor:pointer;z-index:1;transition:background .2s;padding:0;line-height:1}
-.menu-panel{position:absolute;right:0;top:calc(100% + 6px);display:flex;flex-direction:column;gap:8px;z-index:300;background:rgba(10,10,26,.96);border:1px solid rgba(200,162,200,.3);border-radius:16px;padding:12px;min-width:200px}
+.menu-panel{position:absolute;right:0;top:calc(100% + 6px);display:none;flex-direction:column;gap:8px;z-index:300;background:rgba(10,10,26,.96);border:1px solid rgba(200,162,200,.3);border-radius:16px;padding:12px;min-width:200px}.menu-panel.open{display:flex}
 .menu-item{background:none;border:1px solid rgba(200,162,200,.2);color:#fff;padding:10px 16px;border-radius:10px;cursor:pointer;text-align:left;font-size:.9rem;transition:background .2s}
 .menu-item:hover{background:rgba(200,162,200,.1)}
 
