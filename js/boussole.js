@@ -1,6 +1,7 @@
 ﻿'use strict';
 window.GPS0_Boussole = (() => {
   let etat = 'off';
+  let _deviceHeading = null; // heading téléphone en degrés depuis le Nord magnétique (null = inconnu)
   const _l = {};
   function on(e, fn) { (_l[e] = _l[e] || []).push(fn); }
   function emit(e, d) { (_l[e] || []).forEach(fn => fn(d)); }
@@ -31,8 +32,15 @@ window.GPS0_Boussole = (() => {
   }
   function _fusee(bear) {
     const f = document.getElementById('fusee-wrapper');
-    if (f) f.style.transform = `rotate(${bear}deg)`;
+    if (!f) return;
+    // Bearing relatif = bearing géographique − heading du téléphone
+    // Formule : si heading=0 (pointe nord), bear=90 → affiche 90° (droite) ✓
+    //           si heading=90 (pointe est), bear=90 → affiche 0° (haut = droit devant) ✓
+    const h = _deviceHeading !== null ? _deviceHeading : 0;
+    const rel = ((bear - h) + 360) % 360;
+    f.style.transform = `rotate(${rel}deg)`;
   }
+  function setDeviceHeading(h) { _deviceHeading = h; }
   // Pas d'affichage de distance en chiffres (design GPS0 v3.2)
   function _distance() {}
 
@@ -82,5 +90,5 @@ window.GPS0_Boussole = (() => {
 
   function estActif() { return etat === 'on'; }
   function getEtat() { return etat; }
-  return { toggle, forceEtat, updatePosition, estActif, getEtat, on };
+  return { toggle, forceEtat, updatePosition, estActif, getEtat, on, setDeviceHeading };
 })();

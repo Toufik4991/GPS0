@@ -91,72 +91,72 @@
         {
           "id": 1,
           "nom": "Rando Point 1",
-          "lat": 0.0,
-          "lng": 0.0,
+          "lat": 47.47018868679993,
+          "lng": -0.5457921250672614,
           "rayon": 30,
           "mini_jeu": 1
         },
         {
           "id": 2,
           "nom": "Rando Point 2",
-          "lat": 0.0,
-          "lng": 0.0,
+          "lat": 47.47011701179594,
+          "lng": -0.5493858993639028,
           "rayon": 30,
           "mini_jeu": 2
         },
         {
           "id": 3,
           "nom": "Rando Point 3",
-          "lat": 0.0,
-          "lng": 0.0,
+          "lat": 47.470199398880105,
+          "lng": -0.5542471707663097,
           "rayon": 30,
           "mini_jeu": 3
         },
         {
           "id": 4,
           "nom": "Rando Point 4",
-          "lat": 0.0,
-          "lng": 0.0,
+          "lat": 47.46934044936432,
+          "lng": -0.5564217756452269,
           "rayon": 30,
           "mini_jeu": 4
         },
         {
           "id": 5,
           "nom": "Rando Point 5",
-          "lat": 0.0,
-          "lng": 0.0,
+          "lat": 47.46927957277513,
+          "lng": -0.5584298315460416,
           "rayon": 30,
           "mini_jeu": 5
         },
         {
           "id": 6,
           "nom": "Rando Point 6",
-          "lat": 0.0,
-          "lng": 0.0,
+          "lat": 47.47207325041011,
+          "lng": -0.5639875005431632,
           "rayon": 30,
           "mini_jeu": 6
         },
         {
           "id": 7,
           "nom": "Rando Point 7",
-          "lat": 0.0,
-          "lng": 0.0,
+          "lat": 47.47413684761758,
+          "lng": -0.5622581209765974,
           "rayon": 30,
           "mini_jeu": 7
         },
         {
           "id": 8,
           "nom": "Rando Point 8",
-          "lat": 0.0,
-          "lng": 0.0,
+          "lat": 47.47447353121981,
+          "lng": -0.5582077679017797,
           "rayon": 30,
           "mini_jeu": 8
         },
         {
           "id": 9,
           "nom": "Rando Point 9",
-          "lat": 0.0,
-          "lng": 0.0,
+          "lat": 47.472289958782774,
+          "lng": -0.55754703640992,
           "rayon": 30,
           "mini_jeu": 9,
           "final": true

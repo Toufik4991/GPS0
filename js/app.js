@@ -27,6 +27,13 @@ window.GPS0_App = (() => {
       splash.querySelector('.splash-content').appendChild(btn);
       btn.addEventListener('click', async () => {
         try { await document.documentElement.requestFullscreen(); } catch {}
+        // Demander la permission orientation (iOS 13+ exige un geste utilisateur)
+        try {
+          if (typeof DeviceOrientationEvent !== 'undefined' &&
+              typeof DeviceOrientationEvent.requestPermission === 'function') {
+            await DeviceOrientationEvent.requestPermission();
+          }
+        } catch {}
         GPS0_Audio.playMusiqueExploration();
         splash.style.opacity = '0';
         setTimeout(() => { splash.classList.remove('visible'); splash.style.opacity = ''; r(); }, 650);
@@ -389,6 +396,20 @@ window.GPS0_App = (() => {
       document.getElementById('app').classList.add('visible');
     });
     GPS0_GPS.on('zone_changee', () => _majObjectif());
+
+    // Orientation device → boussole relative (bearing géo − heading téléphone)
+    // Android (absolute): alpha = rotation CCW depuis le Nord → heading = (360 − alpha) % 360
+    // iOS: webkitCompassHeading = déjà un heading direct (degrés depuis nord, CW)
+    window.addEventListener('deviceorientationabsolute', e => {
+      if (e.alpha !== null) GPS0_Boussole.setDeviceHeading((360 - e.alpha + 360) % 360);
+    }, true);
+    window.addEventListener('deviceorientation', e => {
+      if (typeof e.webkitCompassHeading === 'number') {
+        GPS0_Boussole.setDeviceHeading(e.webkitCompassHeading);
+      } else if (e.absolute && e.alpha !== null) {
+        GPS0_Boussole.setDeviceHeading((360 - e.alpha + 360) % 360);
+      }
+    }, true);
   }
 
   function _ouvrirInventaire() {

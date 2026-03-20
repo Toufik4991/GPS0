@@ -214,12 +214,32 @@ Init GPS, Boussole, Économie, Lune, HUD
 
 | État | Comportement |
 |---|---|
-| **OFF (défaut)** | Astéroïde grisé, immobile. Fusée masquée. Texte : "Boussole éteinte". Halo gris. Aucune consommation d'énergie. |
-| **ON** | Astéroïde tourne. Fusée pointe vers GPS cible. Distance affichée sous fusée (ex: "340m"). Halo coloré actif. Consommation énergie selon difficulté. |
+| **OFF (défaut)** | Astéroïde grisé, immobile. Fusée masquée. Halo gris. Aucune consommation d'énergie. |
+| **ON** | Astéroïde tourne. Fusée pointe vers GPS cible (bearing RELATIF au téléphone). Halo coloré actif. Consommation énergie selon difficulté. |
 | **ÉPUISÉ** (énergie = 0) | ON impossible. Icône rouge barrée. Système d'indices actif. Halo gris permanent. Message : "Recharge ta boussole !" |
 | **ZONE** (distance ≤ 30m) | Astéroïde pulse fort bleu. Fusée vibre. Bouton "JOUER 🚀" au centre de l'astéroïde. Flash bleu + SFX zone_detectee. |
 
 **Règle absolue : La détection de zone (≤ 30m) s'active MÊME si la boussole est OFF.**
+
+### Boussole — Orientation device (v3.5.1)
+
+La flèche (fusée) affiche un **bearing relatif à l'orientation du téléphone**, pas le bearing géographique brut :
+
+```
+bearing_affiché = (bearing_géo − heading_device + 360) % 360
+```
+
+| Source | Plateforme | API |
+|---|---|---|
+| `event.webkitCompassHeading` | iOS | Heading direct (0–360°, CW depuis nord) |
+| `event.alpha` (absolute) | Android | Rotation CCW → heading = `(360 − alpha) % 360` |
+
+- `deviceorientationabsolute` prioritaire sur Android
+- `deviceorientation` avec `webkitCompassHeading` pour iOS  
+- Si aucun heading disponible → fallback bearing géo (0°, ancien comportement)
+- Permission iOS 13+ demandée au clic du bouton splash (geste utilisateur requis)
+
+**Conséquence** : si tu tiens le téléphone pointé vers la cible, la flèche pointe vers le haut (droit devant). Si tu tournes 90° à droite, la flèche tourne 90° à gauche pour continuer à pointer vers la cible.
 
 ### Halo de proximité
 
