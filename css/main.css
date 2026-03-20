@@ -67,7 +67,7 @@ html,body{height:100%;overflow:hidden;font-family:"Trebuchet MS",sans-serif;colo
 .compass-panel{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:16px;position:relative;z-index:10}
 
 /* ── LUNE BULLE ── */
-.lune-bulle{display:flex;align-items:flex-start;gap:10px;max-width:310px;background:rgba(200,162,200,.1);border:1px solid rgba(200,162,200,.35);border-radius:16px;padding:10px 14px;font-size:.85rem;min-height:48px;opacity:0;transform:translateY(-10px);transition:opacity .4s,transform .4s;pointer-events:none}
+.lune-bulle{display:flex;align-items:flex-start;gap:10px;max-width:310px;background:rgba(200,162,200,.18);border:1px solid rgba(200,162,200,.6);border-radius:16px;padding:10px 14px;font-size:.85rem;min-height:48px;opacity:0;transform:translateY(-10px);transition:opacity .4s,transform .4s;pointer-events:none;box-shadow:0 0 18px rgba(200,162,200,.35),0 0 40px rgba(200,162,200,.12)}
 .lune-bulle.visible{opacity:1;transform:translateY(0)}
 .lune-avatar{font-size:1.5rem;flex-shrink:0}
 .lune-texte{color:var(--accent);line-height:1.45;font-style:italic}
@@ -188,7 +188,7 @@ button, input { touch-action: manipulation; }
 
 /* ── COSMOS FLOTTANTS ── */
 .cosmos-floating{position:fixed;inset:0;z-index:2;pointer-events:none;overflow:hidden}
-.cf{position:absolute;opacity:.5;will-change:transform;line-height:1;font-style:normal}
+.cf{position:absolute;opacity:.72;will-change:transform;line-height:1;font-style:normal}
 .cf-rocket{top:72%;left:-4%;font-size:3.2rem;animation:cf-rise 34s linear infinite}
 .cf-ufo{top:38%;right:-5%;font-size:3.8rem;animation:cf-slide-l 42s linear infinite;animation-delay:-16s}
 .cf-moon{top:16%;right:7%;font-size:3rem;animation:cf-bob 58s ease-in-out infinite;animation-delay:-25s;opacity:.4}

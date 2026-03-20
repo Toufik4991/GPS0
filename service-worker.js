@@ -1,5 +1,5 @@
-﻿const CACHE = 'gps0-v17';
-const APP_VERSION = '3.5.1';
+﻿const CACHE = 'gps0-v18';
+const APP_VERSION = '3.5.2';
 const CORE = [
   'index.html',
   'css/main.css',

@@ -86,13 +86,21 @@ window.GPS0_App = (() => {
   }
 
   function _pseudo() {
-    if (localStorage.getItem('gps0_pseudo')) return Promise.resolve();
+    // Affiche le pseudo dans l’objectif-nom dès qu’il est connu
+    function _afficherPseudo() {
+      const p = localStorage.getItem('gps0_pseudo');
+      if (p) {
+        const el = document.getElementById('objectif-sub');
+        if (el) el.textContent = '\uD83D\uDC64 ' + p;
+      }
+    }
+    if (localStorage.getItem('gps0_pseudo')) { _afficherPseudo(); return Promise.resolve(); }
     const m = document.getElementById('modal-pseudo'); m.showModal();
     return new Promise(r => {
       document.getElementById('form-pseudo').addEventListener('submit', e => {
         e.preventDefault();
         const v = document.getElementById('pseudo-input').value.trim() || 'Explorateur';
-        localStorage.setItem('gps0_pseudo', v); m.close(); r();
+        localStorage.setItem('gps0_pseudo', v); _afficherPseudo(); m.close(); r();
       }, { once: true });
     });
   }
@@ -352,9 +360,6 @@ window.GPS0_App = (() => {
       location.reload();
     });
 
-    document.getElementById('menu-demo')?.addEventListener('click', () => {
-      document.getElementById('modal-demo').showModal();
-    });
     document.getElementById('menu-debug')?.addEventListener('click', () => {
       const mdp = prompt('🔒 Mot de passe debug :');
       if (mdp !== 'jules') { if (mdp !== null) alert('Mot de passe incorrect.'); return; }
