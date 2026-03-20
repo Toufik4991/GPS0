@@ -238,6 +238,7 @@ window.GPS0_App = (() => {
 
     _majObjectif();
     GPS0_GPS.demarrerSuivi();
+    _startGlobalClock();
 
     let _navLastDist = null, _navStale = 0, _navLastBear = null, _navDirChg = 0, _navDirTimer = null;
     GPS0_GPS.on('position', d => {
@@ -409,6 +410,7 @@ window.GPS0_App = (() => {
     });
 
     document.addEventListener('minijeu:complete', e => {
+      _resumeGlobalClock();
       const bjh = document.getElementById('btn-jouer-haut');
       if (bjh) bjh.hidden = true;
       GPS0_Economie.ajouterPoussieres(e.detail?.poussieres || 10);
@@ -418,6 +420,7 @@ window.GPS0_App = (() => {
       document.getElementById('app').classList.add('visible');
     });
     document.addEventListener('minijeu:failed', () => {
+      _resumeGlobalClock();
       const bjh = document.getElementById('btn-jouer-haut');
       if (bjh) bjh.hidden = true;
       document.getElementById('app').classList.add('visible');
@@ -484,6 +487,7 @@ window.GPS0_App = (() => {
       if (dl) { dl.textContent = '⏳ Cooldown: ' + GPS0_Economie.formatCooldown(r); setTimeout(() => { dl.textContent = '---'; }, 4000); }
       return;
     }
+    _pauseGlobalClock();
     document.getElementById('app').classList.remove('visible');
     const iframe = document.createElement('iframe');
     iframe.src = 'minijeux/niveau' + niveau + '.html';
@@ -499,15 +503,32 @@ window.GPS0_App = (() => {
     window.addEventListener('message', handler);
   }
 
-  function _clock() {
-    const t0 = Date.now();
+  // === HORLOGE GLOBALE (pause pendant mini-jeux) ===
+  let _clockStart = null, _clockPaused = 0, _clockPauseAt = null, _clockActive = false;
+  function _startGlobalClock() {
+    if (_clockStart !== null) return; // déjà démarré
+    _clockStart = Date.now();
+    _clockActive = true;
     const tick = () => {
-      const s = Math.floor((Date.now() - t0) / 1000);
+      if (!_clockStart) return;
+      let elapsed = _clockPaused;
+      if (_clockActive) elapsed += Date.now() - _clockStart;
+      const s = Math.floor(elapsed / 1000);
       const el = document.getElementById('chrono');
       if (el) el.textContent = String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0');
       requestAnimationFrame(tick);
     };
     requestAnimationFrame(tick);
+  }
+  function _pauseGlobalClock() {
+    if (!_clockActive) return;
+    _clockPaused += Date.now() - _clockStart;
+    _clockStart = Date.now();
+    _clockActive = false;
+  }
+  function _resumeGlobalClock() {
+    _clockStart = Date.now();
+    _clockActive = true;
   }
 
   function _ouvrirBoutique() {

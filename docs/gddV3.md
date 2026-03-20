@@ -1,9 +1,9 @@
 # 🌙 GPS0 — Game Design Document v3.0
 
-**Version :** 3.1 - Moteur Horizontal Refactore + Mode Demo
+**Version :** 3.5.4 - Refonte Auto-Runner + 8 Niveaux Uniques + Horloge Globale
 **Date :** 18/03/2026
 **Auteur :** Toufik49
-**Statut :** Implementation en cours - Moteur mini-jeux operationnel niveaux 1-8
+**Statut :** Implementation en cours - Auto-runner operationnel niveaux 1-8
 
 ---
 
@@ -42,6 +42,24 @@
 - Asteriode grise + halo dim quand inactif (data-etat=off)
 - Assets fonds d'ecran mini-jeux : assets/backgrounds/fond_ecran1-9.jpeg
 - Service Worker v9 / APP_VERSION 3.1.4
+
+**Changements majeurs v3.5.4 (REFONTE MINI-JEUX) :**
+- **AUTO-RUNNER** : mouvement automatique droite, plus de bouton gauche/droite
+- **Saut tap/hold** : appui court = petit saut (JF×0.55), appui long >220ms = grand saut (JF)
+- **Timer 3 minutes** par mini-jeu (au lieu de 2:30)
+- **8 niveaux distincts** avec mecanique unique chacun :
+  - N1 Tutoriel : parcours initiatique, plateformes simples
+  - N2 Orbe Mobile : plateformes mobiles axe Y (bougent verticalement)
+  - N3 Vent Cosmique : vent lateral oscillant + plateformes glissantes
+  - N4 Nuit Stellaire : obscurite totale, halo lumineux autour du joueur
+  - N5 Eclipse Fragile : toutes plateformes s'effondrent au toucher
+  - N6 Gravite Inversee : zones de gravite inversee, courir au plafond
+  - N7 Vitesse Stellaire : acceleration progressive automatique x1 → x2.5
+  - N8 Labyrinthe Spiral : le plus difficile, mix fragile+mobile+slimes rapides
+- **Power-ups in-game** : bouclier temporaire (5s) + double saut (7s)
+- **Horloge globale** : chrono qui tourne partout SAUF pendant les mini-jeux (pause/resume)
+- Ctrl-bar : 1 seul bouton #bs au lieu de 3 (#zg/#zd supprimés)
+- Service Worker v20 / APP_VERSION 3.5.4
 
 ---
 
