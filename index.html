@@ -20,14 +20,14 @@
 
   <!-- SVG FLOTTANTS SPATIAUX -->
   <div class="cosmos-floating" aria-hidden="true">
-    <span class="cf cf-rocket">🚀</span>
-    <span class="cf cf-ufo">🛸</span>
-    <span class="cf cf-moon">🌙</span>
-    <span class="cf cf-star1">⭐</span>
-    <span class="cf cf-star2">✨</span>
-    <span class="cf cf-cat">🐱</span>
-    <span class="cf cf-planet">🪐</span>
-    <span class="cf cf-comet">💫</span>
+    <span class="cf cf-rocket"><span class="cf-inner">🚀</span></span>
+    <span class="cf cf-ufo"><span class="cf-inner">🛸</span></span>
+    <span class="cf cf-moon"><span class="cf-inner">🌙</span></span>
+    <span class="cf cf-star1"><span class="cf-inner">⭐</span></span>
+    <span class="cf cf-star2"><span class="cf-inner">✨</span></span>
+    <span class="cf cf-cat"><span class="cf-inner">🐱</span></span>
+    <span class="cf cf-planet"><span class="cf-inner">🪐</span></span>
+    <span class="cf cf-comet"><span class="cf-inner">💫</span></span>
   </div>
 
   <!-- MODAL PERMISSIONS (1er lancement) -->
@@ -65,8 +65,8 @@
   <!-- APP PRINCIPALE -->
   <main id="app" class="screen" role="main">
     <header class="hud" role="banner">
-      <span class="hud-item"><span aria-hidden="true">⏱️</span> <span id="chrono" aria-label="Chronomètre">00:00</span></span>
       <span class="hud-item"><span aria-hidden="true">✨</span> <span id="poussieres" aria-label="Poussières d'étoiles">0</span></span>
+      <span class="hud-item"><span aria-hidden="true">⚡</span> <span id="hud-energie-val" aria-label="Énergie">100%</span></span>
       <button class="hud-icon-btn" id="hud-boutique" aria-label="Boutique Lunaire">🏪</button>
       <button class="hud-icon-btn" id="hud-inventaire" aria-label="Inventaire">🎒</button>
       <div class="hud-menu-wrap">
@@ -76,6 +76,8 @@
           <button class="menu-item" id="menu-difficulte">⚙️ Difficulté</button>
           <button class="menu-item" id="menu-reset">🔄 Réinitialiser</button>
           <button class="menu-item" id="menu-demo">&#127918; Tester un niveau</button>
+          <button class="menu-item" id="menu-debug">&#128027; Mode Debug</button>
+          <button class="menu-item" id="menu-guide">&#10067; Guide du cosmonaute</button>
         </nav>
       </div>
     </header>

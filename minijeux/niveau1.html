@@ -80,9 +80,9 @@
     }
     @keyframes scintille { from { opacity: 0.7; transform: scale(0.9); } to { opacity: 1; transform: scale(1.1); } }
 
-        #ctrl-bar { position:fixed; bottom:0; left:0; right:0; height:80px; z-index:45; display:flex; align-items:center; justify-content:space-between; padding:8px 16px; background:rgba(0,0,0,0.45); backdrop-filter:blur(4px); gap:10px; }
-    #zone-gauche, #zone-droite { flex:1; height:56px; border-radius:14px; border:2px solid rgba(200,162,200,0.5); background:rgba(200,162,200,0.15); color:#fff; font-size:2rem; cursor:pointer; display:flex; align-items:center; justify-content:center; touch-action:none; user-select:none; -webkit-user-select:none; }
-    #btn-saut { flex:1.2; height:56px; border-radius:14px; border:2px solid rgba(79,195,247,0.6); background:rgba(79,195,247,0.2); color:#fff; font-size:2rem; cursor:pointer; display:flex; align-items:center; justify-content:center; touch-action:none; user-select:none; -webkit-user-select:none; }
+        #ctrl-bar { position:fixed; bottom:0; left:0; right:0; height:80px; z-index:45; display:flex; align-items:center; justify-content:space-between; padding:8px 16px; background:transparent; gap:10px; }
+    #zone-gauche, #zone-droite { flex:1; height:56px; border-radius:14px; border:none; background:transparent; color:transparent; font-size:2rem; cursor:pointer; display:flex; align-items:center; justify-content:center; touch-action:none; user-select:none; -webkit-user-select:none; }
+    #btn-saut { flex:1.2; height:56px; border-radius:14px; border:none; background:transparent; color:transparent; font-size:2rem; cursor:pointer; display:flex; align-items:center; justify-content:center; touch-action:none; user-select:none; -webkit-user-select:none; }
     #zone-gauche:active, #zone-droite:active, #btn-saut:active { opacity:0.5; }
 
     /* Instruction overlay */
@@ -171,10 +171,10 @@
   <div id="fin-titre"></div>
   <div id="fin-sous"></div>
   <div id="fin-poussieres"></div>
-  <div style="display:flex;gap:12px;margin-top:8px">
+  <div style="display:flex;flex-direction:column;gap:10px;margin-top:16px;width:min(300px,90vw);align-items:stretch">
+    <button class="btn-fin" id="btn-reward" style="display:none">🎁 Prendre la récompense</button>
     <button class="btn-fin" id="btn-retry">🔄 Recommencer</button>
-    <button class="btn-fin" id="btn-reward" style="display:none">🌟 Prendre la récompense</button>
-    <button class="btn-fin" id="btn-abandon-fin">🏳️ Abandonner</button>
+    <button class="btn-fin" id="btn-abandon-fin">❌ Abandonner</button>
   </div>
 </div>
 

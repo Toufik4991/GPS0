@@ -118,6 +118,9 @@ window.GPS0_Economie = (() => {
     }
     if (pct) { pct.textContent = pc + '%'; }
     if (pd) pd.textContent = e.poussieres;
+    // HUD énergie label
+    const hudEnergieVal = document.getElementById('hud-energie-val');
+    if (hudEnergieVal) hudEnergieVal.textContent = pc + '%';
     // Aussi mettre a jour aria
     const hudEnergie = document.querySelector('.hud-energie');
     if (hudEnergie) hudEnergie.setAttribute('aria-valuenow', pc);

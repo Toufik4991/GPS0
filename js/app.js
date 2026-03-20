@@ -5,24 +5,33 @@ window.GPS0_App = (() => {
   async function init() {
     GPS0_Economie.rechargePassive();
     await _splash();
-    if (!(await _fullscreen())) await _fullscreenGate();
     await _requestPermissions();
     await _pseudo();
     await _selfie();
-    await _tuto();
     _parcoursId = await _parcours();
     await _difficulte();
     await _chargerJeu();
     _bindUI();
-    _clock();
     GPS0_Economie.updateHUD();
     GPS0_Lune.demarrerSurveillance();
-    GPS0_Audio.playMusiqueExploration();
     document.getElementById('app').classList.add('visible');
   }
 
   function _splash() {
-    return new Promise(r => setTimeout(() => { document.getElementById('splash').classList.remove('visible'); r(); }, 2000));
+    return new Promise(r => {
+      const splash = document.getElementById('splash');
+      const btn = document.createElement('button');
+      btn.id = 'btn-splash-start';
+      btn.className = 'btn-primary';
+      btn.textContent = 'Commencer l’aventure 🚀';
+      splash.querySelector('.splash-content').appendChild(btn);
+      btn.addEventListener('click', async () => {
+        try { await document.documentElement.requestFullscreen(); } catch {}
+        GPS0_Audio.playMusiqueExploration();
+        splash.style.opacity = '0';
+        setTimeout(() => { splash.classList.remove('visible'); splash.style.opacity = ''; r(); }, 650);
+      }, { once: true });
+    });
   }
 
   function _requestPermissions() {
@@ -336,9 +345,15 @@ window.GPS0_App = (() => {
     });
 
     document.getElementById('menu-demo')?.addEventListener('click', () => {
+      document.getElementById('modal-demo').showModal();
+    });
+    document.getElementById('menu-debug')?.addEventListener('click', () => {
       const mdp = prompt('🔒 Mot de passe debug :');
       if (mdp !== 'jules') { if (mdp !== null) alert('Mot de passe incorrect.'); return; }
       document.getElementById('modal-demo').showModal();
+    });
+    document.getElementById('menu-guide')?.addEventListener('click', () => {
+      _ouvrirTuto();
     });
     document.querySelectorAll('.demo-niveau-btn').forEach(btn => {
       btn.addEventListener('click', () => {

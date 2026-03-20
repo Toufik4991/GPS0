@@ -55,23 +55,23 @@ function fin(ok){
   const ov=document.getElementById('ov'),ot=document.getElementById('ot');
   ot.textContent=ok?'Victoire !':'Perdu...';
   ot.className=ok?'win':'lose';
-  document.getElementById('os').textContent=ok?cfg.msg_win||'Bien joy\u00e9 !':cfg.msg_lose||'La Lune te juge.';
-  const pEl=document.getElementById('op');
-  if(pEl)pEl.textContent=(ok?'+ '+TOTAL:etoiles)+' \u2728 Poussi\u00e8res';
-  // Afficher seulement les boutons pertinents
   const btnRecommencer=document.getElementById('br');
   const btnRecompense=document.getElementById('bc');
   const btnAbandon=document.getElementById('bb');
-  if(btnRecommencer)btnRecommencer.style.display='inline-block';
-  if(btnAbandon)btnAbandon.style.display='inline-block';
-  // Bouton recompense = seulement si victoire
+  const wrap=btnRecompense?.parentElement||btnRecommencer?.parentElement;
+  if(wrap){wrap.style.flexDirection='column';wrap.style.alignItems='stretch';wrap.style.width='min(300px,90vw)';}
+  if(btnRecommencer){btnRecommencer.style.display='block';btnRecommencer.textContent='\uD83D\uDD04 Recommencer';}
+  if(btnAbandon){btnAbandon.style.display='block';btnAbandon.textContent='\u274C Abandonner';}
   if(btnRecompense){
-    btnRecompense.style.display=ok?'inline-block':'none';
     if(ok){
-      btnRecompense.textContent='\u2728 Prendre les '+TOTAL+' poussi\u00e8res';
+      btnRecompense.style.display='block';
+      btnRecompense.textContent='\uD83C\uDF81 Prendre les '+TOTAL+' poussi\u00e8res';
+      if(wrap)wrap.insertBefore(btnRecompense,wrap.firstChild);
       btnRecompense.onclick=()=>{
         try{window.parent.postMessage({source:'gps0_minijeu',success:true,niveau:cfg.niveau,poussieres:TOTAL,etoiles:3},'*');}catch(e){}
       };
+    }else{
+      btnRecompense.style.display='none';
     }
   }
   ov.classList.add('v');

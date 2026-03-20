@@ -30,10 +30,11 @@ html,body{height:100%;overflow:hidden;font-family:"Trebuchet MS",sans-serif;colo
 .screen.visible{display:flex;flex-direction:column;min-height:100dvh}
 
 /* ── SPLASH ── */
-#splash{align-items:center;justify-content:center;animation:sfade 2s ease-in-out forwards}
+#splash{align-items:center;justify-content:center;transition:opacity .65s}
+.splash-content{display:flex;flex-direction:column;align-items:center;text-align:center}
+#btn-splash-start{margin-top:40px;font-size:1.1rem;padding:16px 40px;min-width:260px}
 .logo-gps0{font-size:5rem;font-weight:900;letter-spacing:.12em;color:var(--accent);text-shadow:0 0 30px var(--accent),0 0 60px rgba(200,162,200,.4);animation:logo-pulse 1s ease-in-out infinite alternate}
 .logo-sub{color:var(--gold);letter-spacing:.3em;text-transform:uppercase;font-size:.9rem;margin-top:8px;text-align:center}
-@keyframes sfade{0%,70%{opacity:1}100%{opacity:0}}
 @keyframes logo-pulse{to{text-shadow:0 0 50px var(--accent),0 0 100px rgba(200,162,200,.5)}}
 
 /* ── FULLSCREEN GATE ── */
@@ -188,14 +189,25 @@ button, input { touch-action: manipulation; }
 /* ── COSMOS FLOTTANTS ── */
 .cosmos-floating{position:fixed;inset:0;z-index:2;pointer-events:none;overflow:hidden}
 .cf{position:absolute;opacity:.5;will-change:transform;line-height:1;font-style:normal}
-.cf-rocket{top:72%;left:-4%;font-size:1.3rem;animation:cf-rise 34s linear infinite}
-.cf-ufo{top:38%;right:-5%;font-size:1.5rem;animation:cf-slide-l 42s linear infinite;animation-delay:-16s}
-.cf-moon{top:16%;right:7%;font-size:1.2rem;animation:cf-bob 58s ease-in-out infinite;animation-delay:-25s;opacity:.4}
-.cf-star1{top:60%;left:7%;font-size:1rem;animation:cf-bob 44s ease-in-out infinite;animation-delay:-9s}
-.cf-star2{top:30%;left:52%;font-size:.9rem;animation:cf-bob 37s ease-in-out infinite;animation-delay:-19s;opacity:.35}
-.cf-cat{top:78%;right:10%;font-size:1.4rem;animation:cf-walk 50s linear infinite;animation-delay:-6s}
-.cf-planet{top:6%;left:62%;font-size:2rem;animation:cf-bob 75s ease-in-out infinite;animation-delay:-33s;opacity:.35}
-.cf-comet{top:4%;left:-14%;font-size:1.2rem;animation:cf-comet 20s linear infinite;animation-delay:-4s}
+.cf-rocket{top:72%;left:-4%;font-size:3.2rem;animation:cf-rise 34s linear infinite}
+.cf-ufo{top:38%;right:-5%;font-size:3.8rem;animation:cf-slide-l 42s linear infinite;animation-delay:-16s}
+.cf-moon{top:16%;right:7%;font-size:3rem;animation:cf-bob 58s ease-in-out infinite;animation-delay:-25s;opacity:.4}
+.cf-star1{top:60%;left:7%;font-size:2.5rem;animation:cf-bob 44s ease-in-out infinite;animation-delay:-9s}
+.cf-star2{top:30%;left:52%;font-size:2.2rem;animation:cf-bob 37s ease-in-out infinite;animation-delay:-19s;opacity:.35}
+.cf-cat{top:78%;right:10%;font-size:3.5rem;animation:cf-walk 50s linear infinite;animation-delay:-6s}
+.cf-planet{top:6%;left:62%;font-size:5rem;animation:cf-bob 75s ease-in-out infinite;animation-delay:-33s;opacity:.35}
+.cf-comet{top:4%;left:-14%;font-size:3rem;animation:cf-comet 20s linear infinite;animation-delay:-4s}
+.cf-inner{display:inline-block}
+.cf-rocket .cf-inner{animation:cf-spin 20s linear infinite}
+.cf-ufo .cf-inner{animation:cf-spin-r 15s linear infinite}
+.cf-moon .cf-inner{animation:cf-spin 30s linear infinite}
+.cf-star1 .cf-inner{animation:cf-spin-r 12s linear infinite}
+.cf-star2 .cf-inner{animation:cf-spin 18s linear infinite}
+.cf-cat .cf-inner{animation:cf-spin-r 25s linear infinite}
+.cf-planet .cf-inner{animation:cf-spin 40s linear infinite}
+.cf-comet .cf-inner{animation:cf-spin-r 8s linear infinite}
+@keyframes cf-spin{to{transform:rotate(360deg)}}
+@keyframes cf-spin-r{to{transform:rotate(-360deg)}}
 @keyframes cf-rise{0%{transform:translate(0,20vh) rotate(45deg);opacity:0}8%{opacity:.55}92%{opacity:.55}100%{transform:translate(28vw,-120vh) rotate(45deg);opacity:0}}
 @keyframes cf-slide-l{0%{transform:translate(0,0);opacity:0}8%{opacity:.5}92%{opacity:.5}100%{transform:translate(-115vw,-10vh);opacity:0}}
 @keyframes cf-bob{0%,100%{transform:translate(0,0)}25%{transform:translate(7px,-13px)}50%{transform:translate(-5px,9px)}75%{transform:translate(10px,5px)}}
