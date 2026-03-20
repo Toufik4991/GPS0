@@ -107,7 +107,6 @@ window.GPS0_Economie = (() => {
     const e = get(), pc = Math.round(e.energie.actuelle / e.energie.max * 100);
     // Mise à jour cercle énergie dans l'astéroïde
     const cercle = document.getElementById('energie-cercle');
-    const sable = document.getElementById('energie-sable');
     const pct = document.getElementById('energie-pct');
     const pd = document.getElementById('poussieres');
     if (cercle) {
@@ -116,11 +115,6 @@ window.GPS0_Economie = (() => {
       cercle.style.strokeDashoffset = circ * (1 - pc / 100);
       const col = pc > 50 ? '#4FC3F7' : pc > 20 ? '#FFD700' : '#FF3333';
       cercle.setAttribute('stroke', col);
-    }
-    if (sable) {
-      sable.style.height = pc + '%';
-      const col = pc > 50 ? 'rgba(79,195,247,0.35)' : pc > 20 ? 'rgba(255,215,0,0.35)' : 'rgba(255,51,51,0.45)';
-      sable.style.background = col;
     }
     if (pct) { pct.textContent = pc + '%'; }
     if (pd) pd.textContent = e.poussieres;

@@ -197,6 +197,81 @@
     </div>
   </dialog>
 
+  <!-- MODAL TUTO / FICHE INTRO -->
+  <dialog id="modal-tuto" aria-modal="true" aria-labelledby="tuto-titre">
+    <div class="modal-box intro-fiche-box">
+      <div class="intro-header">
+        <span class="intro-logo">GPS0</span>
+        <h2 id="tuto-titre">&#127769; Le guide du cosmonaute</h2>
+      </div>
+
+      <!-- Étapes paginées -->
+      <div class="intro-steps-wrap" id="intro-steps-wrap">
+
+        <div class="intro-step active" data-step="0">
+          <div class="intro-step-icon">&#127758;</div>
+          <h3>Le concept</h3>
+          <p>GPS0 mélange <strong>le monde réel</strong> et des <strong>mini-jeux pixelisés</strong>.<br>
+          Tu te déplaces en ville pour trouver des <strong>zones GPS</strong> et déclencher des niveaux &nbsp;🎮.</p>
+          <div class="intro-flow">
+            <span>&#127757; Marche</span>
+            <span class="intro-arrow">→</span>
+            <span>&#127919; Zone</span>
+            <span class="intro-arrow">→</span>
+            <span>&#127918; Jeu</span>
+            <span class="intro-arrow">→</span>
+            <span>&#10024; Poussières</span>
+          </div>
+        </div>
+
+        <div class="intro-step" data-step="1">
+          <div class="intro-step-icon">&#128302;</div>
+          <h3>La Boussole Cosmique</h3>
+          <p>Active la boussole pour qu'elle pointe vers ta prochaine zone. Elle <strong>consomme de l'énergie</strong> : éteins-la quand tu t'arrêtes !</p>
+          <div class="intro-halo-legende">
+            <span class="halo-dot" style="background:#FF3333">&#9679;</span><span>Loin (&gt;150m)</span>
+            <span class="halo-dot" style="background:#FF8C00">&#9679;</span><span>Proche (&lt;150m)</span>
+            <span class="halo-dot" style="background:#69FF47">&#9679;</span><span>Très proche (&lt;80m)</span>
+            <span class="halo-dot" style="background:#4FC3F7">&#9679;</span><span>Zone atteinte ! &#127919;</span>
+          </div>
+        </div>
+
+        <div class="intro-step" data-step="2">
+          <div class="intro-step-icon">&#127918;</div>
+          <h3>Les Mini-Jeux</h3>
+          <p>Quand le halo devient <strong style="color:#4FC3F7">bleu</strong>, le mini-jeu se lance automatiquement.<br>
+          Tu incarnes un cosmonaute avec <strong>ton propre visage</strong> pixelisé comme tête !</p>
+          <p style="margin-top:8px;font-size:0.83rem;color:rgba(255,255,255,.65)">
+            ◀ ▶ Gauche / Droite de l'écran &nbsp;|&nbsp; &#8593; Bouton central pour sauter
+          </p>
+          <p style="font-size:0.83rem;color:#FFD700;margin-top:6px">Collecte toutes les &#10024; poussières pour gagner !</p>
+        </div>
+
+        <div class="intro-step" data-step="3">
+          <div class="intro-step-icon">&#9889;</div>
+          <h3>Énergie &amp; Boutique</h3>
+          <p>Ton énergie diminue pendant ta marche. Si elle tombe à 0, la boussole s'éteint.<br>
+          Dépense tes &#10024; poussières en <strong>boutique 🏪</strong> pour acheter des Fragments Lunaires et te recharger !</p>
+          <p style="font-size:0.82rem;color:rgba(255,255,255,.6);margin-top:8px">Les poussières sont gagnées uniquement en <strong>complétant les mini-jeux</strong>.</p>
+        </div>
+
+      </div>
+
+      <!-- Indicateur de page -->
+      <div class="intro-dots" aria-hidden="true">
+        <span class="intro-dot active" data-dot="0"></span>
+        <span class="intro-dot" data-dot="1"></span>
+        <span class="intro-dot" data-dot="2"></span>
+        <span class="intro-dot" data-dot="3"></span>
+      </div>
+
+      <!-- Boutons navigation -->
+      <div class="intro-nav">
+        <button id="intro-prev" class="btn-ghost" disabled>&#8592; Retour</button>
+        <button id="intro-next" class="btn-primary">Suivant &#8594;</button>
+      </div>
+    </div>
+  </dialog>
   <!-- MODAL DEMO -->
   <dialog id="modal-demo" aria-modal="true" aria-labelledby="demo-titre">
     <div class="modal-box">
@@ -241,18 +316,19 @@
     </div>
   </dialog>
   <!-- MODAL INVENTAIRE -->
-  <dialog id="modal-inventaire" aria-modal="true" aria-labelledby="inv-titre">
+<!-- MODAL CONFIRMATION CHANGEMENT DIFFICULTÈ -->
+  <dialog id="modal-confirm-diff" aria-modal="true" aria-labelledby="confirm-diff-titre">
     <div class="modal-box">
-      <h2 id="inv-titre">🎒 Inventaire</h2>
-      <div class="inv-stats">
-        <div class="inv-stat">✨ Poussières : <strong id="inv-poussieres">0</strong></div>
-        <div class="inv-stat">⚡ Énergie : <strong id="inv-energie">100/100</strong></div>
+      <h2 id="confirm-diff-titre">⚠️ Changer la difficulté ?</h2>
+      <p id="confirm-diff-texte" style="color:rgba(255,255,255,.8);text-align:center;margin:8px 0"></p>
+      <p style="color:rgba(255,165,0,.9);font-size:0.85rem;text-align:center;margin-bottom:16px">⚠️ Ta progression sera réinitialisée.</p>
+      <div style="display:flex;gap:12px;justify-content:center">
+        <button id="confirm-diff-non" class="btn-ghost">Annuler</button>
+        <button id="confirm-diff-oui" style="padding:12px 28px;background:linear-gradient(135deg,#FF6B6B,#cc2222);border:none;border-radius:14px;color:#fff;font-weight:bold;font-size:1rem;cursor:pointer">🔄 Recommencer</button>
       </div>
-      <hr class="inv-sep">
-      <div id="inv-fragments" style="display:flex;flex-direction:column;gap:10px;margin:8px 0"></div>
-      <button id="inventaire-fermer" class="btn-ghost">Fermer</button>
     </div>
   </dialog>
+
   <!-- TOAST CODE DÉFI -->
   <div class="code-defi-toast" id="code-toast" role="status" aria-live="polite" aria-atomic="true" hidden>
     <span>Ton code défi :</span>

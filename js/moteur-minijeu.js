@@ -32,7 +32,7 @@ function fisica(){
   plates.forEach(p=>{if(!p.mobile||!p.range)return;p.mt=(p.mt||0)+0.016;if(p.axis==='x'){p.x=p.mx0+Math.sin(p.mt*p.speed)*p.range;p.e.style.left=p.x+'px';}else{p.y=p.my0+Math.sin(p.mt*p.speed)*p.range;p.e.style.top=p.y+'px';}});
   plates.forEach(p=>{if(!p.fragile||!p.falling)return;p.alpha=(p.alpha||0)+0.05;p.e.style.opacity=Math.max(0,1-p.alpha);p.y+=p.alpha*2;p.e.style.top=p.y+'px';});
   air=true;
-  for(const p of plates){if(p.fragile&&p.falling&&p.alpha>1)continue;const cx=jx+20,foot=jy+52;if(cx>p.x+4&&cx<p.x+p.w-4){if(vy>=0&&foot>=p.y&&foot<=p.y+p.h+Math.abs(vy)+3){jy=p.y-52;vy=0;air=false;sauts_restants=DOUBLE_SAUT?2:1;if(p.fragile&&!p.falling)setTimeout(()=>{p.falling=true;},400);}else if(vy<0&&jy<=p.y+p.h&&jy>=p.y-8)vy=0;}}
+  for(const p of plates){if(p.fragile&&p.falling&&p.alpha>1)continue;const cx=jx+20,foot=jy+52;if(cx>p.x+4&&cx<p.x+p.w-4){if(vy>=0&&foot>=p.y&&foot<=p.y+p.h+Math.abs(vy)+3){jy=p.y-52;vy=0;air=false;sauts_restants=DOUBLE_SAUT?2:1;if(p.fragile&&!p.falling)setTimeout(()=>{p.falling=true;},400);if(p.mobile&&air)sfx('plateforme_active');}else if(vy<0&&jy<=p.y+p.h&&jy>=p.y-8)vy=0;}}
   if(jy>H+80){perdre();return;}
   if(!invincible){
     for(const s of slimes){s.x+=s.vx;if(s.x<s.bx||s.x+38>s.bx+s.bw)s.vx*=-1;s.e.style.left=s.x+'px';const dx=(jx+20)-(s.x+19),dy=(jy+26)-(s.y+15);if(Math.sqrt(dx*dx+dy*dy)<30){perdre();return;}}
@@ -46,9 +46,10 @@ function fisica(){
 }
 let lt=0;
 function tickLasers(dt){lasers.forEach(l=>{l.t+=dt;const cycle=l.warn_dur+l.on_dur+l.off_dur,tp=l.t%cycle;const np=tp<l.warn_dur?'warn':tp<l.warn_dur+l.on_dur?'actif':'off';if(np!==l.phase){l.phase=np;l.e.className='laser-h '+(np!=='off'?np:'');if(np==='warn')sfx('laser_warning');}});}
-function perdre(){if(invincible)return;invincible=true;vies--;const vm=['','\u2764\uFE0F','\u2764\uFE0F\u2764\uFE0F','\u2764\uFE0F\u2764\uFE0F\u2764\uFE0F'];document.getElementById('mj-v').textContent=vm[Math.max(0,vies)]||'';lune(vies===1?'Derni\u00e8re chance !':(vies===0?'...':'Aie !'));if(vies<=0){running=false;setTimeout(()=>fin(false),400);return;}jx=cfg.spawn_x||80;jy=cfg.spawn_y||(H-120);vx=0;vy=0;camX=0;if(MONDE_W>W)monde.style.transform='translateX(0px)';setTimeout(()=>{invincible=false;},1200);}
+function perdre(){if(invincible)return;invincible=true;sfx('ennemi_touche');vies--;const vm=['','\u2764\uFE0F','\u2764\uFE0F\u2764\uFE0F','\u2764\uFE0F\u2764\uFE0F\u2764\uFE0F'];document.getElementById('mj-v').textContent=vm[Math.max(0,vies)]||'';lune(vies===1?'Derni\u00e8re chance !':(vies===0?'...':'Aie !'));if(vies<=0){running=false;setTimeout(()=>fin(false),400);return;}jx=cfg.spawn_x||80;jy=cfg.spawn_y||(H-120);vx=0;vy=0;camX=0;if(MONDE_W>W)monde.style.transform='translateX(0px)';setTimeout(()=>{invincible=false;},1200);}
 // ── OVERLAY FIN: choix joueur ───────────────────────────────────
 function fin(ok){
+  if(ok)sfx('boss_hit');
   const ov=document.getElementById('ov'),ot=document.getElementById('ot');
   ot.textContent=ok?'Victoire !':'Perdu...';
   ot.className=ok?'win':'lose';
@@ -75,6 +76,15 @@ function fin(ok){
 }
 function lune(txt){const e=document.getElementById('lune');if(e){e.textContent='\uD83C\uDF19 '+txt;e.classList.add('v');setTimeout(()=>e.classList.remove('v'),4500);}}
 function sfx(n){try{window.parent.GPS0_Audio&&window.parent.GPS0_Audio.playSFX(n);}catch(e){}}
+function demarrerMusiqueNiveau(){
+  try{
+    const audio=window.parent.GPS0_Audio;
+    if(audio&&audio.isEnabled&&audio.isEnabled()){
+      // Relancer une piste exploration aléatoire pour ce niveau
+      audio.playMusiqueExploration();
+    }
+  }catch(e){}
+}
 function ctls(){
   const zg=document.getElementById('zg'),zd=document.getElementById('zd'),bs=document.getElementById('bs');
   if(zg){zg.addEventListener('touchstart',e=>{e.preventDefault();gauche=true},{passive:false});zg.addEventListener('touchend',e=>{e.preventDefault();gauche=false},{passive:false});}
@@ -86,7 +96,7 @@ function ctls(){
 let prev=0;
 function loop(ts){const dt=Math.min((ts-prev)||16,50);prev=ts;if(running){fisica();tickLasers(dt);}requestAnimationFrame(loop);}
 build();ctls();requestAnimationFrame(loop);
-document.getElementById('btn-st').addEventListener('click',()=>{document.getElementById('tuto').style.display='none';running=true;if(cfg.lune_start)setTimeout(()=>lune(cfg.lune_start),1500);});
+document.getElementById('btn-st').addEventListener('click',()=>{document.getElementById('tuto').style.display='none';running=true;demarrerMusiqueNiveau();if(cfg.lune_start)setTimeout(()=>lune(cfg.lune_start),1500);});
 // Recommencer = simple reload, SANS recompense
 document.getElementById('br').addEventListener('click',()=>location.reload());
 // Abandon = retour GPS sans recompense

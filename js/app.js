@@ -8,6 +8,7 @@ window.GPS0_App = (() => {
     if (!(await _fullscreen())) await _fullscreenGate();
     await _pseudo();
     await _selfie();
+    await _tuto();
     _parcoursId = await _parcours();
     await _difficulte();
     await _chargerJeu();
@@ -15,12 +16,6 @@ window.GPS0_App = (() => {
     _clock();
     GPS0_Economie.updateHUD();
     GPS0_Lune.demarrerSurveillance();
-    // iOS : resume AudioContext suspendu apres gestes utilisateur
-    try { if (window.AudioContext || window.webkitAudioContext) {
-      const tmpCtx = new (window.AudioContext || window.webkitAudioContext)();
-      if (tmpCtx.state === 'suspended') tmpCtx.resume().catch(() => {});
-      else tmpCtx.close().catch(() => {});
-    } } catch {}
     GPS0_Audio.playMusiqueExploration();
     document.getElementById('app').classList.add('visible');
   }
@@ -218,8 +213,15 @@ window.GPS0_App = (() => {
     GPS0_GPS.on('zone_atteinte', zone => {
       GPS0_Lune.parler('arrivee_zone');
       GPS0_Audio.playSFX('zone_detectee');
+      GPS0_Audio.playSFX('halo_bip');
       GPS0_Boussole.forceEtat('zone');
-      GPS0_Economie.ajouterPoussieres(5);
+      // Auto-lancement du mini-jeu apres un court delai d'annonce
+      if (zone && zone.mini_jeu) {
+        setTimeout(() => {
+          // Verifier que le joueur est toujours dans la zone (pas sorti entretemps)
+          if (GPS0_Boussole.getEtat() === 'zone') _lancerMiniJeu(zone.mini_jeu);
+        }, 2500);
+      }
     });
     GPS0_GPS.on('jeu_termine', () => {
       GPS0_Finale && GPS0_Finale.lancer && GPS0_Finale.lancer();
@@ -271,30 +273,26 @@ window.GPS0_App = (() => {
     document.getElementById('menu-audio')?.addEventListener('click', () => {
       mp.hidden = true; mb.setAttribute('aria-expanded', 'false');
       const on = GPS0_Audio.toggle();
-      document.getElementById('menu-audio').textContent = on ? '🔊 Son' : '🔇 Son coup?';
+      document.getElementById('menu-audio').textContent = on ? '🔊 Son' : '🔇 Son OFF';
     });
 
     document.getElementById('menu-difficulte')?.addEventListener('click', () => {
       mp.hidden = true; mb.setAttribute('aria-expanded', 'false');
-      const mdiff = document.getElementById('modal-difficulte');
       const diff = localStorage.getItem('gps0_difficulte');
-      if (diff) {
-        document.querySelectorAll('.diff-carte').forEach(b => {
-          b.setAttribute('aria-pressed', b.dataset.val === diff ? 'true' : 'false');
-        });
-        document.getElementById('diff-suivant').disabled = false;
+      const _noms = { clair_de_lune: '\u{1F315} Clair de Lune', face_cachee: '\u{1F317} Face Cach\u00e9e', eclipse_totale: '\u{1F311} \u00c9clipse Totale', trou_noir: '\u{1F573}\uFE0F Trou Noir' };
+      const actuel = _noms[diff] || diff || '?';
+      const modal = document.getElementById('modal-confirm-diff');
+      const texte = document.getElementById('confirm-diff-texte');
+      if (texte) texte.textContent = 'Difficult\u00e9 actuelle : ' + actuel + '.';
+      if (modal) {
+        modal.showModal();
+        document.getElementById('confirm-diff-oui').onclick = () => {
+          modal.close();
+          ['gps0_zones_actives','gps0_economie','gps0_difficulte','gps0_minijeux_progression'].forEach(k => localStorage.removeItem(k));
+          location.reload();
+        };
+        document.getElementById('confirm-diff-non').onclick = () => modal.close();
       }
-      mdiff.showModal();
-      document.getElementById('diff-suivant').addEventListener('click', () => {
-        const choix = document.querySelector('.diff-carte[aria-pressed="true"]')?.dataset.val;
-        if (!choix) return;
-        localStorage.setItem('gps0_difficulte', choix);
-        GPS0_Economie.demarrerConsommation(choix, force => {
-          if (typeof force === 'boolean') { GPS0_Boussole.forceEtat(force ? 'on' : 'off'); return; }
-          return GPS0_Boussole.estActif();
-        });
-        mdiff.close();
-      }, { once: true });
     });
 
     document.getElementById('menu-reset')?.addEventListener('click', () => {
@@ -359,7 +357,7 @@ window.GPS0_App = (() => {
     const elE = document.getElementById('inv-energie');
     const elF = document.getElementById('inv-fragments');
     if (elP) elP.textContent = eco.poussieres;
-    if (elE) elE.textContent = pc + '/100';
+    if (elE) elE.textContent = Math.round(eco.energie.actuelle) + '/' + eco.energie.max;
     if (elF) {
       elF.innerHTML = '';
       const catalog = window.GPS0_Economie_FRAGMENTS || {};
@@ -440,13 +438,41 @@ window.GPS0_App = (() => {
       btn.onclick = () => {
         if (typeof GPS0_Economie !== 'undefined' && typeof GPS0_Economie.acheterFragment === 'function') {
           const ok = GPS0_Economie.acheterFragment(fr.id, fr.prix);
-          if (ok) { GPS0_Economie.updateHUD(); modal.close(); }
+          if (ok) { GPS0_Audio.playSFX('achat'); GPS0_Economie.updateHUD(); modal.close(); }
           else { btn.classList.add('erreur'); setTimeout(() => btn.classList.remove('erreur'), 800); }
         }
       };
       container.appendChild(btn);
     });
     modal.showModal();
+  }
+
+  function _tuto() {
+    if (localStorage.getItem('gps0_tuto_vu')) return Promise.resolve();
+    const m = document.getElementById('modal-tuto'); if (!m) return Promise.resolve();
+    m.showModal();
+
+    let currentStep = 0;
+    const totalSteps = 4;
+    const steps = m.querySelectorAll('.intro-step');
+    const dots = m.querySelectorAll('.intro-dot');
+    const prevBtn = document.getElementById('intro-prev');
+    const nextBtn = document.getElementById('intro-next');
+
+    function gotoStep(n) {
+      steps.forEach((s, i) => s.classList.toggle('active', i === n));
+      dots.forEach((d, i) => d.classList.toggle('active', i === n));
+      prevBtn.disabled = n === 0;
+      nextBtn.textContent = n === totalSteps - 1 ? 'C\u2019est parti ! \uD83D\uDE80' : 'Suivant \u2192';
+    }
+
+    return new Promise(r => {
+      prevBtn.addEventListener('click', () => { if (currentStep > 0) gotoStep(--currentStep); });
+      nextBtn.addEventListener('click', () => {
+        if (currentStep < totalSteps - 1) { gotoStep(++currentStep); }
+        else { localStorage.setItem('gps0_tuto_vu', '1'); m.close(); r(); }
+      });
+    });
   }
 
   return { init };

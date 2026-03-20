@@ -1,6 +1,7 @@
 'use strict';
 window.GPS0_GPS = (() => {
   let config = null, zonesActives = [], zoneIndex = 0, watchId = null;
+  let _zoneAtteintePending = false; // debounce : n'emet zone_atteinte qu'une fois par zone
   const _l = {};
   function on(e, fn) { (_l[e] = _l[e] || []).push(fn); }
   function emit(e, d) { (_l[e] || []).forEach(fn => fn(d)); }
@@ -42,6 +43,7 @@ window.GPS0_GPS = (() => {
   }
   function zoneActuelle() { return zonesActives[zoneIndex] || null; }
   function zoneSuivante() {
+    _zoneAtteintePending = false; // reset pour la prochaine zone
     if (zoneIndex < zonesActives.length - 1) {
       zoneIndex++;
       const s = JSON.parse(localStorage.getItem('gps0_zones_actives'));
@@ -63,7 +65,11 @@ window.GPS0_GPS = (() => {
       const dist = Math.round(haversine(pos.coords.latitude, pos.coords.longitude, zone.lat, zone.lng));
       const bear = bearing(pos.coords.latitude, pos.coords.longitude, zone.lat, zone.lng);
       emit('position', { lat: pos.coords.latitude, lng: pos.coords.longitude, dist, bearing: bear, zone });
-      if (dist <= (zone.rayon || 30)) emit('zone_atteinte', zone);
+      if (dist <= (zone.rayon || 30)) {
+        if (!_zoneAtteintePending) { _zoneAtteintePending = true; emit('zone_atteinte', zone); }
+      } else {
+        _zoneAtteintePending = false;
+      }
     }, err => emit('erreur', err.message), { enableHighAccuracy: true, maximumAge: 3000, timeout: 12000 });
   }
   function arreterSuivi() { if (watchId !== null) { navigator.geolocation.clearWatch(watchId); watchId = null; } }

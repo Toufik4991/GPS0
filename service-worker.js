@@ -1,5 +1,5 @@
-const CACHE = 'gps0-v10';
-const APP_VERSION = '3.1.5';
+﻿const CACHE = 'gps0-v12';
+const APP_VERSION = '3.2.1';
 const CORE = [
   'index.html',
   'css/main.css',
@@ -33,9 +33,26 @@ const CORE = [
   'assets/backgrounds/fond_ecran6.jpeg',
   'assets/backgrounds/fond_ecran7.jpeg',
   'assets/backgrounds/fond_ecran8.jpeg',
-  'assets/backgrounds/fond_ecran9.jpeg'
-];
-self.addEventListener('install', e => {
+  'assets/backgrounds/fond_ecran9.jpeg',
+  'assets/audio/sfx/achat.mp3',
+  'assets/audio/sfx/boussole_on.mp3',
+  'assets/audio/sfx/boussole_off.mp3',
+  'assets/audio/sfx/boss_hit.mp3',
+  'assets/audio/sfx/collecte_poussiere.mp3',
+  'assets/audio/sfx/ennemi_touche.mp3',
+  'assets/audio/sfx/halo_bip.mp3',
+  'assets/audio/sfx/laser_warning.mp3',
+  'assets/audio/sfx/lune_apparait.mp3',
+  'assets/audio/sfx/plateforme_active.mp3',
+  'assets/audio/sfx/saut_cosmonaute.mp3',
+  'assets/audio/sfx/zone_detectee.mp3',
+  'assets/audio/musique/exploration/musique_menu0.mp3',
+  'assets/audio/musique/exploration/musique_menu1.mp3',
+  'assets/audio/musique/exploration/musique_menu2.mp3',
+  'assets/audio/musique/exploration/musique_menu3.mp3',
+  'assets/audio/musique/exploration/musique_menu4.mp3',
+  'assets/audio/musique/finale/musique_finale.mp3'
+];self.addEventListener('install', e => {
   e.waitUntil(
     caches.open(CACHE).then(c => c.addAll(CORE).catch(() => {})).then(() => self.skipWaiting())
   );

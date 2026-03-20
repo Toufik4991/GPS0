@@ -1,4 +1,4 @@
-:root {
+﻿:root {
   --bg: #0A0A1A;
   --bg2: #0D1B2A;
   --accent: #C8A2C8;
@@ -227,3 +227,32 @@ button, input { touch-action: manipulation; }
 .inv-frag-qty{font-size:.78rem;color:var(--accent)}
 .inv-frag-use{background:linear-gradient(135deg,var(--accent),#9a72c8);border:none;border-radius:8px;color:#0A0A1A;font-weight:bold;font-size:.8rem;cursor:pointer;padding:6px 12px;white-space:nowrap}
 .inv-frag-use:disabled{opacity:.35;cursor:not-allowed}
+
+/* == TUTORIEL (ancien, gardé pour compatibilité) == */
+.tuto-steps{display:flex;flex-direction:column;gap:10px}
+.tuto-step{display:flex;align-items:flex-start;gap:12px;background:rgba(255,255,255,.05);border:1px solid rgba(200,162,200,.2);border-radius:12px;padding:12px}
+.tuto-icon{font-size:1.7rem;flex-shrink:0;line-height:1}
+.tuto-step strong{display:block;font-size:.9rem;color:var(--accent);margin-bottom:3px}
+.tuto-step p{font-size:.77rem;color:rgba(255,255,255,.65);line-height:1.4;margin:0}
+
+/* == FICHE INTRO PAGINÉE == */
+.intro-fiche-box{padding:24px 20px;gap:14px;max-height:90dvh;overflow:hidden}
+.intro-header{text-align:center;border-bottom:1px solid rgba(200,162,200,.2);padding-bottom:12px}
+.intro-logo{font-size:2rem;font-weight:900;color:var(--gold);text-shadow:0 0 20px var(--gold);letter-spacing:.1em}
+.intro-header h2{font-size:1.1rem;color:var(--accent);margin-top:4px}
+.intro-steps-wrap{position:relative;min-height:200px}
+.intro-step{display:none;flex-direction:column;align-items:center;text-align:center;gap:10px;animation:intro-slide .3s ease}
+.intro-step.active{display:flex}
+@keyframes intro-slide{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:translateX(0)}}
+.intro-step-icon{font-size:3rem;filter:drop-shadow(0 0 12px rgba(200,162,200,.6))}
+.intro-step h3{color:var(--accent);font-size:1.1rem}
+.intro-step p{font-size:.88rem;color:rgba(255,255,255,.8);line-height:1.55;max-width:300px}
+.intro-flow{display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:6px;font-size:.82rem}
+.intro-flow span{background:rgba(255,255,255,.07);border:1px solid rgba(200,162,200,.25);border-radius:8px;padding:4px 8px}
+.intro-arrow{background:none!important;border:none!important;color:var(--gold);font-size:.9rem;padding:0!important}
+.intro-halo-legende{display:grid;grid-template-columns:auto 1fr;gap:4px 8px;align-items:center;margin-top:8px;text-align:left;font-size:.84rem}
+.halo-dot{font-size:1rem}
+.intro-dots{display:flex;justify-content:center;gap:8px}
+.intro-dot{width:8px;height:8px;border-radius:50%;background:rgba(200,162,200,.3);transition:background .3s}
+.intro-dot.active{background:var(--accent);box-shadow:0 0 6px var(--accent)}
+.intro-nav{display:flex;gap:10px;justify-content:space-between}

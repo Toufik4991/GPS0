@@ -91,8 +91,10 @@ window.GPS0_Lune = (() => {
     tId = setTimeout(() => { bulle.classList.remove('visible'); cooling = false; }, 5000);
   }
 
+  let _survId = null;
   function demarrerSurveillance() {
-    setInterval(() => { if (Math.random() < 0.05) parler('random_fun'); }, 180000);
+    if (_survId) clearInterval(_survId);
+    _survId = setInterval(() => { if (Math.random() < 0.05) parler('random_fun'); }, 180000);
   }
 
   return { parler, demarrerSurveillance };
