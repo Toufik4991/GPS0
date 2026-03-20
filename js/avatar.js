@@ -7,9 +7,23 @@ window.GPS0_Avatar = (() => {
 
   async function demarrerCamera() {
     try {
-      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 320 }, height: { ideal: 320 } }, audio: false });
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 640 } },
+        audio: false
+      });
       const v = document.getElementById('selfie-video');
-      if (v) v.srcObject = stream;
+      if (v) {
+        v.setAttribute('autoplay', '');
+        v.setAttribute('playsinline', '');
+        v.setAttribute('muted', '');
+        v.srcObject = stream;
+        // iOS Safari : attendre loadedmetadata avant d'afficher
+        await new Promise(r => {
+          v.addEventListener('loadedmetadata', r, { once: true });
+          setTimeout(r, 3000); // Fallback timeout
+        });
+        try { await v.play(); } catch (_) {}
+      }
       return true;
     } catch (e) { console.warn('Camera:', e.message); return false; }
   }

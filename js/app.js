@@ -6,6 +6,7 @@ window.GPS0_App = (() => {
   async function init() {
     GPS0_Economie.rechargePassive();
     await _splash();
+    _fixCosmosFloating(); // Bug 3 : SVG flottants hors zone boussole
     await _requestPermissions();
     await _pseudo();
     await _selfie();
@@ -16,6 +17,26 @@ window.GPS0_App = (() => {
     GPS0_Economie.updateHUD();
     GPS0_Lune.demarrerSurveillance();
     document.getElementById('app').classList.add('visible');
+  }
+
+  function _fixCosmosFloating() {
+    // Repositionne les SVG flottants si trop proches du centre (zone boussole)
+    requestAnimationFrame(() => {
+      const cx = window.innerWidth / 2, cy = window.innerHeight / 2;
+      const MIN_DIST = 120;
+      document.querySelectorAll('.cf').forEach(el => {
+        const r = el.getBoundingClientRect();
+        const ecx = r.left + r.width / 2, ecy = r.top + r.height / 2;
+        const dx = ecx - cx, dy = ecy - cy;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < MIN_DIST && dist > 0) {
+          const angle = Math.atan2(dy, dx);
+          const push = MIN_DIST - dist + 20;
+          const currentT = el.style.transform || '';
+          el.style.transform = currentT + ' translate(' + Math.round(Math.cos(angle) * push) + 'px,' + Math.round(Math.sin(angle) * push) + 'px)';
+        }
+      });
+    });
   }
 
   function _splash() {

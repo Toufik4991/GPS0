@@ -80,6 +80,8 @@ window.GPS0_Lune = (() => {
   function parler(cat) {
     const now = Date.now();
     if (cooling || (now - dernierT) < COOLDOWN) return;
+    // Ne pas afficher en zone bleue (bouton JOUER visible, superposition)
+    if (typeof GPS0_Boussole !== 'undefined' && GPS0_Boussole.getEtat() === 'zone') return;
     cooling = true; dernierT = now;
     const bulle = document.getElementById('lune-bulle');
     const txt = document.getElementById('lune-texte');

@@ -80,11 +80,9 @@ html,body{height:100%;overflow:hidden;font-family:"Trebuchet MS",sans-serif;colo
 .asteroide-wrapper[data-etat="off"] .asteroide-svg{animation-play-state:paused;filter:grayscale(.7) brightness(.6)}
 .asteroide-wrapper[data-etat="off"] .energie-ast-overlay{opacity:.35}
 .asteroide-wrapper[data-etat="zone"] .asteroide-svg{animation-duration:.4s}
-.asteroide-wrapper[data-etat="zone"] .ast-jouer{opacity:1!important;animation:jouer-pulse .6s ease-in-out infinite alternate}
 .asteroide-wrapper[data-etat="epuise"]{cursor:default;opacity:.7}
 @keyframes ast-flash{0%{filter:drop-shadow(0 0 8px rgba(79,195,247,.35))}45%{filter:brightness(2.8) drop-shadow(0 0 35px rgba(255,255,255,.9));transform:scale(1.07)}100%{filter:drop-shadow(0 0 8px rgba(79,195,247,.35));transform:scale(1)}}
 .asteroide-svg.flash{animation:ast-flash .42s ease-out forwards!important}
-@keyframes jouer-pulse{to{fill:#fff;font-size:16px}}
 
 /* ── FUSÉE ── */
 .fusee-wrapper{position:absolute;width:70px;height:70px;transform-origin:center center;transition:transform .4s cubic-bezier(.25,.46,.45,.94);will-change:transform}
