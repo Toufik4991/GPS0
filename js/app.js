@@ -266,21 +266,9 @@ window.GPS0_App = (() => {
       GPS0_Audio.playSFX('zone_detectee');
       GPS0_Audio.playSFX('halo_bip');
       GPS0_Boussole.forceEtat('zone');
-      // Afficher bouton JOUER en haut
+      // Afficher bouton JOUER en haut — le joueur clique quand il veut
       const bjh = document.getElementById('btn-jouer-haut');
       if (bjh) bjh.hidden = false;
-      // Auto-lancement du mini-jeu apres un court delai d'annonce
-      if (zone && zone.mini_jeu) {
-        _zoneAutoTimer = setTimeout(() => {
-          _zoneAutoTimer = null;
-          // Verifier que le joueur est toujours dans la zone (pas sorti entretemps)
-          if (GPS0_Boussole.getEtat() === 'zone') {
-            const bjh2 = document.getElementById('btn-jouer-haut');
-            if (bjh2) bjh2.hidden = true;
-            _lancerMiniJeu(zone.mini_jeu);
-          }
-        }, 2500);
-      }
     });
     GPS0_GPS.on('jeu_termine', () => {
       GPS0_Finale && GPS0_Finale.lancer && GPS0_Finale.lancer();
