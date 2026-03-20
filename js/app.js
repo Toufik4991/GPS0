@@ -1,6 +1,7 @@
 ﻿'use strict';
 window.GPS0_App = (() => {
   let _parcoursId = null;
+  let _zoneAutoTimer = null;
 
   async function init() {
     GPS0_Economie.rechargePassive();
@@ -264,11 +265,19 @@ window.GPS0_App = (() => {
       GPS0_Audio.playSFX('zone_detectee');
       GPS0_Audio.playSFX('halo_bip');
       GPS0_Boussole.forceEtat('zone');
+      // Afficher bouton JOUER en haut
+      const bjh = document.getElementById('btn-jouer-haut');
+      if (bjh) bjh.hidden = false;
       // Auto-lancement du mini-jeu apres un court delai d'annonce
       if (zone && zone.mini_jeu) {
-        setTimeout(() => {
+        _zoneAutoTimer = setTimeout(() => {
+          _zoneAutoTimer = null;
           // Verifier que le joueur est toujours dans la zone (pas sorti entretemps)
-          if (GPS0_Boussole.getEtat() === 'zone') _lancerMiniJeu(zone.mini_jeu);
+          if (GPS0_Boussole.getEtat() === 'zone') {
+            const bjh2 = document.getElementById('btn-jouer-haut');
+            if (bjh2) bjh2.hidden = true;
+            _lancerMiniJeu(zone.mini_jeu);
+          }
         }, 2500);
       }
     });
@@ -323,6 +332,15 @@ window.GPS0_App = (() => {
       flash();
       GPS0_Boussole.toggle();
       GPS0_Audio.playSFX(GPS0_Boussole.estActif() ? 'boussole_on' : 'boussole_off');
+    });
+
+    // Bouton JOUER en haut (zone atteinte)
+    document.getElementById('btn-jouer-haut')?.addEventListener('click', () => {
+      if (_zoneAutoTimer) { clearTimeout(_zoneAutoTimer); _zoneAutoTimer = null; }
+      const bjh = document.getElementById('btn-jouer-haut');
+      if (bjh) bjh.hidden = true;
+      const z = GPS0_GPS.zoneActuelle();
+      if (z) _lancerMiniJeu(z.mini_jeu);
     });
 
     const mb = document.getElementById('menu-btn'), mp = document.getElementById('menu-panel');
@@ -391,6 +409,8 @@ window.GPS0_App = (() => {
     });
 
     document.addEventListener('minijeu:complete', e => {
+      const bjh = document.getElementById('btn-jouer-haut');
+      if (bjh) bjh.hidden = true;
       GPS0_Economie.ajouterPoussieres(e.detail?.poussieres || 10);
       if (typeof GPS0_Economie.setCooldown === 'function') GPS0_Economie.setCooldown(e.detail?.niveau || 0);
       GPS0_GPS.zoneSuivante(); _majObjectif();
@@ -398,6 +418,8 @@ window.GPS0_App = (() => {
       document.getElementById('app').classList.add('visible');
     });
     document.addEventListener('minijeu:failed', () => {
+      const bjh = document.getElementById('btn-jouer-haut');
+      if (bjh) bjh.hidden = true;
       document.getElementById('app').classList.add('visible');
     });
     GPS0_GPS.on('zone_changee', () => _majObjectif());

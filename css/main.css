@@ -94,6 +94,7 @@ html,body{height:100%;overflow:hidden;font-family:"Trebuchet MS",sans-serif;colo
 @keyframes flame{from{transform:scaleY(.8);opacity:.6}to{transform:scaleY(1.2);opacity:1}}
 .distance-label{position:absolute;bottom:-30px;left:50%;transform:translateX(-50%);font-size:.82rem;color:var(--accent);font-weight:bold;white-space:nowrap}
 .btn-jouer{position:absolute;bottom:-62px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#4FC3F7,#C8A2C8);color:#0A0A1A;font-weight:bold;font-size:1rem;padding:10px 26px;border-radius:24px;border:none;cursor:pointer;animation:pjour .6s ease-in-out infinite alternate;white-space:nowrap}
+#btn-jouer-haut{position:fixed;top:68px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#69FF47,#4FC3F7);color:#0A0A1A;font-weight:bold;font-size:1.05rem;padding:13px 30px;border-radius:24px;border:none;cursor:pointer;z-index:150;box-shadow:0 0 24px rgba(105,255,71,.5);animation:pjour .6s ease-in-out infinite alternate;white-space:nowrap}
 @keyframes pjour{to{transform:translateX(-50%) scale(1.05);box-shadow:0 0 24px rgba(79,195,247,.6)}}
 
 /* ── TOGGLE BOUSSOLE ── */
@@ -188,7 +189,7 @@ button, input { touch-action: manipulation; }
 
 /* ── COSMOS FLOTTANTS ── */
 .cosmos-floating{position:fixed;inset:0;z-index:2;pointer-events:none;overflow:hidden}
-.cf{position:absolute;opacity:.72;will-change:transform;line-height:1;font-style:normal}
+.cf{position:absolute;opacity:.88;will-change:transform;line-height:1;font-style:normal}
 .cf-rocket{top:72%;left:-4%;font-size:3.2rem;animation:cf-rise 34s linear infinite}
 .cf-ufo{top:38%;right:-5%;font-size:3.8rem;animation:cf-slide-l 42s linear infinite;animation-delay:-16s}
 .cf-moon{top:16%;right:7%;font-size:3rem;animation:cf-bob 58s ease-in-out infinite;animation-delay:-25s;opacity:.4}

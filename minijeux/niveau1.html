@@ -81,9 +81,9 @@
     }
     @keyframes scintille { from { opacity: 0.7; transform: scale(0.9); } to { opacity: 1; transform: scale(1.1); } }
 
-        #ctrl-bar { position:fixed; bottom:0; left:0; right:0; height:80px; z-index:45; display:flex; align-items:center; justify-content:space-between; padding:8px 16px; background:transparent; gap:10px; }
-    #zone-gauche, #zone-droite { flex:1; height:56px; border-radius:14px; border:none; background:transparent; color:transparent; font-size:2rem; cursor:pointer; display:flex; align-items:center; justify-content:center; touch-action:none; user-select:none; -webkit-user-select:none; }
-    #btn-saut { flex:1.2; height:56px; border-radius:14px; border:none; background:transparent; color:transparent; font-size:2rem; cursor:pointer; display:flex; align-items:center; justify-content:center; touch-action:none; user-select:none; -webkit-user-select:none; }
+        #ctrl-bar { position:fixed; bottom:0; left:0; right:0; height:110px; z-index:45; display:flex; align-items:center; justify-content:space-between; padding:8px 16px; background:transparent; gap:10px; }
+    #zone-gauche, #zone-droite { flex:1; height:80px; border-radius:14px; border:none; background:transparent; color:transparent; font-size:2rem; cursor:pointer; display:flex; align-items:center; justify-content:center; touch-action:none; user-select:none; -webkit-user-select:none; }
+    #btn-saut { flex:1.2; height:80px; border-radius:14px; border:none; background:transparent; color:transparent; font-size:2rem; cursor:pointer; display:flex; align-items:center; justify-content:center; touch-action:none; user-select:none; -webkit-user-select:none; }
     #zone-gauche:active, #zone-droite:active, #btn-saut:active { opacity:0.5; }
 
     /* Instruction overlay */
@@ -119,9 +119,9 @@
     /* Lune taquine in-game */
     #lune-ingame {
       position: fixed; top: 56px; left: 50%; transform: translateX(-50%);
-      background: rgba(200,162,200,0.12); border: 1px solid rgba(200,162,200,0.3);
-      border-radius: 14px; padding: 8px 14px; font-size: 0.8rem; color: #C8A2C8;
-      font-style: italic; opacity: 0; transition: opacity 0.4s; white-space: nowrap; z-index: 60; pointer-events: none;
+      background: rgba(10,10,26,.95); border: 1px solid rgba(255,255,255,.4);
+      border-radius: 14px; padding: 8px 14px; font-size: 0.88rem; color: #fff;
+      font-weight: bold; opacity: 0; transition: opacity 0.4s; white-space: nowrap; z-index: 60; pointer-events: none;
     }
     #lune-ingame.visible { opacity: 1; }
   </style>
@@ -160,7 +160,7 @@
 <!-- TUTO OVERLAY -->
 <div id="tuto-overlay">
   <h2>🚀 Niveau 1 — Tutoriel</h2>
-  <p>Collecte les <strong style="color:#FFD700">12 poussières d'étoiles</strong> pour terminer le niveau !</p>
+  <p>Collecte un max de <strong style="color:#FFD700">poussières d'étoiles</strong> en <strong style="color:#4FC3F7">2 min 30 !</strong></p>
   <div class="tuto-controle"><span>✨</span><span>Collecte toutes les poussières d'étoiles</span></div>
   <div class="tuto-controle"><span>🌙</span><span>Explore tout le niveau pour les trouver !</span></div>
   <button id="btn-jouer-tuto">C'est parti ! 🚀</button>
@@ -208,21 +208,21 @@
     { x: Math.round(W*.72),   y: H-210, w: 115, h: 18 },
     { x: Math.round(W*.88),   y: H-160, w: 110, h: 18 },
     { x: Math.round(W*1.12),  y: H-180, w: 115, h: 18 },
-    { x: Math.round(W*1.28),  y: H-310, w: 105, h: 18 },
+    { x: Math.round(W*1.28),  y: H-370, w: 105, h: 18 },
     { x: Math.round(W*1.48),  y: H-220, w: 110, h: 18 },
     { x: Math.round(W*1.68),  y: H-175, w: 115, h: 18 },
-    { x: Math.round(W*1.88),  y: H-290, w: 105, h: 18 },
-    { x: Math.round(W*2.08),  y: H-190, w: 110, h: 18 },
-    { x: Math.round(W*2.28),  y: H-330, w: 100, h: 18 },
-    { x: Math.round(W*2.48),  y: H-230, w: 110, h: 18 },
-    { x: Math.round(W*2.65),  y: H-165, w: 115, h: 18 },
-    { x: Math.round(W*2.85),  y: H-305, w: 100, h: 18 },
-    { x: Math.round(W*3.05),  y: H-195, w: 110, h: 18 },
-    { x: Math.round(W*3.22),  y: H-160, w: 115, h: 18 },
-    { x: Math.round(W*3.40),  y: H-270, w: 105, h: 18 },
-    { x: Math.round(W*3.58),  y: H-240, w: 110, h: 18 },
-    { x: Math.round(W*3.75),  y: H-200, w: 110, h: 18 },
-    { x: Math.round(W*3.82),  y: H-320, w: 100, h: 18 },
+    { x: Math.round(W*1.88),  y: H-340, w: 105, h: 18 },
+    { x: Math.round(W*2.08),  y: H-255, w: 110, h: 18 },
+    { x: Math.round(W*2.28),  y: H-420, w: 100, h: 18 },
+    { x: Math.round(W*2.48),  y: H-290, w: 110, h: 18 },
+    { x: Math.round(W*2.65),  y: H-200, w: 115, h: 18 },
+    { x: Math.round(W*2.85),  y: H-380, w: 100, h: 18 },
+    { x: Math.round(W*3.05),  y: H-250, w: 110, h: 18 },
+    { x: Math.round(W*3.22),  y: H-200, w: 115, h: 18 },
+    { x: Math.round(W*3.40),  y: H-330, w: 105, h: 18 },
+    { x: Math.round(W*3.58),  y: H-280, w: 110, h: 18 },
+    { x: Math.round(W*3.75),  y: H-240, w: 110, h: 18 },
+    { x: Math.round(W*3.82),  y: H-400, w: 100, h: 18 },
   ];
 
   const POUSSIERES_CONFIG = [
@@ -239,6 +239,7 @@
   let gauche = false, droite = false, saut = false;
   let running = false;
   let lune_dit = false;
+  let tempsRestant = 150, timerEl = null, timerInterval = null;
 
   function buildNiveau() {
     const monde = document.getElementById('monde');
@@ -252,6 +253,12 @@
       monde.appendChild(el);
       return { el, x: p.x, y: p.y, w: p.w, h: p.h };
     });
+    // Timer HUD
+    timerEl = document.createElement('span');
+    timerEl.style.cssText = 'color:#4FC3F7;font-weight:bold;margin:0 8px;font-size:.9rem';
+    timerEl.textContent = '2:30';
+    const hudEl = document.getElementById('mj-hud');
+    if (hudEl) { const qa = document.getElementById('btn-abandon'); if (qa) hudEl.insertBefore(timerEl, qa); else hudEl.appendChild(timerEl); }
     poussieres = POUSSIERES_CONFIG.map((c) => {
       const pl = plates[c.pi];
       const px = pl.x + pl.w / 2 - 11, py = pl.y - 32;
@@ -260,7 +267,7 @@
       el.setAttribute('width', '22'); el.setAttribute('height', '22');
       el.setAttribute('viewBox', '0 0 22 22');
       el.style.position = 'absolute'; el.style.left = px + 'px'; el.style.top = py + 'px';
-      el.style.filter = 'drop-shadow(0 0 5px #FFD700) drop-shadow(0 0 12px #FFA500)';
+      el.style.filter = 'drop-shadow(0 0 8px #FFD700) drop-shadow(0 0 22px #FFA500) drop-shadow(0 0 45px #FF6600)';
       el.style.animation = 'scintille 1.2s ease-in-out infinite alternate';
       el.style.pointerEvents = 'none';
       const star = document.createElementNS(ns, 'polygon');
@@ -301,10 +308,10 @@
       const dx = (jx + 20) - (p.x + 11), dy = (jy + 26) - (p.y + 11);
       if (Math.sqrt(dx*dx + dy*dy) < 30) {
         p.collected = true; p.el.style.display = 'none'; etoiles++;
-        document.getElementById('mj-etoiles').textContent = etoiles + ' / ' + totalEtoiles + ' ✨';
+    document.getElementById('mj-etoiles').textContent = etoiles + ' ✨';
         try { window.parent.GPS0_Audio && window.parent.GPS0_Audio.playSFX('collecte_poussiere'); } catch(e) {}
         if (!lune_dit && etoiles === 4) { afficherLune('Pas mal! Tu as trouve la moitie. Continue!'); lune_dit = true; }
-        if (etoiles >= totalEtoiles) { setTimeout(victoire, 400); running = false; }
+        // Plus de condition victoire par total — le timer fait foi
       }
     }
     const tgt = Math.max(0, Math.min(jx - W * 0.35, MONDE_W - W));
@@ -329,17 +336,17 @@
     const el = document.getElementById('lune-ingame');
     el.textContent = '🌙 ' + txt; el.classList.add('visible');
     clearTimeout(luneTId);
-    luneTId = setTimeout(() => el.classList.remove('visible'), 4000);
+    luneTId = setTimeout(() => el.classList.remove('visible'), 15000);
   }
 
   function victoire() {
     document.getElementById('fin-titre').textContent = 'Victoire! 🎉';
     document.getElementById('fin-titre').className = 'victoire';
-    document.getElementById('fin-sous').textContent = 'Tu as collecte toutes les poussieres!';
-    document.getElementById('fin-poussieres').textContent = '+ ' + totalEtoiles + ' ✨';
+    document.getElementById('fin-sous').textContent = 'Temps ecoule ! Tu as collecte ' + etoiles + ' poussieres.';
+    document.getElementById('fin-poussieres').textContent = '+ ' + etoiles + ' ✨';
     document.getElementById('overlay-fin').classList.add('visible');
     const _bR = document.getElementById('btn-reward');
-    if (_bR) { _bR.style.display = 'inline-block'; _bR.onclick = function() { window.parent.postMessage({ source: 'gps0_minijeu', success: true, niveau: 1, poussieres: totalEtoiles, etoiles: 3 }, '*'); }; }
+    if (_bR) { _bR.style.display = 'inline-block'; _bR.onclick = function() { window.parent.postMessage({ source: 'gps0_minijeu', success: true, niveau: 1, poussieres: etoiles, etoiles: 3 }, '*'); }; }
   }
 
   function defaite() {
@@ -354,14 +361,28 @@
   function loop() { if (running) physique(); requestAnimationFrame(loop); }
 
   function setupControles() {
-    const zG = document.getElementById('zone-gauche');
-    const zD = document.getElementById('zone-droite');
-    const bS = document.getElementById('btn-saut');
-    zG.addEventListener('touchstart', e => { e.preventDefault(); gauche = true; }, { passive: false });
-    zG.addEventListener('touchend', e => { e.preventDefault(); gauche = false; }, { passive: false });
-    zD.addEventListener('touchstart', e => { e.preventDefault(); droite = true; }, { passive: false });
-    zD.addEventListener('touchend', e => { e.preventDefault(); droite = false; }, { passive: false });
-    bS.addEventListener('touchstart', e => { e.preventDefault(); saut = true; }, { passive: false });
+    const ctrl = document.getElementById('ctrl-bar');
+    const getBtn = (x, y) => {
+      const zG = document.getElementById('zone-gauche'), zD = document.getElementById('zone-droite'), bS = document.getElementById('btn-saut');
+      if (!zG || !zD || !bS) return null;
+      const rg = zG.getBoundingClientRect(), rd = zD.getBoundingClientRect(), rs = bS.getBoundingClientRect();
+      if (x >= rg.left && x <= rg.right && y >= rg.top && y <= rg.bottom) return 'g';
+      if (x >= rd.left && x <= rd.right && y >= rd.top && y <= rd.bottom) return 'd';
+      if (x >= rs.left && x <= rs.right && y >= rs.top && y <= rs.bottom) return 's';
+      return null;
+    };
+    const activeP = {};
+    const update = () => {
+      gauche = Object.values(activeP).includes('g');
+      droite = Object.values(activeP).includes('d');
+      if (Object.values(activeP).includes('s')) saut = true;
+    };
+    if (ctrl) {
+      ctrl.addEventListener('touchstart', e => { e.preventDefault(); [...e.changedTouches].forEach(t => { const b = getBtn(t.clientX, t.clientY); if (b) activeP[t.identifier] = b; }); update(); }, { passive: false });
+      ctrl.addEventListener('touchmove', e => { e.preventDefault(); [...e.changedTouches].forEach(t => { const b = getBtn(t.clientX, t.clientY); if (b) activeP[t.identifier] = b; else delete activeP[t.identifier]; }); update(); }, { passive: false });
+      ctrl.addEventListener('touchend', e => { e.preventDefault(); [...e.changedTouches].forEach(t => { delete activeP[t.identifier]; }); update(); }, { passive: false });
+      ctrl.addEventListener('touchcancel', e => { [...e.changedTouches].forEach(t => { delete activeP[t.identifier]; }); update(); }, { passive: false });
+    }
     window.addEventListener('keydown', e => {
       if (e.key === 'ArrowLeft' || e.key === 'q') gauche = true;
       if (e.key === 'ArrowRight' || e.key === 'd') droite = true;
@@ -376,6 +397,13 @@
   function start() {
     document.getElementById('tuto-overlay').style.display = 'none';
     running = true;
+    timerInterval = setInterval(() => {
+      if (!running) { clearInterval(timerInterval); timerInterval = null; return; }
+      tempsRestant = Math.max(0, tempsRestant - 1);
+      const m = Math.floor(tempsRestant / 60), s = tempsRestant % 60;
+      if (timerEl) timerEl.textContent = m + ':' + (s < 10 ? '0' : '') + s;
+      if (tempsRestant <= 0) { clearInterval(timerInterval); timerInterval = null; running = false; setTimeout(victoire, 400); }
+    }, 1000);
     setTimeout(() => afficherLune('Saute sur les plateformes pour tout collecter!'), 1500);
   }
 
