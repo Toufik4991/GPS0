@@ -3,349 +3,187 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
-<title>GPS0 — Lune de Verre</title>
+<title>GPS0 N1</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:#0A0A1A;color:#fff;font-family:system-ui,sans-serif;overflow:hidden;height:100dvh;display:flex;flex-direction:column;touch-action:none;user-select:none}
-#bg{position:fixed;inset:0;z-index:0;background:radial-gradient(ellipse at 60% 70%,rgba(100,180,255,0.14) 0%,transparent 60%),linear-gradient(135deg,#060818 0%,#0a1428 100%);}
-#hud{position:relative;z-index:20;display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(0,0,0,.65);flex-shrink:0;backdrop-filter:blur(6px)}
-#lives{font-size:1.2rem;letter-spacing:2px}
-#timer{flex:1;text-align:center;font-size:1rem;font-weight:bold;color:#4FC3F7}
-#score-hud{font-size:.9rem;color:#FFD700;font-weight:bold}
-#game-container{flex:1;position:relative;overflow:hidden;z-index:1}
+html,body{height:100%;overflow:hidden;background:#0A0A1A;font-family:system-ui,sans-serif;color:#fff;touch-action:none;user-select:none}
+#bg{position:fixed;inset:0;z-index:0;background:radial-gradient(ellipse at 60% 70%,rgba(100,180,255,.12) 0%,transparent 60%),linear-gradient(135deg,#060818 0%,#0a1428 100%);}
+#hud{position:relative;z-index:20;display:flex;align-items:center;gap:10px;padding:6px 52px 6px 10px;background:rgba(0,0,0,.65);backdrop-filter:blur(6px);flex-shrink:0}
+#lives{font-size:1.1rem;letter-spacing:2px;min-width:54px}
+#timer{flex:1;text-align:center;font-size:.95rem;font-weight:bold;color:#4FC3F7}
+#score-hud{font-size:.9rem;color:#FFD700;font-weight:bold;min-width:52px;text-align:right}
+#game-container{position:relative;z-index:1;flex:1;overflow:hidden;display:flex;flex-direction:column}
 canvas{display:block;width:100%;height:100%}
-#overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,.88);z-index:20;gap:14px;text-align:center;padding:24px}
-#overlay h2{font-size:1.8rem;color:#C8A2C8}
-#overlay p{font-size:.9rem;color:rgba(255,255,255,.8);max-width:280px;line-height:1.5}
-#overlay .btn{padding:12px 32px;border:none;border-radius:14px;font-size:1rem;font-weight:bold;cursor:pointer;background:linear-gradient(135deg,#C8A2C8,#8860a8);color:#fff}
-:root{--accent:#C8A2C8;--gold:#FFD700;--blue:#4FC3F7}
-
+body{display:flex;flex-direction:column;height:100dvh}
 </style>
 </head>
 <body>
 <div id="bg"></div>
 <div id="hud">
   <span id="lives">❤❤❤</span>
-  <span id="timer">3:00</span>
+  <span id="timer">2:30</span>
   <span id="score-hud">0 ✨</span>
 </div>
 <div id="game-container">
   <canvas id="cv"></canvas>
-
-  <div id="overlay">
-    <div style="font-size:3rem">🌑</div>
-    <h2>Lune de Verre</h2>
-    <p>Lance le cosmonaute avec ta fronde !<br>Fais glisser vers l'arrière &rarr; relâche.<br>Vise les cristaux pour récupérer les ✨.</p>
-    <button class="btn" id="btn-start">C'est parti&nbsp;!</button>
-  </div>
-  <canvas id="selfie-cv" width="64" height="64" style="display:none" aria-hidden="true"></canvas>
 </div>
+<script src="shared.js"></script>
 <script>
-// ── COMMON ENGINE ──
-const NIVEAU = 1;
-let lives = 3, dust = 0, running = false, gameover = false;
-let timerSec = 180, timerInterval = null;
-const livesEl = document.getElementById('lives');
-const timerEl = document.getElementById('timer');
-const scoreEl = document.getElementById('score-hud');
-const overlay = document.getElementById('overlay');
-const btnStart = document.getElementById('btn-start');
-const cv = document.getElementById('cv');
-const ctx = cv.getContext('2d');
+window.NIVEAU = 1;
 
-function updateLivesHUD(){livesEl.textContent='❤'.repeat(lives)+'♡'.repeat(Math.max(0,3-lives));}
-function updateTimer(){const m=Math.floor(timerSec/60),s=timerSec%60;timerEl.textContent=m+':'+(s<10?'0':'')+s;}
-function addDust(n){dust+=n;scoreEl.textContent=dust+' ✨';}
-function loseLife(){if(!running)return;lives--;updateLivesHUD();if(lives<=0)endGame(false);}
+window.TUTO_TEXT = "Glisse en arrière depuis la fronde pour viser.<br>Relâche pour lancer le cosmonaute !<br>Détruis tous les cristaux pour gagner.";
 
-function calcDust(){
-  const played = 180 - timerSec;
-  let base;
-  if(played < 30) base = 1 + Math.floor(Math.random()*5);
-  else if(played < 60) base = 5 + Math.floor(Math.random()*10);
-  else if(played < 120) base = 15 + Math.floor(Math.random()*15);
-  else if(played < 150) base = 30 + Math.floor(Math.random()*10);
-  else base = 40 + Math.floor(Math.random()*10);
-  return Math.min(50, base + dust);
+const GRAV = 0.42, MAX_SHOTS = 12;
+let sling, phase, ball, trail, targets, particles, camX, WORLD_W, shotsLeft, rafId;
+
+function gameReset(){
+  cancelAnimationFrame(rafId);
+  phase='idle'; ball=null; trail=[]; particles=[];
+  shotsLeft=MAX_SHOTS; camX=0;
+  WORLD_W = cv.width*3;
+  sling={x:cv.width*0.18, y:cv.height*0.7};
+  _buildTargets();
 }
+window.gameReset = gameReset;
 
-function endGame(success){
-  if(gameover)return;
-  gameover=true; running=false;
-  clearInterval(timerInterval);
-  const finalDust = success ? Math.min(60, calcDust() + 10) : calcDust();
-  setTimeout(()=>{
-    window.parent.postMessage({source:'gps0_minijeu',success,niveau:NIVEAU,poussieres:finalDust},'*');
-  }, 600);
-}
-
-function startTimer(){
-  updateTimer();
-  timerInterval=setInterval(()=>{
-    if(!running)return;
-    timerSec--;updateTimer();
-    if(timerSec<=0)endGame({'9':true}.hasOwnProperty(String(NIVEAU)) ? false : false);
-  },1000);
-}
-
-// Selfie canvas
-let selfieImg = null;
-function loadSelfie(){
-  const b64 = localStorage.getItem('gps0_avatar_selfie_base64');
-  if(!b64)return;
-  const img = new Image();
-  img.onload = ()=>{ selfieImg = img; };
-  img.src = b64;
-}
-loadSelfie();
-
-function drawSelfie(x, y, r){
-  if(!selfieImg)return;
-  ctx.save();
-  ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.clip();
-  ctx.drawImage(selfieImg, x-r, y-r, r*2, r*2);
-  ctx.restore();
-}
-
-function drawCosmonaut(x, y, r, angle){
-  ctx.save();
-  ctx.translate(x, y);
-  if(angle)ctx.rotate(angle);
-  // Body (suit)
-  ctx.beginPath();
-  ctx.ellipse(0, r*0.5, r*0.55, r*0.7, 0, 0, Math.PI*2);
-  ctx.fillStyle='#dde4ee'; ctx.fill();
-  // Helmet
-  ctx.beginPath(); ctx.arc(0, -r*0.15, r*0.55, 0, Math.PI*2);
-  ctx.fillStyle='rgba(60,120,200,0.3)'; ctx.fill();
-  ctx.beginPath(); ctx.arc(0, -r*0.15, r*0.55, 0, Math.PI*2);
-  ctx.strokeStyle='#8ab4d4'; ctx.lineWidth=2; ctx.stroke();
-  // Selfie face
-  if(selfieImg){
-    ctx.save(); ctx.beginPath(); ctx.arc(0,-r*0.15,r*0.45,0,Math.PI*2); ctx.clip();
-    ctx.drawImage(selfieImg,-r*0.45,-r*0.6,r*0.9,r*0.9); ctx.restore();
-  } else {
-    ctx.fillStyle='rgba(79,195,247,.5)';
-    ctx.beginPath(); ctx.arc(0,-r*0.15,r*0.4,0,Math.PI*2); ctx.fill();
+function _buildTargets(){
+  targets=[];
+  const cols=['rgba(180,230,255,.9)','rgba(140,210,255,.85)','rgba(210,245,255,.9)'];
+  for(let g=0;g<8;g++){
+    const bx=cv.width*0.45+g*(cv.width*0.28);
+    const rows=2+Math.floor(Math.random()*4);
+    for(let r=0;r<rows;r++){
+      const hp=[1,2,3][Math.floor(Math.random()*3)];
+      targets.push({x:bx+(Math.random()-.5)*50,y:cv.height*.7-38*r-19,
+        w:34+hp*4,h:34+hp*4,hp,maxHp:hp,hit:false,dy:0,
+        col:cols[Math.floor(Math.random()*cols.length)],hasDust:Math.random()<.45});
+    }
   }
-  ctx.restore();
 }
 
-function resizeCanvas(){
-  const gc = document.getElementById('game-container');
-  cv.width = gc.clientWidth; cv.height = gc.clientHeight;
-}
-resizeCanvas();
-window.addEventListener('resize', ()=>{resizeCanvas(); if(running) onResize && onResize();});
-
-btnStart.addEventListener('click', ()=>{
-  overlay.style.display='none';
-  running=true;
-  startTimer();
-  gameStart();
-}, {once:true});
-
-// ── GAME SPECIFIC ──
-
-const GRAV = 0.45, MAX_SHOTS = 15;
-let shots_left = MAX_SHOTS, phase = 'idle'; // idle | aiming | flying
-let sling = {x:0,y:0}, anchor = {x:0,y:0};
-let ball = null, trail = [];
-let targets = [], particles = [];
-let camX = 0, WORLD_W = 0;
-
-function onResize() {
-  sling.x = cv.width * 0.18;
-  sling.y = cv.height * 0.72;
-  anchor.x = sling.x; anchor.y = sling.y;
-  if(WORLD_W < cv.width * 3) WORLD_W = cv.width * 3;
-}
-
-function buildTargets() {
-  targets = [];
-  const cols = ['rgba(180,220,255,0.9)', 'rgba(140,200,255,0.8)', 'rgba(200,240,255,0.85)'];
-  // Structures procedurales: colonnes de blocs
-  for(let g = 0; g < 7; g++) {
-    const bx = cv.width * 0.5 + g * (cv.width * 0.3);
-    const rows = 2 + Math.floor(Math.random()*4);
-    for(let r = 0; r < rows; r++) {
-      targets.push({
-        x: bx + (Math.random()-0.5)*60,
-        y: cv.height*0.72 - 36*r - 18,
-        w: 36, h: 36,
-        hp: 2, hit: false, dy: 0,
-        col: cols[Math.floor(Math.random()*cols.length)],
-        hasDust: Math.random() < 0.4
+function gameStart(){
+  const cv=document.getElementById('cv');
+  GPS0_resizeCanvas(cv);
+  gameReset();
+  window.onResize=()=>{ sling={x:cv.width*.18,y:cv.height*.7}; WORLD_W=Math.max(WORLD_W,cv.width*3); };
+  // Pointeur drag
+  let anchor={x:sling.x,y:sling.y}, dragging=false;
+  cv.addEventListener('pointerdown',e=>{
+    if(!GPS0_running()||phase!=='idle')return;
+    const dx=e.offsetX-sling.x,dy=e.offsetY-sling.y;
+    if(Math.sqrt(dx*dx+dy*dy)<70){dragging=true;anchor={x:e.offsetX,y:e.offsetY};}
+  });
+  cv.addEventListener('pointermove',e=>{
+    if(!dragging)return;
+    const dx=Math.max(-90,Math.min(90,e.offsetX-sling.x));
+    const dy=Math.max(-90,Math.min(90,e.offsetY-sling.y));
+    anchor={x:sling.x+dx,y:sling.y+dy};
+  });
+  cv.addEventListener('pointerup',e=>{
+    if(!dragging)return; dragging=false;
+    if(phase!=='idle')return;
+    const dx=sling.x-anchor.x, dy=sling.y-anchor.y;
+    const spd=Math.sqrt(dx*dx+dy*dy);
+    if(spd<14){anchor={x:sling.x,y:sling.y};return;}
+    ball={x:anchor.x+camX,y:anchor.y,vx:Math.min(18,dx*.21),vy:Math.min(14,dy*.21),r:20};
+    trail=[]; phase='flying'; anchor={x:sling.x,y:sling.y};
+    shotsLeft--;
+  });
+  const ctx=cv.getContext('2d');
+  const loop=()=>{
+    rafId=requestAnimationFrame(loop);
+    if(!GPS0_running()){return;}
+    const W=cv.width,H=cv.height;
+    ctx.clearRect(0,0,W,H);
+    // Étoiles statiques
+    ctx.fillStyle='rgba(255,255,255,.06)';
+    for(let i=0;i<30;i++)ctx.fillRect((i*73+17)%W,(i*41+7)%H,1,1);
+    // Sol lunaire
+    const grd=ctx.createLinearGradient(0,H*.65,0,H);
+    grd.addColorStop(0,'rgba(60,70,100,.9)'); grd.addColorStop(1,'rgba(30,35,60,1)');
+    ctx.fillStyle=grd; ctx.fillRect(0,H*.7+18,W,H);
+    // Cratères déco
+    [.15,.38,.58,.8].forEach((fx,i)=>{
+      ctx.strokeStyle='rgba(100,120,160,.3)'; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.ellipse(fx*W,(H*.7+18)+8+(i%2)*4,18+i*5,6+i*2,0,0,Math.PI*2); ctx.stroke();
+    });
+    // Caméra suit ball
+    if(ball){ const tgt=ball.x-camX-W*.28; if(tgt>0)camX+=tgt*.1; camX=Math.max(0,Math.min(WORLD_W-W,camX)); }
+    // Cibles
+    targets.forEach(t=>{
+      if(t.hit){t.y+=t.dy;t.dy+=.3;}
+      if(t.y>H+60)return;
+      const tx=t.x-camX;
+      ctx.fillStyle=t.col;
+      ctx.strokeStyle='rgba(255,255,255,.4)'; ctx.lineWidth=1.5;
+      _rrect(ctx,tx-t.w/2,t.y-t.h/2,t.w,t.h,5);
+      ctx.fill(); ctx.stroke();
+      // HP cracks
+      if(t.maxHp>1&&!t.hit){
+        ctx.strokeStyle='rgba(0,0,0,.3)'; ctx.lineWidth=1;
+        for(let c=1;c<t.maxHp-t.hp+1;c++){
+          ctx.beginPath();ctx.moveTo(tx-t.w*.3,t.y-t.h*.3+c*8);ctx.lineTo(tx+t.w*.3+Math.random()*4,t.y-t.h*.2+c*8);ctx.stroke();
+        }
+      }
+      if(t.hasDust&&!t.hit){ctx.fillStyle='#FFD700';ctx.font='13px system-ui';ctx.textAlign='center';ctx.fillText('✨',tx,t.y+5);}
+    });
+    // Fronde
+    ctx.strokeStyle='#8a6a40';ctx.lineWidth=4;
+    ctx.beginPath();ctx.moveTo(sling.x-16,sling.y);ctx.lineTo(sling.x-16,sling.y+32);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(sling.x+16,sling.y);ctx.lineTo(sling.x+16,sling.y+32);ctx.stroke();
+    // Phase aiming
+    if(dragging&&phase==='idle'){
+      ctx.strokeStyle='#c8a264';ctx.lineWidth=3;
+      ctx.beginPath();ctx.moveTo(sling.x-16,sling.y);ctx.lineTo(anchor.x,anchor.y);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(sling.x+16,sling.y);ctx.lineTo(anchor.x,anchor.y);ctx.stroke();
+      // Trajectoire prédictive
+      let px=anchor.x+camX,py=anchor.y,pvx=(sling.x-anchor.x)*.21,pvy=(sling.y-anchor.y)*.21;
+      ctx.fillStyle='rgba(255,255,255,.35)';
+      for(let i=0;i<20;i++){px+=pvx;py+=pvy;pvy+=GRAV;ctx.beginPath();ctx.arc(px-camX,py,2.5,0,Math.PI*2);ctx.fill();}
+      drawCosmonaut(ctx,anchor.x,anchor.y,20,0);
+    }
+    // Balle en vol
+    if(ball){
+      trail.push({x:ball.x-camX,y:ball.y});
+      if(trail.length>22)trail.shift();
+      trail.forEach((p,i)=>{
+        ctx.fillStyle=`rgba(79,195,247,${i/trail.length*.45})`;
+        ctx.beginPath();ctx.arc(p.x,p.y,ball.r*(i/trail.length*.5+.15),0,Math.PI*2);ctx.fill();
       });
+      ball.vx*=.997; ball.vy+=GRAV; ball.x+=ball.vx; ball.y+=ball.vy;
+      const bsx=ball.x-camX;
+      drawCosmonaut(ctx,bsx,ball.y,ball.r,Math.atan2(ball.vy,ball.vx));
+      // Collisions
+      targets.forEach(t=>{
+        if(t.hit)return;
+        if(Math.abs(ball.x-t.x)<t.w/2+ball.r&&Math.abs(ball.y-t.y)<t.h/2+ball.r){
+          t.hp--;
+          for(let i=0;i<10;i++)particles.push({x:t.x-camX,y:t.y,vx:(Math.random()-.5)*6,vy:-4+Math.random()*3,life:28,col:t.col});
+          if(t.hp<=0){t.hit=true;t.dy=-4+Math.random()*2;if(t.hasDust){addDust(4);t.hasDust=false;}}
+          ball=null; phase='idle'; return;
+        }
+      });
+      if(ball&&(ball.y>H*.7+20||ball.x>WORLD_W+200)){ball=null;phase='idle';}
+      if(phase==='idle'&&shotsLeft<=0)setTimeout(()=>{const alive=targets.filter(t=>!t.hit).length;endGame(alive===0);},500);
+    } else if(phase==='idle'){
+      drawCosmonaut(ctx,sling.x,sling.y-22,20,0);
     }
-  }
+    // Particules
+    particles=particles.filter(p=>p.life>0);
+    particles.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.15;p.life--;
+      ctx.fillStyle=p.col;ctx.globalAlpha=p.life/28;ctx.beginPath();ctx.arc(p.x,p.y,4,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;});
+    // HUD tirs
+    ctx.fillStyle='rgba(255,255,255,.6)';ctx.font='bold 12px system-ui';ctx.textAlign='left';
+    ctx.fillText('Tirs: '+shotsLeft+'/'+MAX_SHOTS,8,cv.height-8);
+    // Victoire auto
+    if(targets.length&&targets.every(t=>t.hit))setTimeout(()=>endGame(true),400);
+  };
+  loop();
 }
-
-function gameStart() {
-  onResize(); WORLD_W = cv.width * 3;
-  buildTargets();
-  requestAnimationFrame(loop);
-}
-
-let touchStart = null;
-cv.addEventListener('pointerdown', e => {
-  if(!running || phase !== 'idle') return;
-  const dx = e.offsetX - sling.x, dy = e.offsetY - sling.y;
-  if(Math.sqrt(dx*dx+dy*dy) < 60) { phase = 'aiming'; touchStart = {x: e.offsetX, y: e.offsetY}; }
-});
-cv.addEventListener('pointermove', e => {
-  if(phase !== 'aiming') return;
-  const dx = Math.min(80, Math.max(-80, e.offsetX - sling.x));
-  const dy = Math.min(80, Math.max(-80, e.offsetY - sling.y));
-  anchor = {x: sling.x + dx, y: sling.y + dy};
-});
-cv.addEventListener('pointerup', e => {
-  if(phase !== 'aiming') return;
-  const dx = sling.x - anchor.x, dy = sling.y - anchor.y;
-  const spd = Math.sqrt(dx*dx+dy*dy);
-  if(spd < 10) { phase = 'idle'; anchor = {...sling}; return; }
-  ball = {x: anchor.x + camX, y: anchor.y, vx: dx*0.22, vy: dy*0.22, r: 20};
-  trail = [];
-  phase = 'flying'; anchor = {...sling};
-  shots_left--;
-  if(shots_left <= 0 && !ball) endGame(false);
-});
-
-function loop() {
-  if(!running) return;
-  requestAnimationFrame(loop);
-  const W = cv.width, H = cv.height;
-  ctx.clearRect(0,0,W,H);
-
-  // BG stars
-  ctx.fillStyle='rgba(0,0,0,0)';
-  ctx.clearRect(0,0,W,H);
-
-  // Camera follow ball
-  if(ball) {
-    const target = ball.x - camX - W*0.3;
-    if(target > 0) camX += target * 0.08;
-    camX = Math.max(0, Math.min(WORLD_W - W, camX));
-  }
-
-  // Draw targets
-  targets.forEach(t => {
-    if(t.hit) {
-      t.y += t.dy; t.dy += 0.3;
-      if(t.y > H+50) return;
-    }
-    ctx.save();
-    ctx.fillStyle = t.col;
-    ctx.strokeStyle = 'rgba(255,255,255,0.6)';
-    ctx.lineWidth = 2;
-    const tx = t.x - camX;
-    ctx.beginPath();
-    roundRect(ctx, tx-t.w/2, t.y-t.h/2, t.w, t.h, 6);
-    ctx.fill(); ctx.stroke();
-    if(t.hasDust && !t.hit) {
-      ctx.fillStyle='#FFD700';
-      ctx.font='14px system-ui'; ctx.textAlign='center';
-      ctx.fillText('✨', tx, t.y+6);
-    }
-    ctx.restore();
-  });
-
-  // Draw ground
-  ctx.fillStyle='rgba(40,60,100,0.6)';
-  ctx.fillRect(0, H*0.72+20, W, H);
-
-  // Draw sling
-  ctx.strokeStyle='#8a6a40'; ctx.lineWidth=4;
-  ctx.beginPath(); ctx.moveTo(sling.x-14, sling.y); ctx.lineTo(sling.x-14, sling.y+30); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(sling.x+14, sling.y); ctx.lineTo(sling.x+14, sling.y+30); ctx.stroke();
-
-  if(phase === 'aiming') {
-    // Rubber band
-    ctx.strokeStyle='#c8a264'; ctx.lineWidth=3;
-    ctx.beginPath(); ctx.moveTo(sling.x-14, sling.y); ctx.lineTo(anchor.x, anchor.y); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(sling.x+14, sling.y); ctx.lineTo(anchor.x, anchor.y); ctx.stroke();
-    // Trajectory preview
-    let px = anchor.x + camX, py = anchor.y;
-    let pvx = (sling.x - anchor.x)*0.22, pvy = (sling.y - anchor.y)*0.22;
-    ctx.fillStyle='rgba(255,255,255,0.4)';
-    for(let i=0;i<18;i++) {
-      px+=pvx; py+=pvy; pvy+=GRAV;
-      ctx.beginPath(); ctx.arc(px-camX, py, 3, 0, Math.PI*2); ctx.fill();
-    }
-    // Cosmonaute visant
-    drawCosmonaut(anchor.x, anchor.y, 20, 0);
-  }
-
-  // Ball in flight
-  if(ball) {
-    trail.push({x: ball.x - camX, y: ball.y});
-    if(trail.length > 20) trail.shift();
-    trail.forEach((p,i) => {
-      const a = i/trail.length*0.5;
-      ctx.fillStyle=`rgba(79,195,247,${a})`;
-      ctx.beginPath(); ctx.arc(p.x, p.y, ball.r*(i/trail.length*0.6+0.2), 0, Math.PI*2);
-      ctx.fill();
-    });
-    ball.vx *= 0.995; ball.vy += GRAV;
-    ball.x += ball.vx; ball.y += ball.vy;
-    const bsx = ball.x - camX;
-    drawCosmonaut(bsx, ball.y, ball.r, Math.atan2(ball.vy, ball.vx));
-
-    // Collision targets
-    targets.forEach(t => {
-      if(t.hit) return;
-      const dx = (ball.x - t.x), dy = (ball.y - t.y);
-      if(Math.abs(dx) < t.w/2 + ball.r && Math.abs(dy) < t.h/2 + ball.r) {
-        t.hit = true; t.dy = -4 + Math.random()*2;
-        t.hp--;
-        // Particles
-        for(let i=0;i<8;i++) particles.push({x:t.x-camX,y:t.y,vx:(Math.random()-.5)*5,vy:-3+Math.random()*2,life:30,col:t.col});
-        if(t.hasDust) { addDust(3); t.hasDust = false; }
-      }
-    });
-
-    // Hit ground
-    if(ball.y > H*0.72 + 20) {
-      ball = null; phase = 'idle';
-      if(shots_left <= 0) {
-        const alive = targets.filter(t=>!t.hit).length;
-        endGame(alive === 0);
-      }
-    }
-    // Out of world
-    if(ball && ball.x > WORLD_W + 200) { ball = null; phase = 'idle'; }
-  }
-
-  // Particles
-  particles = particles.filter(p => p.life > 0);
-  particles.forEach(p => {
-    p.x+=p.vx; p.y+=p.vy; p.vy+=0.15; p.life--;
-    ctx.fillStyle = p.col; ctx.globalAlpha = p.life/30;
-    ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI*2); ctx.fill();
-    ctx.globalAlpha=1;
-  });
-
-  // Idle cosmonaute in sling
-  if(phase === 'idle') {
-    drawCosmonaut(sling.x, sling.y, 20, 0);
-  }
-
-  // HUD shots
-  ctx.fillStyle='rgba(255,255,255,.8)';
-  ctx.font='bold 13px system-ui'; ctx.textAlign='left';
-  ctx.fillText('Tirs: ' + shots_left + '/' + MAX_SHOTS, 8, cv.height-10);
-
-  // Check win
-  if(targets.length > 0 && targets.every(t=>t.hit)) { setTimeout(()=>endGame(true), 500); }
-}
-
-function roundRect(ctx, x, y, w, h, r) {
-  ctx.beginPath();
-  ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y); ctx.quadraticCurveTo(x+w,y,x+w,y+r);
-  ctx.lineTo(x+w,y+h-r); ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
-  ctx.lineTo(x+r,y+h); ctx.quadraticCurveTo(x,y+h,x,y+h-r);
-  ctx.lineTo(x,y+r); ctx.quadraticCurveTo(x,y,x+r,y);
-  ctx.closePath();
+function _rrect(ctx,x,y,w,h,r){
+  ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();
 }
 
 </script>

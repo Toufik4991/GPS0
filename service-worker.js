@@ -1,5 +1,5 @@
-﻿const CACHE = 'gps0-v25';
-const APP_VERSION = '3.10.0';
+﻿const CACHE = 'gps0-v26';
+const APP_VERSION = '3.11.0';
 const CORE = [
   'index.html',
   'css/main.css',
@@ -16,6 +16,7 @@ const CORE = [
   'js/finale.js',
   'gps_config.json',
   'manifest.json',
+  'minijeux/shared.js',
   'minijeux/niveau1.html',
   'minijeux/niveau2.html',
   'minijeux/niveau3.html',

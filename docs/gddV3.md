@@ -1,9 +1,68 @@
 # 🌙 GPS0 — Game Design Document v3.0
 
-**Version :** 3.10.0 - Bug 13 : Méga-correctif UI/UX + 9 mini-jeux refontes
-**Date :** 23/03/2026
+**Version :** 3.11.0 - Bug 14 : shared.js engine, tuto in-game, quit, flash rouge, boussole, 9 mini-jeux
+**Date :** 24/03/2026
 **Auteur :** Toufik49
-**Statut :** Opérationnel - Bug 13 appliqué intégralement
+**Statut :** Opérationnel - Bug 14 appliqué intégralement
+
+---
+
+## Changements v3.11.0 (Bug 14)
+
+### A. Architecture mini-jeux — shared.js
+- Nouveau fichier `minijeux/shared.js` : moteur commun à tous les 9 niveaux
+- **Contrat** : chaque `niveauN.html` expose `window.NIVEAU`, `window.TUTO_TEXT`, `window.gameStart()`, optionnel `window.gameReset()` et `window.onResize()`
+- **Séquence de boot** : tuto overlay → "Compris!" → countdown 5→4→3→2→1→GO! → `gameStart()`
+- **Exports** : `drawCosmonaut`, `addDust`, `loseLife`, `endGame`, `GPS0_resizeCanvas`, `GPS0_lives`, `GPS0_running`
+
+### B. UI — Tutoriel dans l'iframe
+- Le tuto s'affiche dans l'iframe **après** loading, AVANT le countdown
+- "Compris!" déclenche le countdown puis le jeu
+- `TUTO_TEXT` est une string HTML propre à chaque niveau
+
+### C. Bouton ✕ Quitter
+- Présent sur tous les niveaux, coin supérieur droit (z-index 950)
+- Confirmation modal avant quit
+- Envoie `{source:'gps0_minijeu', quit:true}` au parent
+- `app.js._ouvrirIframe()` gère ce message → ferme iframe sans écran de résultat
+
+### D. Smiley fallback
+- Si aucun selfie en localStorage, `drawCosmonaut()` dessine un smiley 😊 (cercle jaune, yeux, sourire)
+
+### E. Flash rouge sur perte de vie
+- `loseLife()` : bordure rouge 8px + fond rgba(255,0,0,0.3) → opacity 0.7 → 0 en 300ms
+- Screenshake : body translateX(5→-5→3→0)px en 200ms
+
+### F. Boussole — fix état inactif
+- `boussole.js case 'off'` : `delete w.dataset.zone` pour que CSS `grayscale(1) brightness(0.5)` s'applique correctement
+
+### G. Debug Rejouer — bypass cooldown
+- `res-rejouer` appelle `_ouvrirIframe()` directement sans passer par `_lancerMiniJeu()`
+- `_ouvrirIframe(niveau)` extrait dans `app.js` gère tout le cycle iframe
+
+### H. 9 mini-jeux refonte complète
+| N | Nom | Mécanique | Nouveautés Bug 14 |
+|---|-----|-----------|------------------|
+| 1 | Verre | Lance-pierre | Drag opposé au vecteur, trajectoire prédictive, blocs HP, caméra suit |
+| 2 | Cendre | Flappy Bird | CSS volcanique: stalactites rocheuses, lave ondulante, halo orange |
+| 3 | Lierre | Doodle Jump | Accéléromètre + swipe, 4 types plateformes, espacement réduit |
+| 4 | Givre | Swing/Pendule | Tap accroche, swipe longueur corde, physique pendule |
+| 5 | Ombre | Labyrinthe | Rayon lumière 70px, lampes +20px (doré +12), D-pad continu 4 boutons, maze 33×33 |
+| 6 | Fer | Agar.io | Croissance +10%, vitesse inverse, 25 ennemis, map 3×, IA évitement |
+| 7 | Tempête | Jetpack | Poussée -40%, gravité +20%, rebond sol/plafond, obstacles -30% |
+| 8 | Cristal | Course Cristal | Piste auto, cristaux normaux/rouges/dorés(×5)/bleus, combos, power-ups |
+| 9 | Éclipse | Boss Fight | Phases par HP (66%→33%), lasers, charges, spirales, rage mode, gold projs |
+
+### I. Boss Fight (N9) — Phases par HP
+- Phase 1 : HP 100→66% — tir modéré, pattern ciblé
+- Phase 2 : HP 66→33% — lasers 0.7s warning, charges, 2 proj spread
+- Phase 3 : HP 33→0% — spirales 6-dir, 3 proj spread, regen HP lente
+- Rage Mode : si timer épuisé → boss en mode frénétique 2.5s puis Game Over
+- Récompenses dust : Phase kill 1=50, 2=45, 3=40, Rage=35
+
+### J. Service Worker
+- Bumped vers `gps0-v26`
+- `minijeux/shared.js` ajouté au CORE cache
 
 ---
 

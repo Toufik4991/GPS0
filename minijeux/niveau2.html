@@ -3,268 +3,133 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
-<title>GPS0 — Lune de Cendre</title>
+<title>GPS0 N2</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:#0A0A1A;color:#fff;font-family:system-ui,sans-serif;overflow:hidden;height:100dvh;display:flex;flex-direction:column;touch-action:none;user-select:none}
-#bg{position:fixed;inset:0;z-index:0;background:radial-gradient(ellipse at 50% 90%,rgba(255,80,0,0.3) 0%,transparent 60%),linear-gradient(180deg,#1a0a00 0%,#0d0008 100%);}
-#hud{position:relative;z-index:20;display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(0,0,0,.65);flex-shrink:0;backdrop-filter:blur(6px)}
-#lives{font-size:1.2rem;letter-spacing:2px}
-#timer{flex:1;text-align:center;font-size:1rem;font-weight:bold;color:#4FC3F7}
-#score-hud{font-size:.9rem;color:#FFD700;font-weight:bold}
-#game-container{flex:1;position:relative;overflow:hidden;z-index:1}
+html,body{height:100%;overflow:hidden;background:#0A0A1A;font-family:system-ui,sans-serif;color:#fff;touch-action:none;user-select:none}
+#bg{position:fixed;inset:0;z-index:0;background:radial-gradient(ellipse at 50% 90%,rgba(255,80,0,.28) 0%,transparent 60%),linear-gradient(180deg,#1a0800 0%,#0d0008 100%);}
+#hud{position:relative;z-index:20;display:flex;align-items:center;gap:10px;padding:6px 52px 6px 10px;background:rgba(0,0,0,.65);backdrop-filter:blur(6px);flex-shrink:0}
+#lives{font-size:1.1rem;letter-spacing:2px;min-width:54px}
+#timer{flex:1;text-align:center;font-size:.95rem;font-weight:bold;color:#4FC3F7}
+#score-hud{font-size:.9rem;color:#FFD700;font-weight:bold;min-width:52px;text-align:right}
+#game-container{position:relative;z-index:1;flex:1;overflow:hidden;display:flex;flex-direction:column}
 canvas{display:block;width:100%;height:100%}
-#overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,.88);z-index:20;gap:14px;text-align:center;padding:24px}
-#overlay h2{font-size:1.8rem;color:#C8A2C8}
-#overlay p{font-size:.9rem;color:rgba(255,255,255,.8);max-width:280px;line-height:1.5}
-#overlay .btn{padding:12px 32px;border:none;border-radius:14px;font-size:1rem;font-weight:bold;cursor:pointer;background:linear-gradient(135deg,#C8A2C8,#8860a8);color:#fff}
-:root{--accent:#C8A2C8;--gold:#FFD700;--blue:#4FC3F7}
-
+body{display:flex;flex-direction:column;height:100dvh}
 </style>
 </head>
 <body>
 <div id="bg"></div>
 <div id="hud">
   <span id="lives">❤❤❤</span>
-  <span id="timer">3:00</span>
+  <span id="timer">2:30</span>
   <span id="score-hud">0 ✨</span>
 </div>
 <div id="game-container">
   <canvas id="cv"></canvas>
-
-  <div id="overlay">
-    <div style="font-size:3rem">🌒</div>
-    <h2>Lune de Cendre</h2>
-    <p>Tape pour faire battre les ailes !<br>Passe entre les colonnes de lave.<br>Ne touche ni les parois ni le sol.</p>
-    <button class="btn" id="btn-start">C'est parti&nbsp;!</button>
-  </div>
-  <canvas id="selfie-cv" width="64" height="64" style="display:none" aria-hidden="true"></canvas>
 </div>
+<script src="shared.js"></script>
 <script>
-// ── COMMON ENGINE ──
-const NIVEAU = 2;
-let lives = 3, dust = 0, running = false, gameover = false;
-let timerSec = 180, timerInterval = null;
-const livesEl = document.getElementById('lives');
-const timerEl = document.getElementById('timer');
-const scoreEl = document.getElementById('score-hud');
-const overlay = document.getElementById('overlay');
-const btnStart = document.getElementById('btn-start');
-const cv = document.getElementById('cv');
-const ctx = cv.getContext('2d');
+window.NIVEAU = 2;
 
-function updateLivesHUD(){livesEl.textContent='❤'.repeat(lives)+'♡'.repeat(Math.max(0,3-lives));}
-function updateTimer(){const m=Math.floor(timerSec/60),s=timerSec%60;timerEl.textContent=m+':'+(s<10?'0':'')+s;}
-function addDust(n){dust+=n;scoreEl.textContent=dust+' ✨';}
-function loseLife(){if(!running)return;lives--;updateLivesHUD();if(lives<=0)endGame(false);}
+window.TUTO_TEXT = "Tape pour faire battre les ailes !<br>Passe entre les colonnes de lave.<br>Évite les parois et ne t'écrase pas.";
 
-function calcDust(){
-  const played = 180 - timerSec;
-  let base;
-  if(played < 30) base = 1 + Math.floor(Math.random()*5);
-  else if(played < 60) base = 5 + Math.floor(Math.random()*10);
-  else if(played < 120) base = 15 + Math.floor(Math.random()*15);
-  else if(played < 150) base = 30 + Math.floor(Math.random()*10);
-  else base = 40 + Math.floor(Math.random()*10);
-  return Math.min(50, base + dust);
+const GRAV_B=0.38, JUMP=-6;
+let bird, pipes, dustItems, particles, speed, frame, rafId, ashParts;
+
+function gameReset(){
+  cancelAnimationFrame(rafId);
+  bird={x:0,y:0,vy:0,r:22};
+  pipes=[]; dustItems=[]; particles=[]; ashParts=[];
+  speed=2.2; frame=0;
 }
+window.gameReset=gameReset;
 
-function endGame(success){
-  if(gameover)return;
-  gameover=true; running=false;
-  clearInterval(timerInterval);
-  const finalDust = success ? Math.min(60, calcDust() + 10) : calcDust();
-  setTimeout(()=>{
-    window.parent.postMessage({source:'gps0_minijeu',success,niveau:NIVEAU,poussieres:finalDust},'*');
-  }, 600);
-}
-
-function startTimer(){
-  updateTimer();
-  timerInterval=setInterval(()=>{
-    if(!running)return;
-    timerSec--;updateTimer();
-    if(timerSec<=0)endGame({'9':true}.hasOwnProperty(String(NIVEAU)) ? false : false);
-  },1000);
-}
-
-// Selfie canvas
-let selfieImg = null;
-function loadSelfie(){
-  const b64 = localStorage.getItem('gps0_avatar_selfie_base64');
-  if(!b64)return;
-  const img = new Image();
-  img.onload = ()=>{ selfieImg = img; };
-  img.src = b64;
-}
-loadSelfie();
-
-function drawSelfie(x, y, r){
-  if(!selfieImg)return;
-  ctx.save();
-  ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.clip();
-  ctx.drawImage(selfieImg, x-r, y-r, r*2, r*2);
-  ctx.restore();
-}
-
-function drawCosmonaut(x, y, r, angle){
-  ctx.save();
-  ctx.translate(x, y);
-  if(angle)ctx.rotate(angle);
-  // Body (suit)
-  ctx.beginPath();
-  ctx.ellipse(0, r*0.5, r*0.55, r*0.7, 0, 0, Math.PI*2);
-  ctx.fillStyle='#dde4ee'; ctx.fill();
-  // Helmet
-  ctx.beginPath(); ctx.arc(0, -r*0.15, r*0.55, 0, Math.PI*2);
-  ctx.fillStyle='rgba(60,120,200,0.3)'; ctx.fill();
-  ctx.beginPath(); ctx.arc(0, -r*0.15, r*0.55, 0, Math.PI*2);
-  ctx.strokeStyle='#8ab4d4'; ctx.lineWidth=2; ctx.stroke();
-  // Selfie face
-  if(selfieImg){
-    ctx.save(); ctx.beginPath(); ctx.arc(0,-r*0.15,r*0.45,0,Math.PI*2); ctx.clip();
-    ctx.drawImage(selfieImg,-r*0.45,-r*0.6,r*0.9,r*0.9); ctx.restore();
-  } else {
-    ctx.fillStyle='rgba(79,195,247,.5)';
-    ctx.beginPath(); ctx.arc(0,-r*0.15,r*0.4,0,Math.PI*2); ctx.fill();
-  }
-  ctx.restore();
-}
-
-function resizeCanvas(){
-  const gc = document.getElementById('game-container');
-  cv.width = gc.clientWidth; cv.height = gc.clientHeight;
-}
-resizeCanvas();
-window.addEventListener('resize', ()=>{resizeCanvas(); if(running) onResize && onResize();});
-
-btnStart.addEventListener('click', ()=>{
-  overlay.style.display='none';
-  running=true;
-  startTimer();
-  gameStart();
-}, {once:true});
-
-// ── GAME SPECIFIC ──
-
-const GRAV_BASE = 0.38, JUMP = -5.5;
-let bird = {x:0,y:0,vy:0,r:22};
-let pipes = [], dustItems = [], particles = [];
-let speed = 2, frameCount = 0;
-
-function gameStart() {
-  bird.x = cv.width * 0.25;
-  bird.y = cv.height * 0.45;
-  bird.vy = 0;
-  pipes = []; dustItems = []; particles = [];
-  speed = 2; frameCount = 0;
-  spawnPipe();
-  cv.addEventListener('pointerdown', jump);
-  requestAnimationFrame(loop);
-}
-
-function jump() { if(!running)return; bird.vy = JUMP; }
-
-function spawnPipe() {
-  const W = cv.width, H = cv.height;
-  const gap = H * 0.34;
-  const topH = H * 0.1 + Math.random() * (H * 0.55);
-  pipes.push({x: W + 60, top: topH, bot: topH + gap, w: 48, passed: false});
-  // Dust in gap
-  dustItems.push({x: W + 60 + 24, y: topH + gap/2 + (Math.random()-0.5)*60, r: 14, collected: false});
-}
-
-function loop() {
-  if(!running)return;
-  requestAnimationFrame(loop);
-  const W = cv.width, H = cv.height;
-  frameCount++;
-
-  // Accelerate
-  if(frameCount % 300 === 0) speed = Math.min(5, speed + 0.3);
-
-  // Physics
-  bird.vy += GRAV_BASE;
-  bird.y += bird.vy;
-
-  // Spawn pipes
-  const pipeGap = Math.max(160, 220 - frameCount*0.05);
-  if(frameCount % Math.floor(pipeGap) === 0) spawnPipe();
-
-  // Pipe collisions + move
-  let alive = true;
-  pipes = pipes.filter(p => p.x + p.w > -10);
-  pipes.forEach(p => {
-    p.x -= speed;
-    if(!p.passed && p.x + p.w < bird.x) { p.passed = true; addDust(2); }
-    // collision
-    if(bird.x + bird.r > p.x && bird.x - bird.r < p.x + p.w) {
-      if(bird.y - bird.r < p.top || bird.y + bird.r > p.bot) {
-        alive = false;
+function gameStart(){
+  const cv=document.getElementById('cv');
+  GPS0_resizeCanvas(cv);
+  gameReset();
+  bird.x=cv.width*.22; bird.y=cv.height*.45;
+  cv.addEventListener('pointerdown',_jump);
+  // Cendres décoratives
+  for(let i=0;i<20;i++) ashParts.push({x:Math.random()*cv.width,y:Math.random()*cv.height,vx:-.3-Math.random()*.4,vy:.2+Math.random()*.3,r:1+Math.random()*2,a:.2+Math.random()*.3});
+  _spawnPipe();
+  const ctx=cv.getContext('2d');
+  const loop=()=>{
+    rafId=requestAnimationFrame(loop);
+    if(!GPS0_running())return;
+    const W=cv.width,H=cv.height;
+    frame++;
+    if(frame%280===0)speed=Math.min(5.5,speed+.35);
+    bird.vy+=GRAV_B; bird.y+=bird.vy;
+    // Spawn
+    const gap=Math.max(140,210-frame*.06);
+    if(frame%Math.floor(gap)===0)_spawnPipe();
+    // Cendres
+    ashParts.forEach(a=>{a.x+=a.vx;a.y+=a.vy;if(a.x<-5)a.x=W+5;if(a.y>H+5){a.y=-5;a.x=Math.random()*W;}});
+    // Pipes
+    let alive=true;
+    pipes=pipes.filter(p=>p.x+p.w>-10);
+    pipes.forEach(p=>{
+      p.x-=speed;
+      if(!p.passed&&p.x+p.w<bird.x){p.passed=true;addDust(2);}
+      if(bird.x+bird.r>p.x&&bird.x-bird.r<p.x+p.w){
+        if(bird.y-bird.r<p.top||bird.y+bird.r>p.bot)alive=false;
       }
-    }
-  });
-
-  // Dust collect
-  dustItems.forEach(d => {
-    if(d.collected) return;
-    d.x -= speed;
-    const dx = bird.x - d.x, dy = bird.y - d.y;
-    if(Math.sqrt(dx*dx+dy*dy) < bird.r + d.r) { d.collected = true; addDust(5); for(let i=0;i<6;i++) particles.push({x:d.x,y:d.y,vx:(Math.random()-.5)*4,vy:-2+Math.random()*2,life:25}); }
-  });
-  dustItems = dustItems.filter(d => d.x > -30);
-
-  // Walls
-  if(bird.y - bird.r < 0 || bird.y + bird.r > H - 60) alive = false;
-
-  if(!alive) { loseLife(); if(lives>0)bird.vy=JUMP; }
-
-  // Draw
-  ctx.clearRect(0,0,W,H);
-
-  // Ground
-  ctx.fillStyle='rgba(40,20,0,0.85)';
-  ctx.fillRect(0, H-60, W, 60);
-  ctx.fillStyle='rgba(255,100,0,0.5)';
-  for(let x=0;x<W;x+=40) ctx.fillRect(x, H-62, 36, 4);
-
-  // Pipes (lava columns)
-  pipes.forEach(p => {
-    const grad = ctx.createLinearGradient(p.x, 0, p.x+p.w, 0);
-    grad.addColorStop(0,'rgba(200,50,0,0.9)');
-    grad.addColorStop(0.5,'rgba(255,120,0,0.95)');
-    grad.addColorStop(1,'rgba(180,40,0,0.9)');
-    ctx.fillStyle = grad;
-    ctx.fillRect(p.x, 0, p.w, p.top);
-    ctx.fillRect(p.x, p.bot, p.w, H);
-    // Glow edges
-    ctx.fillStyle='rgba(255,70,0,0.4)';
-    ctx.fillRect(p.x, p.top-4, p.w+4, 8);
-    ctx.fillRect(p.x, p.bot-4, p.w+4, 8);
-  });
-
-  // Dust items
-  dustItems.forEach(d => {
-    if(d.collected) return;
-    ctx.fillStyle='#FFD700';
-    ctx.font='bold 18px system-ui'; ctx.textAlign='center';
-    ctx.fillText('✨', d.x, d.y+6);
-  });
-
-  // Particles
-  particles = particles.filter(p=>p.life>0);
-  particles.forEach(p=>{ p.x+=p.vx;p.y+=p.vy;p.vy+=.1;p.life--;
-    ctx.fillStyle=`rgba(255,215,0,${p.life/25})`; ctx.beginPath(); ctx.arc(p.x,p.y,3,0,Math.PI*2); ctx.fill(); });
-
-  // Bird / cosmonaut
-  drawCosmonaut(bird.x, bird.y, bird.r, bird.vy * 0.05);
-
-  // Ash particles (decorative)
-  ctx.fillStyle='rgba(120,100,80,0.3)'; ctx.textAlign='left';
-  for(let i=0;i<6;i++) {
-    const ax = (frameCount*speed*0.7 + i*W/6) % W;
-    ctx.fillRect(ax, (40+i*30+frameCount*0.5)%H, 2, 2);
-  }
+    });
+    // Dust
+    dustItems.forEach(d=>{
+      d.x-=speed; if(d.col)return;
+      if(Math.sqrt((bird.x-d.x)**2+(bird.y-d.y)**2)<bird.r+d.r){d.col=true;addDust(5);for(let i=0;i<6;i++)particles.push({x:d.x,y:d.y,vx:(Math.random()-.5)*4,vy:-2,life:22});}
+    });
+    dustItems=dustItems.filter(d=>d.x>-30);
+    if(bird.y-bird.r<0||bird.y+bird.r>H-48)alive=false;
+    if(!alive){loseLife();if(GPS0_lives()>0){bird.vy=JUMP;bird.y=Math.min(bird.y,H*.5);}}
+    // Draw
+    ctx.clearRect(0,0,W,H);
+    // Sol lave animé
+    const lavaG=ctx.createLinearGradient(0,H-48,0,H);
+    lavaG.addColorStop(0,'rgba(255,80,0,.95)'); lavaG.addColorStop(.5,'rgba(200,40,0,.9)'); lavaG.addColorStop(1,'rgba(100,10,0,1)');
+    ctx.fillStyle=lavaG; ctx.fillRect(0,H-48,W,48);
+    // Ondulation lave
+    ctx.fillStyle='rgba(255,150,0,.4)';
+    for(let x=0;x<W;x+=30){const off=Math.sin((x+frame*2)*.04)*4;ctx.fillRect(x,H-50+off,26,4);}
+    // Brume volcanique haut
+    ctx.fillStyle='rgba(80,50,30,.25)';
+    ctx.fillRect(0,0,W,32);
+    // Cendres
+    ashParts.forEach(a=>{ctx.fillStyle=`rgba(120,100,80,${a.a})`;ctx.beginPath();ctx.arc(a.x,a.y,a.r,0,Math.PI*2);ctx.fill();});
+    // Tuyaux volcaniques
+    pipes.forEach(p=>{
+      _drawLavaPipe(ctx,p.x,0,p.w,p.top,false);
+      _drawLavaPipe(ctx,p.x,p.bot,p.w,H-p.bot,true);
+    });
+    dustItems.forEach(d=>{if(!d.col){ctx.fillStyle='#FFD700';ctx.font='bold 17px system-ui';ctx.textAlign='center';ctx.fillText('✨',d.x,d.y+6);}});
+    particles=particles.filter(p=>p.life>0);
+    particles.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.1;p.life--;ctx.fillStyle=`rgba(255,215,0,${p.life/22})`;ctx.beginPath();ctx.arc(p.x,p.y,3,0,Math.PI*2);ctx.fill();});
+    // Halo orange cosmonaute
+    ctx.fillStyle='rgba(255,100,0,.18)'; ctx.beginPath();ctx.arc(bird.x,bird.y,bird.r+10,0,Math.PI*2);ctx.fill();
+    drawCosmonaut(ctx,bird.x,bird.y,bird.r,bird.vy*.05);
+  };
+  loop();
+}
+function _jump(){if(!GPS0_running())return;bird.vy=JUMP;}
+function _spawnPipe(){
+  const H=document.getElementById('cv').clientHeight, W=document.getElementById('cv').clientWidth;
+  const gap=H*.32; const topH=H*.08+Math.random()*(H*.55);
+  pipes.push({x:W+60,top:topH,bot:topH+gap,w:50,passed:false});
+  dustItems.push({x:W+85,y:topH+gap/2+(Math.random()-.5)*50,r:14,col:false});
+}
+function _drawLavaPipe(ctx,x,y,w,h,flip){
+  if(h<=0)return;
+  const g=ctx.createLinearGradient(x,0,x+w,0);
+  g.addColorStop(0,'rgba(80,50,40,.95)'); g.addColorStop(.4,'rgba(140,80,50,.95)'); g.addColorStop(1,'rgba(60,35,25,.95)');
+  ctx.fillStyle=g; ctx.fillRect(x,y,w,h);
+  // Bords irréguliers (dents)
+  ctx.fillStyle='rgba(255,80,0,.25)';
+  const edgeY=flip?y:y+h-12;
+  for(let i=0;i<w;i+=14){const jag=flip?-Math.random()*8:Math.random()*8;ctx.fillRect(x+i,edgeY+jag,10,12);}
+  ctx.strokeStyle='rgba(255,100,0,.5)';ctx.lineWidth=2;
+  ctx.strokeRect(x,y,w,h);
 }
 
 </script>

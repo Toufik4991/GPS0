@@ -3,276 +3,122 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
-<title>GPS0 — Lune de Lierre</title>
+<title>GPS0 N3</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:#0A0A1A;color:#fff;font-family:system-ui,sans-serif;overflow:hidden;height:100dvh;display:flex;flex-direction:column;touch-action:none;user-select:none}
-#bg{position:fixed;inset:0;z-index:0;background:radial-gradient(ellipse at 30% 40%,rgba(30,120,20,0.2) 0%,transparent 60%),linear-gradient(160deg,#040c04 0%,#0a1408 100%);}
-#hud{position:relative;z-index:20;display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(0,0,0,.65);flex-shrink:0;backdrop-filter:blur(6px)}
-#lives{font-size:1.2rem;letter-spacing:2px}
-#timer{flex:1;text-align:center;font-size:1rem;font-weight:bold;color:#4FC3F7}
-#score-hud{font-size:.9rem;color:#FFD700;font-weight:bold}
-#game-container{flex:1;position:relative;overflow:hidden;z-index:1}
+html,body{height:100%;overflow:hidden;background:#0A0A1A;font-family:system-ui,sans-serif;color:#fff;touch-action:none;user-select:none}
+#bg{position:fixed;inset:0;z-index:0;background:radial-gradient(ellipse at 30% 40%,rgba(30,120,20,.18) 0%,transparent 60%),linear-gradient(160deg,#040c04 0%,#0a1408 100%);}
+#hud{position:relative;z-index:20;display:flex;align-items:center;gap:10px;padding:6px 52px 6px 10px;background:rgba(0,0,0,.65);backdrop-filter:blur(6px);flex-shrink:0}
+#lives{font-size:1.1rem;letter-spacing:2px;min-width:54px}
+#timer{flex:1;text-align:center;font-size:.95rem;font-weight:bold;color:#4FC3F7}
+#score-hud{font-size:.9rem;color:#FFD700;font-weight:bold;min-width:52px;text-align:right}
+#game-container{position:relative;z-index:1;flex:1;overflow:hidden;display:flex;flex-direction:column}
 canvas{display:block;width:100%;height:100%}
-#overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,.88);z-index:20;gap:14px;text-align:center;padding:24px}
-#overlay h2{font-size:1.8rem;color:#C8A2C8}
-#overlay p{font-size:.9rem;color:rgba(255,255,255,.8);max-width:280px;line-height:1.5}
-#overlay .btn{padding:12px 32px;border:none;border-radius:14px;font-size:1rem;font-weight:bold;cursor:pointer;background:linear-gradient(135deg,#C8A2C8,#8860a8);color:#fff}
-:root{--accent:#C8A2C8;--gold:#FFD700;--blue:#4FC3F7}
-
+body{display:flex;flex-direction:column;height:100dvh}
 </style>
 </head>
 <body>
 <div id="bg"></div>
 <div id="hud">
   <span id="lives">❤❤❤</span>
-  <span id="timer">3:00</span>
+  <span id="timer">2:30</span>
   <span id="score-hud">0 ✨</span>
 </div>
 <div id="game-container">
   <canvas id="cv"></canvas>
-
-  <div id="overlay">
-    <div style="font-size:3rem">🌓</div>
-    <h2>Lune de Lierre</h2>
-    <p>Le cosmonaute rebondit automatiquement.<br>Glisse gauche/droite pour se déplacer.<br>Monte le plus haut possible !</p>
-    <button class="btn" id="btn-start">C'est parti&nbsp;!</button>
-  </div>
-  <canvas id="selfie-cv" width="64" height="64" style="display:none" aria-hidden="true"></canvas>
 </div>
+<script src="shared.js"></script>
 <script>
-// ── COMMON ENGINE ──
-const NIVEAU = 3;
-let lives = 3, dust = 0, running = false, gameover = false;
-let timerSec = 180, timerInterval = null;
-const livesEl = document.getElementById('lives');
-const timerEl = document.getElementById('timer');
-const scoreEl = document.getElementById('score-hud');
-const overlay = document.getElementById('overlay');
-const btnStart = document.getElementById('btn-start');
-const cv = document.getElementById('cv');
-const ctx = cv.getContext('2d');
+window.NIVEAU = 3;
 
-function updateLivesHUD(){livesEl.textContent='❤'.repeat(lives)+'♡'.repeat(Math.max(0,3-lives));}
-function updateTimer(){const m=Math.floor(timerSec/60),s=timerSec%60;timerEl.textContent=m+':'+(s<10?'0':'')+s;}
-function addDust(n){dust+=n;scoreEl.textContent=dust+' ✨';}
-function loseLife(){if(!running)return;lives--;updateLivesHUD();if(lives<=0)endGame(false);}
+window.TUTO_TEXT = "Penche ton téléphone ou glisse gauche/droite pour te déplacer.<br>Le cosmonaute rebondit sur les plateformes.<br>Monte le plus haut possible !";
 
-function calcDust(){
-  const played = 180 - timerSec;
-  let base;
-  if(played < 30) base = 1 + Math.floor(Math.random()*5);
-  else if(played < 60) base = 5 + Math.floor(Math.random()*10);
-  else if(played < 120) base = 15 + Math.floor(Math.random()*15);
-  else if(played < 150) base = 30 + Math.floor(Math.random()*10);
-  else base = 40 + Math.floor(Math.random()*10);
-  return Math.min(50, base + dust);
+const JUMP_V=-13.5;
+let cosmo,platforms,dustItems,particles,worldY,rafId;
+let tiltX=0,touchDx=0,lastTx=null;
+
+window.addEventListener('deviceorientation',e=>{if(!GPS0_running())return;tiltX=Math.max(-1,Math.min(1,(e.gamma||0)/30));},{passive:true});
+
+function gameReset(){
+  cancelAnimationFrame(rafId);
+  cosmo={x:0,y:0,vx:0,vy:0,r:22};
+  platforms=[]; dustItems=[]; particles=[]; worldY=0; tiltX=0; touchDx=0;
 }
+window.gameReset=gameReset;
 
-function endGame(success){
-  if(gameover)return;
-  gameover=true; running=false;
-  clearInterval(timerInterval);
-  const finalDust = success ? Math.min(60, calcDust() + 10) : calcDust();
-  setTimeout(()=>{
-    window.parent.postMessage({source:'gps0_minijeu',success,niveau:NIVEAU,poussieres:finalDust},'*');
-  }, 600);
-}
-
-function startTimer(){
-  updateTimer();
-  timerInterval=setInterval(()=>{
-    if(!running)return;
-    timerSec--;updateTimer();
-    if(timerSec<=0)endGame({'9':true}.hasOwnProperty(String(NIVEAU)) ? false : false);
-  },1000);
-}
-
-// Selfie canvas
-let selfieImg = null;
-function loadSelfie(){
-  const b64 = localStorage.getItem('gps0_avatar_selfie_base64');
-  if(!b64)return;
-  const img = new Image();
-  img.onload = ()=>{ selfieImg = img; };
-  img.src = b64;
-}
-loadSelfie();
-
-function drawSelfie(x, y, r){
-  if(!selfieImg)return;
-  ctx.save();
-  ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.clip();
-  ctx.drawImage(selfieImg, x-r, y-r, r*2, r*2);
-  ctx.restore();
-}
-
-function drawCosmonaut(x, y, r, angle){
-  ctx.save();
-  ctx.translate(x, y);
-  if(angle)ctx.rotate(angle);
-  // Body (suit)
-  ctx.beginPath();
-  ctx.ellipse(0, r*0.5, r*0.55, r*0.7, 0, 0, Math.PI*2);
-  ctx.fillStyle='#dde4ee'; ctx.fill();
-  // Helmet
-  ctx.beginPath(); ctx.arc(0, -r*0.15, r*0.55, 0, Math.PI*2);
-  ctx.fillStyle='rgba(60,120,200,0.3)'; ctx.fill();
-  ctx.beginPath(); ctx.arc(0, -r*0.15, r*0.55, 0, Math.PI*2);
-  ctx.strokeStyle='#8ab4d4'; ctx.lineWidth=2; ctx.stroke();
-  // Selfie face
-  if(selfieImg){
-    ctx.save(); ctx.beginPath(); ctx.arc(0,-r*0.15,r*0.45,0,Math.PI*2); ctx.clip();
-    ctx.drawImage(selfieImg,-r*0.45,-r*0.6,r*0.9,r*0.9); ctx.restore();
-  } else {
-    ctx.fillStyle='rgba(79,195,247,.5)';
-    ctx.beginPath(); ctx.arc(0,-r*0.15,r*0.4,0,Math.PI*2); ctx.fill();
-  }
-  ctx.restore();
-}
-
-function resizeCanvas(){
-  const gc = document.getElementById('game-container');
-  cv.width = gc.clientWidth; cv.height = gc.clientHeight;
-}
-resizeCanvas();
-window.addEventListener('resize', ()=>{resizeCanvas(); if(running) onResize && onResize();});
-
-btnStart.addEventListener('click', ()=>{
-  overlay.style.display='none';
-  running=true;
-  startTimer();
-  gameStart();
-}, {once:true});
-
-// ── GAME SPECIFIC ──
-
-const JUMP_SPND = -13, PLAT_MIN = 6, PLAT_MAX = 9, GRAVITY = 0.45;
-let cosmo = {x:0,y:0,vx:0,vy:0,r:22,onGround:false};
-let platforms = [], dustItems = [], particles = [], worldY = 0, highestY = 0;
-let tiltX = 0;
-
-window.addEventListener('deviceorientation', e => { if(!running)return; tiltX = Math.max(-1, Math.min(1, e.gamma/35)); });
-let touchDx = 0, lastTx = null;
-document.addEventListener('touchstart', e=>{ lastTx = e.touches[0].clientX; }, {passive:true});
-document.addEventListener('touchmove', e=>{ if(!running||!lastTx)return; touchDx = (e.touches[0].clientX - lastTx)/50; lastTx = e.touches[0].clientX; }, {passive:true});
-document.addEventListener('touchend', ()=>{ touchDx = 0; lastTx = null; });
-
-function makePlatform(y) {
-  const types = ['normal','normal','normal','spring','break','break','toxic'];
-  const t = types[Math.floor(Math.random()*types.length)];
-  return {x: 20 + Math.random()*(cv.width - 120), y, w: 80 + Math.random()*30, h:14, type:t, broken: false};
-}
-
-function gameStart() {
-  const H = cv.height, W = cv.width;
-  cosmo.x = W/2; cosmo.y = H*0.7; cosmo.vx=0; cosmo.vy=0;
-  worldY = 0; highestY = cosmo.y;
-  platforms = [];
-  // Initial platforms
-  platforms.push({x: W/2-50, y: H*0.75, w:100, h:14, type:'normal', broken:false});
-  for(let i=1;i<24;i++) makePlatformAt(-i*85);
-  requestAnimationFrame(loop);
-}
-
-function makePlatformAt(y) {
-  platforms.push(makePlatform(y));
-}
-
-function loop() {
-  if(!running)return;
-  requestAnimationFrame(loop);
-  const W=cv.width, H=cv.height;
-
-  // Horizontal input
-  const inputX = tiltX + touchDx;
-  cosmo.vx += inputX * 0.8;
-  cosmo.vx *= 0.85;
-
-  // Physics
-  cosmo.vy += GRAVITY;
-  cosmo.x += cosmo.vx;
-  cosmo.y += cosmo.vy;
-
-  // Wrap horizontal
-  if(cosmo.x < -cosmo.r) cosmo.x = W + cosmo.r;
-  if(cosmo.x > W + cosmo.r) cosmo.x = -cosmo.r;
-
-  // Camera: keep cosmo in middle-upper
-  if(cosmo.y < H*0.45 + worldY) {
-    const diff = (H*0.45 + worldY) - cosmo.y;
-    worldY -= diff; cosmo.y += diff;
-    // Spawn new platforms ahead
-    const topP = platforms.reduce((mn,p)=>Math.min(mn,p.y), 9999);
-    while(topP + worldY > -H*0.5) makePlatformAt(topP - 85);
-    platforms = platforms.filter(p => p.y + worldY < H + 50);
-  }
-
-  // Floor death
-  if(cosmo.y - worldY > H + 60) { loseLife(); if(lives>0){ cosmo.y=H*0.7-worldY; cosmo.vy=-8; } return; }
-
-  // Platform collision (only when falling)
-  if(cosmo.vy > 0) {
-    platforms.forEach(p => {
-      const py = p.y - worldY;
-      if(cosmo.x > p.x && cosmo.x < p.x + p.w &&
-         cosmo.y + cosmo.r > py && cosmo.y + cosmo.r < py + p.h + 14 &&
-         !p.broken) {
-        if(p.type === 'toxic') { loseLife(); return; }
-        if(p.type === 'break') { p.broken = true; setTimeout(()=>{},200); }
-        cosmo.vy = p.type === 'spring' ? JUMP_SPND * 1.5 : JUMP_SPND;
-        addDust(1);
-        for(let i=0;i<5;i++) particles.push({x:cosmo.x,y:py,vx:(Math.random()-.5)*4,vy:-2,life:20,col:p.type==='spring'?'#69FF47':'#a0c840'});
-      }
+function gameStart(){
+  const cv=document.getElementById('cv');
+  GPS0_resizeCanvas(cv);
+  gameReset();
+  const W=cv.width,H=cv.height;
+  cosmo.x=W/2; cosmo.y=H*.68;
+  // Plateformes initiales
+  platforms.push({x:W/2-50,y:H*.74,w:100,h:14,type:'normal',broken:false,bounce:false});
+  for(let i=1;i<28;i++) _mkPlat(-(i*78));
+  worldY=0;
+  // Swipe
+  cv.addEventListener('touchstart',e=>{lastTx=e.touches[0].clientX;},{passive:true});
+  cv.addEventListener('touchmove',e=>{if(!GPS0_running()||!lastTx)return;touchDx=(e.touches[0].clientX-lastTx)/40;lastTx=e.touches[0].clientX;},{passive:true});
+  cv.addEventListener('touchend',()=>{touchDx=0;lastTx=null;});
+  const ctx=cv.getContext('2d');
+  const loop=()=>{
+    rafId=requestAnimationFrame(loop);
+    if(!GPS0_running())return;
+    const W=cv.width,H=cv.height;
+    cosmo.vx+=(tiltX+touchDx)*.7; cosmo.vx*=.82;
+    cosmo.vy+=.43; cosmo.x+=cosmo.vx; cosmo.y+=cosmo.vy;
+    if(cosmo.x<-cosmo.r)cosmo.x=W+cosmo.r;
+    if(cosmo.x>W+cosmo.r)cosmo.x=-cosmo.r;
+    // Caméra
+    if(cosmo.y<H*.42+worldY){
+      const diff=(H*.42+worldY)-cosmo.y; worldY-=diff; cosmo.y+=diff;
+      const topP=platforms.reduce((m,p)=>Math.min(m,p.y),9999);
+      while(topP+worldY>-H*.5)_mkPlat(topP-78);
+      platforms=platforms.filter(p=>p.y+worldY<H+50);
+    }
+    // Mort bas
+    if(cosmo.y-worldY>H+60){loseLife();if(GPS0_lives()>0){cosmo.y=H*.6-worldY;cosmo.vy=-9;}return;}
+    // Collisions plateformes
+    if(cosmo.vy>0){
+      platforms.forEach(p=>{
+        const py=p.y-worldY;
+        if(!p.broken&&cosmo.x>p.x&&cosmo.x<p.x+p.w&&cosmo.y+cosmo.r>py&&cosmo.y+cosmo.r<py+p.h+16){
+          if(p.type==='toxic'){loseLife();return;}
+          if(p.type==='break'){p.broken=true;}
+          cosmo.vy=p.type==='spring'?JUMP_V*1.55:JUMP_V; addDust(1);
+          for(let i=0;i<5;i++)particles.push({x:cosmo.x,y:py,vx:(Math.random()-.5)*4,vy:-2,life:18,col:p.type==='spring'?'#00ff88':'#a0c840'});
+        }
+      });
+    }
+    // Dust aléatoires
+    if(Math.random()<.004&&dustItems.filter(d=>!d.col).length<6)
+      dustItems.push({x:20+Math.random()*(cv.width-40),y:worldY-cv.height*.3-Math.random()*cv.height*2,col:false});
+    dustItems.forEach(d=>{if(d.col)return;const dy=d.y-worldY;if(Math.sqrt((cosmo.x-d.x)**2+(cosmo.y-dy-worldY+d.y)**2)<cosmo.r+13){d.col=true;addDust(4);for(let i=0;i<5;i++)particles.push({x:d.x,y:dy,vx:(Math.random()-.5)*4,vy:-2.5,life:20,col:'#FFD700'});}});
+    ctx.clearRect(0,0,W,H);
+    // BG jungle spatiale
+    ctx.fillStyle='rgba(20,50,20,.15)';
+    for(let i=0;i<5;i++){const vx=(i*W/5+worldY*.08)%W;ctx.beginPath();ctx.moveTo(vx,0);ctx.bezierCurveTo(vx+25,H/3,vx-20,H*2/3,vx,H);ctx.strokeStyle='rgba(40,120,40,.2)';ctx.lineWidth=2;ctx.stroke();}
+    // Plateformes
+    platforms.forEach(p=>{
+      if(p.broken)return;
+      const py=p.y-worldY;
+      const cs={normal:'#4a9a3a',spring:'#3af070',break:'#c8c040',toxic:'#e05050'};
+      ctx.fillStyle=cs[p.type]||'#4a9a3a';
+      ctx.beginPath();ctx.ellipse(p.x+p.w/2,py+p.h/2,p.w/2,p.h/2,0,0,Math.PI*2);ctx.fill();
+      ctx.strokeStyle='rgba(255,255,255,.25)';ctx.lineWidth=1.5;ctx.stroke();
+      if(p.type==='spring'){ctx.fillStyle='rgba(0,255,136,.5)';ctx.font='14px system-ui';ctx.textAlign='center';ctx.fillText('🌿',p.x+p.w/2,py+p.h/2+5);}
     });
-  }
-
-  // Dust items
-  dustItems = dustItems.filter(d=>!d.col);
-  if(Math.random()<0.004 && dustItems.length < 5) {
-    const y = worldY - H*0.3 - Math.random()*H*2;
-    dustItems.push({x:20+Math.random()*(W-40), y, col:false});
-  }
-
-  // Draw
-  ctx.clearRect(0,0,W,H);
-
-  // BG vines decoration
-  ctx.strokeStyle='rgba(40,100,40,0.25)'; ctx.lineWidth=2;
-  for(let i=0;i<5;i++){
-    const vx = (i*W/5+worldY*0.1)%W;
-    ctx.beginPath(); ctx.moveTo(vx,0); ctx.bezierCurveTo(vx+20,H/3,vx-20,H*2/3,vx,H); ctx.stroke();
-  }
-
-  // Platforms
-  platforms.forEach(p=>{
-    if(p.broken)return;
-    const py=p.y-worldY;
-    const cols = {normal:'#4a9a3a', spring:'#3af070', break:'#c8c040', toxic:'#e05050'};
-    ctx.fillStyle=cols[p.type]||'#4a9a3a';
-    ctx.beginPath(); ctx.ellipse(p.x+p.w/2, py+p.h/2, p.w/2, p.h/2, 0, 0, Math.PI*2); ctx.fill();
-    ctx.strokeStyle='rgba(255,255,255,0.3)'; ctx.lineWidth=1.5; ctx.stroke();
-  });
-
-  // Dust items
-  dustItems.forEach(d=>{
-    const dy=d.y-worldY;
-    if(dy<-20||dy>H+20)return;
-    const dx2=cosmo.x-d.x, dy2=cosmo.y-dy+worldY-d.y;
-    const dd=Math.sqrt((cosmo.x-d.x)**2+(cosmo.y-(d.y-worldY))**2);
-    if(dd<cosmo.r+14){d.col=true;addDust(4);for(let i=0;i<5;i++)particles.push({x:d.x,y:dy,vx:(Math.random()-.5)*4,vy:-2,life:20,col:'#FFD700'});}
-    ctx.fillStyle='#FFD700'; ctx.font='18px system-ui'; ctx.textAlign='center';
-    ctx.fillText('✨',d.x,dy+6);
-  });
-
-  // Particles
-  particles=particles.filter(p=>p.life>0);
-  particles.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.1;p.life--;
-    ctx.fillStyle=p.col||'#69FF47'; ctx.globalAlpha=p.life/20;
-    ctx.beginPath();ctx.arc(p.x,p.y,3,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;});
-
-  // Cosmonaut
-  drawCosmonaut(cosmo.x, cosmo.y, cosmo.r, 0);
+    dustItems.forEach(d=>{if(d.col)return;const dy=d.y-worldY;if(dy<-20||dy>H+20)return;ctx.fillStyle='#FFD700';ctx.font='17px system-ui';ctx.textAlign='center';ctx.fillText('✨',d.x,dy+6);});
+    particles=particles.filter(p=>p.life>0);
+    particles.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.1;p.life--;ctx.fillStyle=p.col;ctx.globalAlpha=p.life/20;ctx.beginPath();ctx.arc(p.x,p.y,3,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;});
+    drawCosmonaut(ctx,cosmo.x,cosmo.y,cosmo.r,0);
+  };
+  loop();
+}
+function _mkPlat(y){
+  const types=['normal','normal','normal','normal','spring','break','toxic'];
+  const t=types[Math.floor(Math.random()*types.length)];
+  platforms.push({x:20+Math.random()*(document.getElementById('cv').width-120),y,w:80+Math.random()*30,h:14,type:t,broken:false});
 }
 
 </script>

@@ -61,6 +61,7 @@ window.GPS0_Boussole = (() => {
       case 'off':
         f && f.classList.add('hidden');
         h && (h.dataset.etat = 'off');
+        if (w) delete w.dataset.zone; // Fix: supprimer data-zone pour que le grayscale CSS s'applique
         tl && (tl.textContent = 'Activer la boussole');
         t && (t.dataset.active = 'false', t.dataset.epuise = 'false');
         bj && (bj.hidden = true);

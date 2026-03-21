@@ -3,308 +3,113 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
-<title>GPS0 — Lune de Fer</title>
+<title>GPS0 N6</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:#0A0A1A;color:#fff;font-family:system-ui,sans-serif;overflow:hidden;height:100dvh;display:flex;flex-direction:column;touch-action:none;user-select:none}
-#bg{position:fixed;inset:0;z-index:0;background:radial-gradient(ellipse at 40% 40%,rgba(140,140,160,0.12) 0%,transparent 60%),linear-gradient(135deg,#0a0a10 0%,#080810 100%);}
-#hud{position:relative;z-index:20;display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(0,0,0,.65);flex-shrink:0;backdrop-filter:blur(6px)}
-#lives{font-size:1.2rem;letter-spacing:2px}
-#timer{flex:1;text-align:center;font-size:1rem;font-weight:bold;color:#4FC3F7}
-#score-hud{font-size:.9rem;color:#FFD700;font-weight:bold}
-#game-container{flex:1;position:relative;overflow:hidden;z-index:1}
+html,body{height:100%;overflow:hidden;background:#0A0A1A;font-family:system-ui,sans-serif;color:#fff;touch-action:none;user-select:none}
+#bg{position:fixed;inset:0;z-index:0;background:radial-gradient(ellipse at 40% 40%,rgba(140,140,160,.1) 0%,transparent 60%),linear-gradient(135deg,#0a0a10 0%,#080810 100%);}
+#hud{position:relative;z-index:20;display:flex;align-items:center;gap:10px;padding:6px 52px 6px 10px;background:rgba(0,0,0,.65);backdrop-filter:blur(6px);flex-shrink:0}
+#lives{font-size:1.1rem;letter-spacing:2px;min-width:54px}
+#timer{flex:1;text-align:center;font-size:.95rem;font-weight:bold;color:#4FC3F7}
+#score-hud{font-size:.9rem;color:#FFD700;font-weight:bold;min-width:52px;text-align:right}
+#game-container{position:relative;z-index:1;flex:1;overflow:hidden;display:flex;flex-direction:column}
 canvas{display:block;width:100%;height:100%}
-#overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,.88);z-index:20;gap:14px;text-align:center;padding:24px}
-#overlay h2{font-size:1.8rem;color:#C8A2C8}
-#overlay p{font-size:.9rem;color:rgba(255,255,255,.8);max-width:280px;line-height:1.5}
-#overlay .btn{padding:12px 32px;border:none;border-radius:14px;font-size:1rem;font-weight:bold;cursor:pointer;background:linear-gradient(135deg,#C8A2C8,#8860a8);color:#fff}
-:root{--accent:#C8A2C8;--gold:#FFD700;--blue:#4FC3F7}
-
+body{display:flex;flex-direction:column;height:100dvh}
 </style>
 </head>
 <body>
 <div id="bg"></div>
 <div id="hud">
   <span id="lives">❤❤❤</span>
-  <span id="timer">3:00</span>
+  <span id="timer">2:30</span>
   <span id="score-hud">0 ✨</span>
 </div>
 <div id="game-container">
   <canvas id="cv"></canvas>
-
-  <div id="overlay">
-    <div style="font-size:3rem">🌖</div>
-    <h2>Lune de Fer</h2>
-    <p>Drag le doigt pour déplacer ta lune.<br>Absorbe les plus petits, fuis les grands.<br>Grossis jusqu&rsquo;à la taille max !</p>
-    <button class="btn" id="btn-start">C'est parti&nbsp;!</button>
-  </div>
-  <canvas id="selfie-cv" width="64" height="64" style="display:none" aria-hidden="true"></canvas>
 </div>
+<script src="shared.js"></script>
 <script>
-// ── COMMON ENGINE ──
-const NIVEAU = 6;
-let lives = 3, dust = 0, running = false, gameover = false;
-let timerSec = 180, timerInterval = null;
-const livesEl = document.getElementById('lives');
-const timerEl = document.getElementById('timer');
-const scoreEl = document.getElementById('score-hud');
-const overlay = document.getElementById('overlay');
-const btnStart = document.getElementById('btn-start');
-const cv = document.getElementById('cv');
-const ctx = cv.getContext('2d');
+window.NIVEAU = 6;
 
-function updateLivesHUD(){livesEl.textContent='❤'.repeat(lives)+'♡'.repeat(Math.max(0,3-lives));}
-function updateTimer(){const m=Math.floor(timerSec/60),s=timerSec%60;timerEl.textContent=m+':'+(s<10?'0':'')+s;}
-function addDust(n){dust+=n;scoreEl.textContent=dust+' ✨';}
-function loseLife(){if(!running)return;lives--;updateLivesHUD();if(lives<=0)endGame(false);}
+window.TUTO_TEXT = "Drag le doigt pour déplacer ta lune.<br>Absorbe les plus petites boules, fuis les grandes.<br>Grossis jusqu'à la taille maximum !";
 
-function calcDust(){
-  const played = 180 - timerSec;
-  let base;
-  if(played < 30) base = 1 + Math.floor(Math.random()*5);
-  else if(played < 60) base = 5 + Math.floor(Math.random()*10);
-  else if(played < 120) base = 15 + Math.floor(Math.random()*15);
-  else if(played < 150) base = 30 + Math.floor(Math.random()*10);
-  else base = 40 + Math.floor(Math.random()*10);
-  return Math.min(50, base + dust);
-}
+const WORLD=1400;
+let player,enemies,dustBlobs,particles,camX,camY,ptarget,rafId,aiInt;
 
-function endGame(success){
-  if(gameover)return;
-  gameover=true; running=false;
-  clearInterval(timerInterval);
-  const finalDust = success ? Math.min(60, calcDust() + 10) : calcDust();
-  setTimeout(()=>{
-    window.parent.postMessage({source:'gps0_minijeu',success,niveau:NIVEAU,poussieres:finalDust},'*');
-  }, 600);
-}
-
-function startTimer(){
-  updateTimer();
-  timerInterval=setInterval(()=>{
-    if(!running)return;
-    timerSec--;updateTimer();
-    if(timerSec<=0)endGame({'9':true}.hasOwnProperty(String(NIVEAU)) ? false : false);
-  },1000);
-}
-
-// Selfie canvas
-let selfieImg = null;
-function loadSelfie(){
-  const b64 = localStorage.getItem('gps0_avatar_selfie_base64');
-  if(!b64)return;
-  const img = new Image();
-  img.onload = ()=>{ selfieImg = img; };
-  img.src = b64;
-}
-loadSelfie();
-
-function drawSelfie(x, y, r){
-  if(!selfieImg)return;
-  ctx.save();
-  ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.clip();
-  ctx.drawImage(selfieImg, x-r, y-r, r*2, r*2);
-  ctx.restore();
-}
-
-function drawCosmonaut(x, y, r, angle){
-  ctx.save();
-  ctx.translate(x, y);
-  if(angle)ctx.rotate(angle);
-  // Body (suit)
-  ctx.beginPath();
-  ctx.ellipse(0, r*0.5, r*0.55, r*0.7, 0, 0, Math.PI*2);
-  ctx.fillStyle='#dde4ee'; ctx.fill();
-  // Helmet
-  ctx.beginPath(); ctx.arc(0, -r*0.15, r*0.55, 0, Math.PI*2);
-  ctx.fillStyle='rgba(60,120,200,0.3)'; ctx.fill();
-  ctx.beginPath(); ctx.arc(0, -r*0.15, r*0.55, 0, Math.PI*2);
-  ctx.strokeStyle='#8ab4d4'; ctx.lineWidth=2; ctx.stroke();
-  // Selfie face
-  if(selfieImg){
-    ctx.save(); ctx.beginPath(); ctx.arc(0,-r*0.15,r*0.45,0,Math.PI*2); ctx.clip();
-    ctx.drawImage(selfieImg,-r*0.45,-r*0.6,r*0.9,r*0.9); ctx.restore();
-  } else {
-    ctx.fillStyle='rgba(79,195,247,.5)';
-    ctx.beginPath(); ctx.arc(0,-r*0.15,r*0.4,0,Math.PI*2); ctx.fill();
-  }
-  ctx.restore();
-}
-
-function resizeCanvas(){
-  const gc = document.getElementById('game-container');
-  cv.width = gc.clientWidth; cv.height = gc.clientHeight;
-}
-resizeCanvas();
-window.addEventListener('resize', ()=>{resizeCanvas(); if(running) onResize && onResize();});
-
-btnStart.addEventListener('click', ()=>{
-  overlay.style.display='none';
-  running=true;
-  startTimer();
-  gameStart();
-}, {once:true});
-
-// ── GAME SPECIFIC ──
-
-const WORLD = 1200, DUST_RESPAWN = 10000;
-let player = {x:WORLD/2,y:WORLD/2,r:20,vx:0,vy:0};
-let enemies = [], dustBlobs = [], particles = [];
-let camX = 0, camY = 0;
-let lastDust = 0;
-
-function speed() { return Math.max(1.5, 5 - (player.r - 20)/10); }
-
-function spawnEnemies() {
-  enemies = [];
-  for(let i=0;i<15;i++) {
-    const r = 10 + Math.random()*40;
-    enemies.push({
-      x: Math.random()*WORLD, y: Math.random()*WORLD,
-      r, vx: (Math.random()-.5)*1.5, vy: (Math.random()-.5)*1.5,
-      col: `hsl(${Math.random()*360},60%,55%)`
-    });
-  }
-}
-
-function spawnDust() {
-  dustBlobs = [];
-  for(let i=0;i<60;i++) {
-    dustBlobs.push({x:Math.random()*WORLD,y:Math.random()*WORLD,r:6,col:false});
-  }
-}
-
-function gameStart() {
+function gameReset(){
+  cancelAnimationFrame(rafId); clearInterval(aiInt);
   player={x:WORLD/2,y:WORLD/2,r:20,vx:0,vy:0};
-  spawnEnemies(); spawnDust();
+  enemies=[]; dustBlobs=[]; particles=[]; camX=0; camY=0;
+  ptarget={x:WORLD/2,y:WORLD/2};
+}
+window.gameReset=gameReset;
+
+function _spd(){return Math.max(1.3,5/(1+((player.r-20)/18)*.5));}
+
+function gameStart(){
+  const cv=document.getElementById('cv');
+  GPS0_resizeCanvas(cv);
+  gameReset();
   camX=player.x-cv.width/2; camY=player.y-cv.height/2;
-  lastDust=Date.now();
-
-  let ptarget={x:player.x,y:player.y};
-  cv.addEventListener('pointermove',e=>{ ptarget={x:e.offsetX+camX,y:e.offsetY+camY}; });
-  cv.addEventListener('pointerdown',e=>{ ptarget={x:e.offsetX+camX,y:e.offsetY+camY}; });
-
-  function ai() {
+  ptarget={x:player.x,y:player.y};
+  // Ennemis (25)
+  for(let i=0;i<25;i++){const r=8+Math.random()*50;enemies.push({x:Math.random()*WORLD,y:Math.random()*WORLD,r,vx:(Math.random()-.5)*1.6,vy:(Math.random()-.5)*1.6,col:`hsl(${Math.random()*360},55%,55%)`});}
+  // Dust
+  for(let i=0;i<80;i++) dustBlobs.push({x:Math.random()*WORLD,y:Math.random()*WORLD,col:false});
+  cv.addEventListener('pointermove',e=>{ptarget={x:e.offsetX+camX,y:e.offsetY+camY};});
+  cv.addEventListener('pointerdown',e=>{ptarget={x:e.offsetX+camX,y:e.offsetY+camY};});
+  // Respawn dust
+  setInterval(()=>{const alive=dustBlobs.filter(d=>!d.col).length;for(let i=alive;i<80;i++)dustBlobs.push({x:Math.random()*WORLD,y:Math.random()*WORLD,col:false});},8000);
+  // IA ennemis
+  aiInt=setInterval(()=>{
     enemies.forEach(en=>{
-      // Chase small players; flee from big ones
-      const d=Math.sqrt((player.x-en.x)**2+(player.y-en.y)**2);
-      if(en.r < player.r - 5 && d < 200) {
-        en.vx += (en.x-player.x)/d*0.15;
-        en.vy += (en.y-player.y)/d*0.15;
-      } else if(en.r > player.r + 5 && d < 200) {
-        en.vx += (player.x-en.x)/d*0.1;
-        en.vy += (player.y-en.y)/d*0.1;
-      }
-      // Wander
-      en.vx += (Math.random()-.5)*0.1;
-      en.vy += (Math.random()-.5)*0.1;
-      const spd=Math.sqrt(en.vx**2+en.vy**2);
-      if(spd>2){en.vx=en.vx/spd*2;en.vy=en.vy/spd*2;}
+      const dx=player.x-en.x,dy=player.y-en.y,d=Math.sqrt(dx*dx+dy*dy);
+      if(d<250){if(en.r<player.r-5){en.vx+=(en.x-player.x)/d*.2;en.vy+=(en.y-player.y)/d*.2;}else if(en.r>player.r+5){en.vx+=(player.x-en.x)/d*.12;en.vy+=(player.y-en.y)/d*.12;}}
+      en.vx+=(Math.random()-.5)*.12;en.vy+=(Math.random()-.5)*.12;
+      const sp=Math.sqrt(en.vx**2+en.vy**2);if(sp>2.2){en.vx=en.vx/sp*2.2;en.vy=en.vy/sp*2.2;}
       en.x=Math.max(en.r,Math.min(WORLD-en.r,en.x+en.vx));
       en.y=Math.max(en.r,Math.min(WORLD-en.r,en.y+en.vy));
     });
-    setTimeout(ai, 50);
-  }
-  ai();
-
-  setInterval(()=>{
-    if(Date.now()-lastDust>DUST_RESPAWN){
-      dustBlobs=dustBlobs.filter(d=>d.col===false?false:(d.col=false,true));
-      for(let i=dustBlobs.filter(d=>!d.col).length;i<60;i++)
-        dustBlobs.push({x:Math.random()*WORLD,y:Math.random()*WORLD,r:6,col:false});
-      lastDust=Date.now();
-    }
-  },1000);
-
-  function loop() {
-    if(!running)return;
-    requestAnimationFrame(loop);
-
-    // Move player toward pointer
-    const dx=ptarget.x-player.x, dy=ptarget.y-player.y;
-    const d=Math.sqrt(dx*dx+dy*dy);
-    if(d>4){player.vx=dx/d*speed();player.vy=dy/d*speed();}
+  },50);
+  const ctx=cv.getContext('2d');
+  const loop=()=>{
+    rafId=requestAnimationFrame(loop);
+    if(!GPS0_running())return;
+    const dx=ptarget.x-player.x,dy=ptarget.y-player.y,d=Math.sqrt(dx*dx+dy*dy);
+    if(d>5){player.vx=dx/d*_spd();player.vy=dy/d*_spd();}
     player.x=Math.max(player.r,Math.min(WORLD-player.r,player.x+player.vx));
     player.y=Math.max(player.r,Math.min(WORLD-player.r,player.y+player.vy));
-
-    // Cam
-    camX += (player.x - cv.width/2 - camX)*0.08;
-    camY += (player.y - cv.height/2 - camY)*0.08;
-    camX=Math.max(0,Math.min(WORLD-cv.width,camX));
-    camY=Math.max(0,Math.min(WORLD-cv.height,camY));
-
+    camX+=(player.x-cv.width/2-camX)*.09;camY+=(player.y-cv.height/2-camY)*.09;
+    camX=Math.max(0,Math.min(WORLD-cv.width,camX));camY=Math.max(0,Math.min(WORLD-cv.height,camY));
     // Absorb dust
-    dustBlobs.forEach(d=>{
-      if(d.col)return;
-      const dd=Math.sqrt((player.x-d.x)**2+(player.y-d.y)**2);
-      if(dd<player.r+d.r){d.col=true;player.r=Math.min(100,player.r+2);addDust(2);
-        for(let i=0;i<4;i++)particles.push({x:d.x,y:d.y,vx:(Math.random()-.5)*3,vy:-2,life:18,col:'#FFD700'});}
-    });
-
-    // Absorb/get eaten by enemies
-    enemies.forEach((en,i)=>{
-      const dd=Math.sqrt((player.x-en.x)**2+(player.y-en.y)**2);
-      if(dd<player.r+en.r) {
-        if(player.r > en.r + 5) {
-          player.r=Math.min(100,player.r+en.r*0.3);
-          addDust(3);
-          for(let j=0;j<8;j++)particles.push({x:en.x,y:en.y,vx:(Math.random()-.5)*5,vy:-3,life:22,col:en.col});
-          enemies.splice(i,1);
-          // respawn enemy
-          setTimeout(()=>{const r=10+Math.random()*40;enemies.push({x:Math.random()*WORLD,y:Math.random()*WORLD,r,vx:(Math.random()-.5)*1.5,vy:(Math.random()-.5)*1.5,col:`hsl(${Math.random()*360},60%,55%)`});},3000);
-        } else if(en.r > player.r + 5 && dd < (player.r+en.r)*0.6) {
-          player.r=Math.max(15,player.r*0.7);
-          loseLife();
-        }
+    dustBlobs.forEach(d=>{if(d.col)return;const dd=Math.sqrt((player.x-d.x)**2+(player.y-d.y)**2);if(dd<player.r+7){d.col=true;player.r=Math.min(100,player.r+2);addDust(2);for(let i=0;i<4;i++)particles.push({x:d.x,y:d.y,vx:(Math.random()-.5)*3,vy:-2,life:16,col:'#FFD700'});}});
+    // Enemy interactions
+    for(let i=enemies.length-1;i>=0;i--){
+      const en=enemies[i],dd=Math.sqrt((player.x-en.x)**2+(player.y-en.y)**2);
+      if(dd<player.r+en.r){
+        if(player.r>en.r+5){player.r=Math.min(100,player.r+en.r*.3);addDust(4);for(let j=0;j<8;j++)particles.push({x:en.x,y:en.y,vx:(Math.random()-.5)*5,vy:-3,life:20,col:en.col});enemies.splice(i,1);setTimeout(()=>{const r=8+Math.random()*50;enemies.push({x:Math.random()*WORLD,y:Math.random()*WORLD,r,vx:(Math.random()-.5)*1.6,vy:(Math.random()-.5)*1.6,col:`hsl(${Math.random()*360},55%,55%)`});},4000);}
+        else if(en.r>player.r+5&&dd<(player.r+en.r)*.5){player.r=Math.max(14,player.r*.72);loseLife();}
       }
-    });
-
+    }
+    if(player.r>=99)endGame(true);
     const W=cv.width,H=cv.height;
     ctx.clearRect(0,0,W,H);
-
-    // Grid
-    ctx.strokeStyle='rgba(100,80,60,0.2)'; ctx.lineWidth=1;
-    for(let x=((- camX)%60);x<W;x+=60){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+    ctx.strokeStyle='rgba(100,80,60,.18)';ctx.lineWidth=1;
+    for(let x=((-camX)%60);x<W;x+=60){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
     for(let y=((-camY)%60);y<H;y+=60){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
-
-    // Border
-    ctx.strokeStyle='rgba(200,160,80,0.5)'; ctx.lineWidth=4;
-    ctx.strokeRect(-camX,-camY,WORLD,WORLD);
-
-    // Dust
-    dustBlobs.forEach(d=>{
-      if(d.col)return;
-      const px=d.x-camX,py=d.y-camY;
-      if(px<-20||px>W+20||py<-20||py>H+20)return;
-      ctx.fillStyle='#FFD700'; ctx.font='14px system-ui'; ctx.textAlign='center';
-      ctx.fillText('✨',px,py+5);
-    });
-
-    // Enemies
-    enemies.forEach(en=>{
-      const px=en.x-camX,py=en.y-camY;
-      if(px<-en.r-10||px>W+en.r+10||py<-en.r-10||py>H+en.r+10)return;
-      ctx.fillStyle=en.col;
-      ctx.beginPath();ctx.arc(px,py,en.r,0,Math.PI*2);ctx.fill();
-      ctx.strokeStyle='rgba(255,255,255,0.3)';ctx.lineWidth=2;ctx.stroke();
-    });
-
-    // Particles
+    ctx.strokeStyle='rgba(200,160,80,.5)';ctx.lineWidth=4;ctx.strokeRect(-camX,-camY,WORLD,WORLD);
+    dustBlobs.forEach(d=>{if(d.col)return;const px=d.x-camX,py=d.y-camY;if(px<-15||px>W+15||py<-15||py>H+15)return;ctx.fillStyle='#FFD700';ctx.font='13px system-ui';ctx.textAlign='center';ctx.fillText('✨',px,py+5);});
+    enemies.forEach(en=>{const px=en.x-camX,py=en.y-camY;if(px<-en.r-10||px>W+en.r+10||py<-en.r-10||py>H+en.r+10)return;ctx.fillStyle=en.col;ctx.beginPath();ctx.arc(px,py,en.r,0,Math.PI*2);ctx.fill();ctx.strokeStyle='rgba(255,255,255,.25)';ctx.lineWidth=2;ctx.stroke();});
     particles=particles.filter(p=>p.life>0);
-    particles.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.05;p.life--;
-      ctx.fillStyle=p.col;ctx.globalAlpha=p.life/22;ctx.beginPath();ctx.arc(p.x-camX,p.y-camY,3,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;});
-
-    // Player cosmonaut
+    particles.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.05;p.life--;ctx.fillStyle=p.col;ctx.globalAlpha=p.life/20;ctx.beginPath();ctx.arc(p.x-camX,p.y-camY,3,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;});
     const px=player.x-camX,py=player.y-camY;
-    ctx.fillStyle='rgba(79,195,247,0.15)';
-    ctx.beginPath();ctx.arc(px,py,player.r,0,Math.PI*2);ctx.fill();
-    ctx.strokeStyle='rgba(79,195,247,0.6)';ctx.lineWidth=2;ctx.stroke();
-    drawCosmonaut(px,py,Math.min(player.r*0.75,36),0);
-
-    // Size indicator
-    ctx.fillStyle='rgba(255,255,255,.5)'; ctx.font='12px system-ui'; ctx.textAlign='left';
-    ctx.fillText('Taille: '+Math.round(player.r), 8, H-10);
-  }
+    // Boule joueur sans halo
+    ctx.fillStyle='rgba(200,220,255,.12)';ctx.beginPath();ctx.arc(px,py,player.r,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle='rgba(79,195,247,.5)';ctx.lineWidth=2;ctx.stroke();
+    drawCosmonaut(ctx,px,py,Math.min(player.r*.78,38),0);
+    ctx.fillStyle='rgba(255,255,255,.45)';ctx.font='11px system-ui';ctx.textAlign='left';
+    ctx.fillText('Taille: '+Math.round(player.r)+'/100',8,cv.height-8);
+  };
   loop();
 }
 

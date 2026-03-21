@@ -521,6 +521,26 @@ window.GPS0_App = (() => {
   }
 
 
+  function _ouvrirIframe(niveau) {
+    _pauseGlobalClock();
+    document.getElementById('app').classList.remove('visible');
+    const iframe = document.createElement('iframe');
+    iframe.src = 'minijeux/niveau' + niveau + '.html';
+    iframe.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;border:none;z-index:1000;background:#0A0A1A';
+    iframe.setAttribute('title', 'Mini-jeu niveau ' + niveau);
+    document.body.appendChild(iframe);
+    const handler = e => {
+      if (!e.data || e.data.source !== 'gps0_minijeu') return;
+      window.removeEventListener('message', handler);
+      iframe.remove();
+      document.getElementById('app').classList.add('visible');
+      _resumeGlobalClock();
+      if (e.data.quit) return; // Quitter sans résultat
+      document.dispatchEvent(new CustomEvent(e.data.success ? 'minijeu:complete' : 'minijeu:failed', { detail: e.data }));
+    };
+    window.addEventListener('message', handler);
+  }
+
   function _lancerMiniJeu(niveau) {
     if (typeof GPS0_Economie !== 'undefined' && typeof GPS0_Economie.isCooldown === 'function' && GPS0_Economie.isCooldown(niveau)) {
       const r = GPS0_Economie.getCooldownRestant(niveau);
@@ -528,22 +548,7 @@ window.GPS0_App = (() => {
       if (dl) { dl.textContent = '⏳ Cooldown: ' + GPS0_Economie.formatCooldown(r); setTimeout(() => { dl.textContent = '---'; }, 4000); }
       return;
     }
-    _pauseGlobalClock();
-    document.getElementById('app').classList.remove('visible');
-    _afficherCountdown(niveau).then(() => {
-      const iframe = document.createElement('iframe');
-      iframe.src = 'minijeux/niveau' + niveau + '.html';
-      iframe.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;border:none;z-index:1000;background:#0A0A1A';
-      iframe.setAttribute('title', 'Mini-jeu niveau ' + niveau);
-      document.body.appendChild(iframe);
-      const handler = e => {
-        if (!e.data || e.data.source !== 'gps0_minijeu') return;
-        window.removeEventListener('message', handler);
-        iframe.remove();
-        document.dispatchEvent(new CustomEvent(e.data.success ? 'minijeu:complete' : 'minijeu:failed', { detail: e.data }));
-      };
-      window.addEventListener('message', handler);
-    });
+    _ouvrirIframe(niveau);
   }
 
   function _afficherCountdown(niveau) {
@@ -665,7 +670,7 @@ window.GPS0_App = (() => {
     // Bind result buttons
     document.getElementById('res-rejouer').onclick = () => {
       overlay.style.display = 'none';
-      if (_resultNiveau) _lancerMiniJeu(_resultNiveau);
+      if (_resultNiveau) _ouvrirIframe(_resultNiveau); // bypass cooldown pour rejouer
     };
     if (recompenseBtn) recompenseBtn.onclick = () => {
       overlay.style.display = 'none';

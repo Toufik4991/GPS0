@@ -3,300 +3,129 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
-<title>GPS0 — Lune de Tempête</title>
+<title>GPS0 N7</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:#0A0A1A;color:#fff;font-family:system-ui,sans-serif;overflow:hidden;height:100dvh;display:flex;flex-direction:column;touch-action:none;user-select:none}
-#bg{position:fixed;inset:0;z-index:0;background:radial-gradient(ellipse at 50% 20%,rgba(80,40,160,0.2) 0%,transparent 60%),linear-gradient(180deg,#080414 0%,#0a0820 100%);}
-#hud{position:relative;z-index:20;display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(0,0,0,.65);flex-shrink:0;backdrop-filter:blur(6px)}
-#lives{font-size:1.2rem;letter-spacing:2px}
-#timer{flex:1;text-align:center;font-size:1rem;font-weight:bold;color:#4FC3F7}
-#score-hud{font-size:.9rem;color:#FFD700;font-weight:bold}
-#game-container{flex:1;position:relative;overflow:hidden;z-index:1}
+html,body{height:100%;overflow:hidden;background:#0A0A1A;font-family:system-ui,sans-serif;color:#fff;touch-action:none;user-select:none}
+#bg{position:fixed;inset:0;z-index:0;background:radial-gradient(ellipse at 50% 20%,rgba(80,40,160,.2) 0%,transparent 60%),linear-gradient(180deg,#080414 0%,#0a0820 100%);}
+#hud{position:relative;z-index:20;display:flex;align-items:center;gap:10px;padding:6px 52px 6px 10px;background:rgba(0,0,0,.65);backdrop-filter:blur(6px);flex-shrink:0}
+#lives{font-size:1.1rem;letter-spacing:2px;min-width:54px}
+#timer{flex:1;text-align:center;font-size:.95rem;font-weight:bold;color:#4FC3F7}
+#score-hud{font-size:.9rem;color:#FFD700;font-weight:bold;min-width:52px;text-align:right}
+#game-container{position:relative;z-index:1;flex:1;overflow:hidden;display:flex;flex-direction:column}
 canvas{display:block;width:100%;height:100%}
-#overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,.88);z-index:20;gap:14px;text-align:center;padding:24px}
-#overlay h2{font-size:1.8rem;color:#C8A2C8}
-#overlay p{font-size:.9rem;color:rgba(255,255,255,.8);max-width:280px;line-height:1.5}
-#overlay .btn{padding:12px 32px;border:none;border-radius:14px;font-size:1rem;font-weight:bold;cursor:pointer;background:linear-gradient(135deg,#C8A2C8,#8860a8);color:#fff}
-:root{--accent:#C8A2C8;--gold:#FFD700;--blue:#4FC3F7}
-
+body{display:flex;flex-direction:column;height:100dvh}
 </style>
 </head>
 <body>
 <div id="bg"></div>
 <div id="hud">
   <span id="lives">❤❤❤</span>
-  <span id="timer">3:00</span>
+  <span id="timer">2:30</span>
   <span id="score-hud">0 ✨</span>
 </div>
 <div id="game-container">
   <canvas id="cv"></canvas>
-
-  <div id="overlay">
-    <div style="font-size:3rem">🌗</div>
-    <h2>Lune de Tempête</h2>
-    <p>Maintiens appuyé pour monter.<br>Relâche pour descendre doucement.<br>Évite les éclairs et météores.</p>
-    <button class="btn" id="btn-start">C'est parti&nbsp;!</button>
-  </div>
-  <canvas id="selfie-cv" width="64" height="64" style="display:none" aria-hidden="true"></canvas>
 </div>
+<script src="shared.js"></script>
 <script>
-// ── COMMON ENGINE ──
-const NIVEAU = 7;
-let lives = 3, dust = 0, running = false, gameover = false;
-let timerSec = 180, timerInterval = null;
-const livesEl = document.getElementById('lives');
-const timerEl = document.getElementById('timer');
-const scoreEl = document.getElementById('score-hud');
-const overlay = document.getElementById('overlay');
-const btnStart = document.getElementById('btn-start');
-const cv = document.getElementById('cv');
-const ctx = cv.getContext('2d');
+window.NIVEAU = 7;
 
-function updateLivesHUD(){livesEl.textContent='❤'.repeat(lives)+'♡'.repeat(Math.max(0,3-lives));}
-function updateTimer(){const m=Math.floor(timerSec/60),s=timerSec%60;timerEl.textContent=m+':'+(s<10?'0':'')+s;}
-function addDust(n){dust+=n;scoreEl.textContent=dust+' ✨';}
-function loseLife(){if(!running)return;lives--;updateLivesHUD();if(lives<=0)endGame(false);}
+window.TUTO_TEXT = "Maintiens appuyé pour monter avec le jetpack.<br>Relâche pour descendre doucement.<br>Évite les éclairs et les météores !";
 
-function calcDust(){
-  const played = 180 - timerSec;
-  let base;
-  if(played < 30) base = 1 + Math.floor(Math.random()*5);
-  else if(played < 60) base = 5 + Math.floor(Math.random()*10);
-  else if(played < 120) base = 15 + Math.floor(Math.random()*15);
-  else if(played < 150) base = 30 + Math.floor(Math.random()*10);
-  else base = 40 + Math.floor(Math.random()*10);
-  return Math.min(50, base + dust);
+let cosmo,obstacles,dustItems,particles,powerups;
+let scrollSpd,frame,thrust,shield,magnet,magnetT,rafId;
+
+function gameReset(){
+  cancelAnimationFrame(rafId);
+  cosmo={x:0,y:0,vy:0,r:22}; obstacles=[]; dustItems=[]; particles=[]; powerups=[];
+  scrollSpd=2.2; frame=0; thrust=false; shield=false; magnet=false; magnetT=0;
 }
+window.gameReset=gameReset;
 
-function endGame(success){
-  if(gameover)return;
-  gameover=true; running=false;
-  clearInterval(timerInterval);
-  const finalDust = success ? Math.min(60, calcDust() + 10) : calcDust();
-  setTimeout(()=>{
-    window.parent.postMessage({source:'gps0_minijeu',success,niveau:NIVEAU,poussieres:finalDust},'*');
-  }, 600);
+function gameStart(){
+  const cv=document.getElementById('cv');
+  GPS0_resizeCanvas(cv);
+  gameReset();
+  cosmo.x=cv.width*.18; cosmo.y=cv.height*.5;
+  cv.addEventListener('pointerdown',()=>{thrust=true;});
+  cv.addEventListener('pointerup',()=>{thrust=false;});
+  _spawnObs();
+  const ctx=cv.getContext('2d');
+  const loop=()=>{
+    rafId=requestAnimationFrame(loop);
+    if(!GPS0_running())return;
+    const W=cv.width,H=cv.height;
+    frame++;
+    if(frame%550===0)scrollSpd=Math.min(5.5,scrollSpd+.4);
+    // Physique — poussée réduite de 40%, gravité +20%
+    const PUSH=thrust?-0.34:0, GRAV=0.42;
+    cosmo.vy+=GRAV+PUSH; cosmo.vy=Math.max(-5.5,Math.min(5,cosmo.vy)); cosmo.y+=cosmo.vy;
+    // Rebond doux sol/plafond (pas mort)
+    const safeTop=30+cosmo.r, safeBot=H-30-cosmo.r;
+    if(cosmo.y<safeTop){cosmo.y=safeTop;cosmo.vy=Math.abs(cosmo.vy)*.4;}
+    if(cosmo.y>safeBot){cosmo.y=safeBot;cosmo.vy=-Math.abs(cosmo.vy)*.4;}
+    // Spawn
+    if(frame%Math.max(160-Math.floor(frame/400),70)===0)_spawnObs();
+    if(frame%50===0){const y=H*.12+Math.random()*H*.72;for(let i=0;i<4;i++)dustItems.push({x:W+i*45,y,r:11,col:false});}
+    if(frame%320===0&&Math.random()<.5)powerups.push({x:W+10,y:H*.15+Math.random()*H*.65,type:Math.random()<.5?'shield':'magnet',r:18,col:false});
+    // Move
+    obstacles=obstacles.filter(o=>{
+      if(o.type==='lightning'){o.x-=scrollSpd;return o.x>-15;}
+      if(o.type==='meteor'){o.x-=scrollSpd*.55;o.y+=o.vy;return o.x>-45&&o.y<H+50;}
+      if(o.type==='wind'){o.x-=scrollSpd;o.life--;return o.life>0&&o.x>-90;}
+      return false;
+    });
+    // Collisions obstacles
+    obstacles.forEach(o=>{
+      let hit=false;
+      // Obstacles réduits de 30%
+      if(o.type==='lightning'&&Math.abs(cosmo.x-o.x)<o.w/2+cosmo.r&&cosmo.y>o.y&&cosmo.y<o.y+o.h)hit=true;
+      if(o.type==='meteor'&&Math.sqrt((cosmo.x-o.x)**2+(cosmo.y-o.y)**2)<o.r*.7+cosmo.r)hit=true;
+      if(hit){if(!shield){loseLife();cosmo.vy=-4;}else{shield=false;for(let i=0;i<8;i++)particles.push({x:cosmo.x,y:cosmo.y,vx:(Math.random()-.5)*5,vy:-3,life:20,col:'#5af0ff'});}}
+      if(o.type==='wind'&&Math.abs(cosmo.x-o.x)<o.w/2+cosmo.r&&Math.abs(cosmo.y-o.y)<o.h/2+cosmo.r)cosmo.vy+=o.dir*.35;
+    });
+    // Dust
+    dustItems.forEach(d=>{d.x-=scrollSpd;if(magnet){const dx=cosmo.x-d.x,dy=cosmo.y-d.y;const dd=Math.sqrt(dx*dx+dy*dy);if(dd<150){d.x+=dx/dd*4.5;d.y+=dy/dd*4.5;}}});
+    dustItems=dustItems.filter(d=>d.x>-25);
+    dustItems.forEach(d=>{if(d.col)return;if(Math.sqrt((cosmo.x-d.x)**2+(cosmo.y-d.y)**2)<cosmo.r+d.r){d.col=true;addDust(3);for(let i=0;i<4;i++)particles.push({x:d.x,y:d.y,vx:(Math.random()-.5)*4,vy:-2,life:16,col:'#FFD700'});}});
+    powerups.forEach(p=>{p.x-=scrollSpd;if(p.col)return;if(Math.sqrt((cosmo.x-p.x)**2+(cosmo.y-p.y)**2)<cosmo.r+p.r){p.col=true;if(p.type==='shield')shield=true;else{magnet=true;magnetT=320;}}});
+    powerups=powerups.filter(p=>p.x>-35&&!p.col);
+    if(magnet){magnetT--;if(magnetT<=0)magnet=false;}
+    ctx.clearRect(0,0,W,H);
+    // BG orageux
+    if(frame%85<6){ctx.fillStyle='rgba(140,120,255,.05)';ctx.fillRect(0,0,W,H);}
+    ctx.fillStyle='rgba(60,40,100,.4)';
+    for(let i=0;i<4;i++){const cx=((i*230-frame*scrollSpd*.15+W*2)%W)*1.05;ctx.beginPath();ctx.ellipse(cx,60+i*28,110,32,0,0,Math.PI*2);ctx.fill();}
+    // Lignes sol/plafond
+    ctx.strokeStyle='rgba(120,80,200,.3)';ctx.lineWidth=3;
+    ctx.beginPath();ctx.moveTo(0,safeBot+cosmo.r);ctx.lineTo(W,safeBot+cosmo.r);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(0,safeTop-cosmo.r);ctx.lineTo(W,safeTop-cosmo.r);ctx.stroke();
+    // Obstacles
+    obstacles.forEach(o=>{
+      if(o.type==='lightning'){
+        ctx.strokeStyle='rgba(200,180,255,.9)';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(o.x,o.y);ctx.lineTo(o.x,o.y+o.h);ctx.stroke();
+        ctx.strokeStyle='rgba(255,255,255,.3)';ctx.lineWidth=7;ctx.stroke();
+      }
+      if(o.type==='meteor'){ctx.fillStyle='rgba(200,80,40,.85)';ctx.beginPath();ctx.arc(o.x,o.y,o.r*.7,0,Math.PI*2);ctx.fill();ctx.fillStyle='rgba(255,150,50,.3)';ctx.beginPath();ctx.arc(o.x,o.y,o.r,0,Math.PI*2);ctx.fill();}
+      if(o.type==='wind'){const a=o.life/200*.45;ctx.fillStyle=`rgba(100,150,255,${a})`;ctx.fillRect(o.x-o.w/2,o.y-o.h/2,o.w,o.h);ctx.font='22px system-ui';ctx.textAlign='center';ctx.fillStyle=`rgba(255,255,255,${a*.6})`;ctx.fillText(o.dir>0?'→':'←',o.x,o.y+8);}
+    });
+    dustItems.forEach(d=>{if(!d.col){ctx.fillStyle='#FFD700';ctx.font='15px system-ui';ctx.textAlign='center';ctx.fillText('✨',d.x,d.y+5);}});
+    powerups.forEach(p=>{if(p.col)return;ctx.font='22px system-ui';ctx.textAlign='center';ctx.fillText(p.type==='shield'?'🛡️':'🧲',p.x,p.y+7);});
+    if(shield){ctx.strokeStyle='rgba(79,195,247,.7)';ctx.lineWidth=3;ctx.beginPath();ctx.arc(cosmo.x,cosmo.y,cosmo.r+9,0,Math.PI*2);ctx.stroke();}
+    particles=particles.filter(p=>p.life>0);
+    particles.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.08;p.life--;ctx.fillStyle=p.col;ctx.globalAlpha=p.life/20;ctx.beginPath();ctx.arc(p.x,p.y,3,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;});
+    drawCosmonaut(ctx,cosmo.x,cosmo.y,cosmo.r,thrust?-.3:.08);
+    if(thrust){ctx.fillStyle='rgba(255,140,0,.7)';ctx.beginPath();ctx.ellipse(cosmo.x-18,cosmo.y+14,6,10+Math.random()*7,Math.PI/4,0,Math.PI*2);ctx.fill();}
+  };
+  loop();
 }
-
-function startTimer(){
-  updateTimer();
-  timerInterval=setInterval(()=>{
-    if(!running)return;
-    timerSec--;updateTimer();
-    if(timerSec<=0)endGame({'9':true}.hasOwnProperty(String(NIVEAU)) ? false : false);
-  },1000);
-}
-
-// Selfie canvas
-let selfieImg = null;
-function loadSelfie(){
-  const b64 = localStorage.getItem('gps0_avatar_selfie_base64');
-  if(!b64)return;
-  const img = new Image();
-  img.onload = ()=>{ selfieImg = img; };
-  img.src = b64;
-}
-loadSelfie();
-
-function drawSelfie(x, y, r){
-  if(!selfieImg)return;
-  ctx.save();
-  ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.clip();
-  ctx.drawImage(selfieImg, x-r, y-r, r*2, r*2);
-  ctx.restore();
-}
-
-function drawCosmonaut(x, y, r, angle){
-  ctx.save();
-  ctx.translate(x, y);
-  if(angle)ctx.rotate(angle);
-  // Body (suit)
-  ctx.beginPath();
-  ctx.ellipse(0, r*0.5, r*0.55, r*0.7, 0, 0, Math.PI*2);
-  ctx.fillStyle='#dde4ee'; ctx.fill();
-  // Helmet
-  ctx.beginPath(); ctx.arc(0, -r*0.15, r*0.55, 0, Math.PI*2);
-  ctx.fillStyle='rgba(60,120,200,0.3)'; ctx.fill();
-  ctx.beginPath(); ctx.arc(0, -r*0.15, r*0.55, 0, Math.PI*2);
-  ctx.strokeStyle='#8ab4d4'; ctx.lineWidth=2; ctx.stroke();
-  // Selfie face
-  if(selfieImg){
-    ctx.save(); ctx.beginPath(); ctx.arc(0,-r*0.15,r*0.45,0,Math.PI*2); ctx.clip();
-    ctx.drawImage(selfieImg,-r*0.45,-r*0.6,r*0.9,r*0.9); ctx.restore();
-  } else {
-    ctx.fillStyle='rgba(79,195,247,.5)';
-    ctx.beginPath(); ctx.arc(0,-r*0.15,r*0.4,0,Math.PI*2); ctx.fill();
-  }
-  ctx.restore();
-}
-
-function resizeCanvas(){
-  const gc = document.getElementById('game-container');
-  cv.width = gc.clientWidth; cv.height = gc.clientHeight;
-}
-resizeCanvas();
-window.addEventListener('resize', ()=>{resizeCanvas(); if(running) onResize && onResize();});
-
-btnStart.addEventListener('click', ()=>{
-  overlay.style.display='none';
-  running=true;
-  startTimer();
-  gameStart();
-}, {once:true});
-
-// ── GAME SPECIFIC ──
-
-let cosmo = {x:0,y:0,vy:0,r:22};
-let obstacles = [], dustItems = [], particles = [], powerups = [];
-let scrollX = 0, speed = 2, frameCount = 0;
-let thrust = false, shield = false, magnet = false, magnetTimer = 0;
-
-function gameStart() {
-  cosmo.x = cv.width*0.2; cosmo.y = cv.height*0.5; cosmo.vy=0;
-  obstacles=[]; dustItems=[]; particles=[]; powerups=[];
-  scrollX=0; speed=2; frameCount=0; shield=false; magnet=false;
-
-  cv.addEventListener('pointerdown',()=>{ thrust=true; });
-  cv.addEventListener('pointerup',()=>{ thrust=false; });
-  requestAnimationFrame(loop);
-}
-
-function spawnObstacle() {
-  const H=cv.height;
-  const types=['lightning','meteor','wind'];
-  const t=types[Math.floor(Math.random()*types.length)];
-  if(t==='lightning') {
-    const y=H*0.1+Math.random()*H*0.7;
-    obstacles.push({type:'lightning',x:cv.width+60,y,w:8,h:H*0.55,vy:0});
-  } else if(t==='meteor') {
-    const x=cv.width+30+Math.random()*100;
-    obstacles.push({type:'meteor',x,y:-30,w:28,h:28,vy:3+Math.random()*2});
-  } else {
-    obstacles.push({type:'wind',x:cv.width,y:H*0.3+Math.random()*H*0.3,w:60,h:40,dir:Math.random()<.5?1:-1,life:180});
-  }
-}
-
-function loop() {
-  if(!running)return;
-  requestAnimationFrame(loop);
-  const W=cv.width, H=cv.height;
-  frameCount++;
-
-  // Accelerate every 10s
-  if(frameCount%600===0) speed=Math.min(5, speed+0.4);
-
-  // Physics
-  const GRAV=0.35;
-  if(thrust) { cosmo.vy += -0.6; } else { cosmo.vy += GRAV; }
-  cosmo.vy = Math.max(-6, Math.min(5, cosmo.vy));
-  cosmo.y += cosmo.vy;
-  cosmo.y = Math.max(cosmo.r, Math.min(H-cosmo.r, cosmo.y));
-  if(cosmo.y<=cosmo.r||cosmo.y>=H-cosmo.r) { if(!shield)loseLife(); cosmo.vy=0; }
-
-  scrollX += speed;
-
-  // Spawn obstacles (easy first 30s)
-  const minSpawn = frameCount < 1800 ? 120 : 60;
-  if(frameCount%Math.max(minSpawn - Math.floor(frameCount/300),40) === 0) spawnObstacle();
-
-  // Spawn dust (lines)
-  if(frameCount%45===0) {
-    const y=H*0.15+Math.random()*H*0.65;
-    for(let i=0;i<4;i++) dustItems.push({x:W+i*40,y,r:10,col:false});
-  }
-
-  // Spawn powerups
-  if(frameCount%300===0&&Math.random()<0.4) {
-    powerups.push({x:W+10,y:H*0.2+Math.random()*H*0.6,type:Math.random()<.5?'shield':'magnet',r:16,col:false});
-  }
-
-  // Move obstacles
-  obstacles=obstacles.filter(o=>{
-    if(o.type==='lightning'){o.x-=speed;return o.x>-20;}
-    if(o.type==='meteor'){o.x-=speed*0.5;o.y+=o.vy;return o.x>-40&&o.y<H+40;}
-    if(o.type==='wind'){o.x-=speed;o.life--;return o.life>0&&o.x>-80;}
-    return false;
-  });
-
-  // Obstacle collision
-  obstacles.forEach(o=>{
-    let hit=false;
-    if(o.type==='lightning'){const dx=cosmo.x-o.x,dy=cosmo.y-o.y;if(Math.abs(dx)<o.w/2+cosmo.r&&dy>-o.h/2&&dy<o.h/2)hit=true;}
-    if(o.type==='meteor'){const dx=cosmo.x-o.x,dy=cosmo.y-o.y;if(Math.sqrt(dx*dx+dy*dy)<o.w/2+cosmo.r)hit=true;}
-    if(hit){if(!shield){loseLife();cosmo.vy=-4;}else{shield=false;for(let i=0;i<8;i++)particles.push({x:cosmo.x,y:cosmo.y,vx:(Math.random()-.5)*5,vy:-3,life:20,col:'#5af0ff'});}}
-    if(o.type==='wind'){const dx=cosmo.x-o.x,dy=cosmo.y-o.y;if(Math.abs(dx)<o.w/2+cosmo.r&&Math.abs(dy)<o.h/2+cosmo.r)cosmo.vy+=o.dir*0.4;}
-  });
-
-  // Move dust
-  dustItems.forEach(d=>{d.x-=speed;if(magnet){const dx=cosmo.x-d.x,dy=cosmo.y-d.y;const dd=Math.sqrt(dx*dx+dy*dy);if(dd<140){d.x+=dx/dd*4;d.y+=dy/dd*4;}}});
-  dustItems=dustItems.filter(d=>d.x>-20);
-  dustItems.forEach(d=>{
-    if(d.col)return;
-    const dx=cosmo.x-d.x,dy=cosmo.y-d.y;
-    if(Math.sqrt(dx*dx+dy*dy)<cosmo.r+d.r){d.col=true;addDust(3);for(let i=0;i<4;i++)particles.push({x:d.x,y:d.y,vx:(Math.random()-.5)*4,vy:-2,life:16,col:'#FFD700'});}
-  });
-
-  // Powerups
-  powerups.forEach(p=>{p.x-=speed;if(p.col)return;const dx=cosmo.x-p.x,dy=cosmo.y-p.y;if(Math.sqrt(dx*dx+dy*dy)<cosmo.r+p.r){p.col=true;if(p.type==='shield')shield=true;else{magnet=true;magnetTimer=300;}}});
-  powerups=powerups.filter(p=>p.x>-30&&!p.col);
-  if(magnet){magnetTimer--;if(magnetTimer<=0)magnet=false;}
-
-  // Draw
-  ctx.clearRect(0,0,W,H);
-
-  // Storm BG layers
-  const stormX=(scrollX*0.3)%W;
-  ctx.fillStyle='rgba(40,30,80,0.5)';
-  ctx.fillRect(0,0,W,H);
-  // Lightning flashes (bg)
-  if(frameCount%80<5){ctx.fillStyle='rgba(140,120,255,0.06)';ctx.fillRect(0,0,W,H);}
-  // Clouds
-  ctx.fillStyle='rgba(60,40,100,0.4)';
-  for(let i=0;i<4;i++){const cx=((i*220-stormX+W*2)%W)*1.1;ctx.beginPath();ctx.ellipse(cx,60+i*30,100,35,0,0,Math.PI*2);ctx.fill();}
-
-  // Ground + ceiling lines
-  ctx.strokeStyle='rgba(120,80,200,0.4)'; ctx.lineWidth=3;
-  ctx.beginPath();ctx.moveTo(0,H-cosmo.r+2);ctx.lineTo(W,H-cosmo.r+2);ctx.stroke();
-  ctx.beginPath();ctx.moveTo(0,cosmo.r-2);ctx.lineTo(W,cosmo.r-2);ctx.stroke();
-
-  // Obstacles
-  obstacles.forEach(o=>{
-    if(o.type==='lightning'){
-      ctx.strokeStyle='rgba(200,180,255,0.9)';ctx.lineWidth=4;
-      ctx.beginPath();ctx.moveTo(o.x,o.y);ctx.lineTo(o.x,o.y+o.h);ctx.stroke();
-      ctx.strokeStyle='rgba(255,255,255,0.4)';ctx.lineWidth=8;ctx.stroke();
-    }
-    if(o.type==='meteor'){
-      ctx.fillStyle='rgba(200,80,40,0.85)';ctx.beginPath();ctx.arc(o.x,o.y,o.w/2,0,Math.PI*2);ctx.fill();
-      ctx.fillStyle='rgba(255,150,50,0.4)';ctx.beginPath();ctx.arc(o.x,o.y,o.w/2+8,0,Math.PI*2);ctx.fill();
-    }
-    if(o.type==='wind'){const a=o.life/180*0.5;ctx.fillStyle=`rgba(100,150,255,${a})`;ctx.fillRect(o.x-o.w/2,o.y-o.h/2,o.w,o.h);ctx.fillStyle=`rgba(255,255,255,${a*0.5})`;ctx.font='24px system-ui';ctx.textAlign='center';ctx.fillText(o.dir>0?'💨':'💨',o.x,o.y+8);}
-  });
-
-  // Dust
-  dustItems.forEach(d=>{if(!d.col){ctx.fillStyle='#FFD700';ctx.font='16px system-ui';ctx.textAlign='center';ctx.fillText('✨',d.x,d.y+5);}});
-
-  // Powerups
-  powerups.forEach(p=>{if(p.col)return;ctx.font='22px system-ui';ctx.textAlign='center';ctx.fillText(p.type==='shield'?'🛡️':'🧲',p.x,p.y+7);});
-
-  // Shield ring
-  if(shield){ctx.strokeStyle='rgba(79,195,247,.7)';ctx.lineWidth=3;ctx.beginPath();ctx.arc(cosmo.x,cosmo.y,cosmo.r+8,0,Math.PI*2);ctx.stroke();}
-
-  // Particles
-  particles=particles.filter(p=>p.life>0);
-  particles.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.08;p.life--;ctx.fillStyle=p.col;ctx.globalAlpha=p.life/20;ctx.beginPath();ctx.arc(p.x,p.y,3,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;});
-
-  // Cosmonaut
-  drawCosmonaut(cosmo.x, cosmo.y, cosmo.r, thrust ? -0.3 : 0.1);
-
-  // Jetpack flame
-  if(thrust){
-    ctx.fillStyle='rgba(255,140,0,0.7)';
-    ctx.beginPath();ctx.ellipse(cosmo.x-18,cosmo.y+14,6,10+Math.random()*6,Math.PI/4,0,Math.PI*2);ctx.fill();
-    ctx.fillStyle='rgba(255,215,0,0.5)';
-    ctx.beginPath();ctx.ellipse(cosmo.x-18,cosmo.y+14,4,7,Math.PI/4,0,Math.PI*2);ctx.fill();
-  }
+function _spawnObs(){
+  const cv=document.getElementById('cv'),H=cv.clientHeight,W=cv.clientWidth;
+  const t=['lightning','meteor','wind'][Math.floor(Math.random()*3)];
+  if(t==='lightning'){const y=H*.08+Math.random()*H*.68;obstacles.push({type:'lightning',x:W+55,y,w:7,h:H*.5,vy:0});}
+  else if(t==='meteor'){obstacles.push({type:'meteor',x:W+30+Math.random()*80,y:-30,r:22,vy:2.5+Math.random()*2});}
+  else{obstacles.push({type:'wind',x:W,y:H*.25+Math.random()*H*.45,w:55,h:38,dir:Math.random()<.5?1:-1,life:200});}
 }
 
 </script>
