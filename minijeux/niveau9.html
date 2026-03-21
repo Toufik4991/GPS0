@@ -52,6 +52,8 @@ function gameStart(){
   const W=cv.width,H=cv.height;
   cosmo.x=W/2; cosmo.y=H*.83;
   boss.x=W/2; boss.y=H*.2; boss.r=W*.11;
+  // Rage mode si le timer expire (remplace l'accès direct à timerSec)
+  window.GPS0_onTimerExpired = function(){ if(!rageMode){ rageMode=true; rageT=150; } };
   let dragging=false,dragBase=null,dragStartX=null;
   cv.addEventListener('pointerdown',e=>{
     dragging=true; dragBase=cosmo.x; dragStartX=e.clientX;
@@ -67,7 +69,7 @@ function gameStart(){
         for(let j=0;j<6;j++)particles.push({x:p.x,y:p.y,vx:(Math.random()-.5)*5,vy:-3,life:20,col:'#FFD700'});
       }
     });
-    minions.forEach((m,i)=>{const dx=tx-m.x,dy=ty-m.y;if(Math.sqrt(dx*dx+dy*dy)<m.r+18){m.hp--;if(m.hp<=0){for(let j=0;j<6;j++)particles.push({x:m.x,y:m.y,vx:(Math.random()-.5)*5,vy:-3,life:20,col:'rgba(180,100,220,.9)'});minions.splice(i,1);addDust(4);}}});
+    minions.forEach((m,i)=>{const dx=tx-m.x,dy=ty-m.y;if(Math.sqrt(dx*dx+dy*dy)<m.r+18){m.hp--;if(m.hp<=0){for(let j=0;j<6;j++)particles.push({x:m.x,y:m.y,vx:(Math.random()-.5)*5,vy:-3,life:20,col:'rgba(180,100,220,.9)'});minions.splice(i,1);addDust(3);}}});
   });
   cv.addEventListener('pointermove',e=>{if(!dragging)return;cosmo.x=Math.max(cosmo.r,Math.min(W-cosmo.r,dragBase+(e.clientX-dragStartX)));});
   cv.addEventListener('pointerup',()=>{dragging=false;});
@@ -83,8 +85,7 @@ function gameStart(){
     const hpPct=boss.hp/boss.maxHp;
     if(hpPct<=.33&&bossPhase<3){bossPhase=3;boss.phase=3;_phaseFlash(ctx,'ÉCLIPSE !','#ff2020');}
     else if(hpPct<=.66&&bossPhase<2){bossPhase=2;boss.phase=2;_phaseFlash(ctx,'COLÈRE !','#ff8800');}
-    // Rage mode si timer dépassé (15s après fin timer)
-    if(!rageMode&&timerSec<=0){rageMode=true;rageT=150;}
+    // Rage mode (déclenché par GPS0_onTimerExpired)
     if(rageMode){rageT--;if(rageT<=0)endGame(false);}
     const spd=rageMode?2:1, fq=rageMode?18:(bossPhase===1?80:bossPhase===2?48:30);
     // Boss physique
@@ -112,7 +113,7 @@ function gameStart(){
     projs=projs.filter(p=>{
       p.x+=p.vx; p.y+=p.vy;
       if(p.isPu){if(Math.sqrt((p.x-cosmo.x)**2+(p.y-cosmo.y)**2)<cosmo.r+p.r){if(p.puType==='shield')shield=true;else{superShot=true;superShotT=320;}for(let i=0;i<5;i++)particles.push({x:p.x,y:p.y,vx:(Math.random()-.5)*4,vy:-3,life:18,col:p.puType==='shield'?'#5af0ff':'#FFD700'});return false;}return p.y<H+35;}
-      if(p.toBoss){const dx=p.x-boss.x,dy=p.y-boss.y;if(Math.sqrt(dx*dx+dy*dy)<boss.r){const dmg=superShot?28:12;boss.hp=Math.max(0,boss.hp-dmg);boss.shake=3;addDust(superShot?16:8);for(let i=0;i<8;i++)particles.push({x:boss.x,y:boss.y,vx:(Math.random()-.5)*6,vy:-4+Math.random()*3,life:24,col:'rgba(255,80,80,.9)'});if(boss.hp<=0){const ph=bossPhase;const pts=ph===1?50:ph===2?45:rageMode?35:40;dust+=pts;endGame(true);return false;}return false;}return p.y>-30&&p.y<H+30&&p.x>-30&&p.x<W+30;}
+      if(p.toBoss){const dx=p.x-boss.x,dy=p.y-boss.y;if(Math.sqrt(dx*dx+dy*dy)<boss.r){const dmg=superShot?28:12;boss.hp=Math.max(0,boss.hp-dmg);boss.shake=3;addDust(superShot?8:5);for(let i=0;i<8;i++)particles.push({x:boss.x,y:boss.y,vx:(Math.random()-.5)*6,vy:-4+Math.random()*3,life:24,col:'rgba(255,80,80,.9)'});if(boss.hp<=0){const ph=bossPhase;addDust(ph===1?15:ph===2?12:rageMode?8:10);endGame(true);return false;}return false;}return p.y>-30&&p.y<H+30&&p.x>-30&&p.x<W+30;}
       if(p.charge){if(Math.sqrt((p.x-cosmo.x)**2+(p.y-cosmo.y)**2)<cosmo.r+p.r*.6){if(!shield)loseLife();else shield=false;return false;}return p.y<H+35;}
       if(!p.toBoss){const dx=p.x-cosmo.x,dy=p.y-cosmo.y;if(Math.sqrt(dx*dx+dy*dy)<cosmo.r+p.r){if(!shield)loseLife();else{shield=false;for(let i=0;i<5;i++)particles.push({x:cosmo.x,y:cosmo.y,vx:(Math.random()-.5)*5,vy:-3,life:18,col:'#5af0ff'});}return false;}}
       return p.y<H+35&&p.y>-35&&p.x>-35&&p.x<W+35;

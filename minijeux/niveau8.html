@@ -60,7 +60,7 @@ function gameStart(){
         c.col=true; hit=true;
         if(c.type==='red'){combo=0;loseLife();for(let j=0;j<5;j++)particles.push({x:c.x,y:c.y,vx:(Math.random()-.5)*5,vy:-3,life:20,col:'rgba(255,60,60,.8)'});}
         else{
-          const pts=c.type==='gold'?15:c.type==='blue'?8:5;
+          const pts=c.type==='gold'?8:c.type==='blue'?5:3;
           combo++; const bonus=combo>=5?2:1;
           addDust(pts*bonus); score+=pts*bonus;
           for(let j=0;j<7;j++)particles.push({x:c.x,y:c.y,vx:(Math.random()-.5)*5,vy:-3,life:22,col:c.type==='gold'?'#FFD700':c.type==='blue'?'#5af0ff':'rgba(180,255,180,.9)'});

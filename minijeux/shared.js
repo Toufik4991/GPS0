@@ -32,37 +32,96 @@
     img.src = b64;
   }
 
-  // ── DESSIN COSMONAUTE ──────────────────────────────────────────────────────
-  window.drawCosmonaut = function (ctx, x, y, r, angle) {
+  // ── DESSIN COSMONAUTE v3.12 (jetpack animé, visière dégradée, limbes) ──────
+  window.drawCosmonaut = function (ctx, x, y, r, angle, state) {
+    state = state || 'idle';
+    const flaming = (state === 'fly' || state === 'jump');
+    const t = Date.now() * 0.004;
+    const legA = (state === 'run') ? Math.sin(t * 6) * 0.28 : 0;
+    const armA = (state === 'run') ? Math.sin(t * 6 + Math.PI) * 0.2 : 0;
     ctx.save();
-    ctx.translate(x, y);
+    ctx.translate(x, y + (state === 'idle' ? Math.sin(t * 1.5) * r * 0.04 : 0));
     if (angle) ctx.rotate(angle);
-    // Corps
-    ctx.beginPath();
-    ctx.ellipse(0, r * 0.5, r * 0.55, r * 0.7, 0, 0, Math.PI * 2);
-    ctx.fillStyle = '#dde4ee'; ctx.fill();
-    ctx.strokeStyle = 'rgba(100,140,200,0.4)'; ctx.lineWidth = 1.5; ctx.stroke();
-    // Casque
-    ctx.beginPath(); ctx.arc(0, -r * 0.15, r * 0.55, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(60,120,200,0.25)'; ctx.fill();
-    ctx.strokeStyle = '#8ab4d4'; ctx.lineWidth = 2; ctx.stroke();
-    // Visage : selfie ou smiley
+    // ── Jetpack ────────────────────────────────────────────────────────────
+    ctx.fillStyle = '#6a7e9c';
+    ctx.strokeStyle = 'rgba(40,60,100,0.55)'; ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.ellipse(-r*0.58, -r*0.04, r*0.22, r*0.42, 0, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#4a5e7c';
+    ctx.beginPath(); ctx.ellipse(-r*0.58, -r*0.04, r*0.08, r*0.18, 0, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = (Date.now() % 1200 < 600) ? '#ff4040' : '#881010';
+    ctx.beginPath(); ctx.arc(-r*0.58, -r*0.32, r*0.055, 0, Math.PI*2); ctx.fill();
+    if (flaming) {
+      const fh = r * (0.32 + Math.sin(t * 18) * 0.1);
+      const fB = r * 0.38;
+      const fG = ctx.createLinearGradient(-r*0.58, fB, -r*0.58, fB + fh);
+      fG.addColorStop(0, 'rgba(255,220,60,0.95)'); fG.addColorStop(0.5, 'rgba(255,110,20,0.8)'); fG.addColorStop(1, 'rgba(255,60,0,0)');
+      ctx.fillStyle = fG;
+      ctx.beginPath(); ctx.ellipse(-r*0.58, fB + fh*0.42, r*0.1, fh*0.52, 0, 0, Math.PI*2); ctx.fill();
+      const fG2 = ctx.createLinearGradient(-r*0.58, fB, -r*0.58, fB + fh*0.6);
+      fG2.addColorStop(0, 'rgba(255,255,255,0.9)'); fG2.addColorStop(1, 'rgba(255,220,60,0)');
+      ctx.fillStyle = fG2;
+      ctx.beginPath(); ctx.ellipse(-r*0.58, fB + fh*0.2, r*0.045, fh*0.25, 0, 0, Math.PI*2); ctx.fill();
+    }
+    // ── Jambe gauche ────────────────────────────────────────────────────────
+    ctx.save(); ctx.translate(-r*0.2, r*0.48); ctx.rotate(-legA);
+    ctx.fillStyle = '#b0bfd0'; ctx.strokeStyle = 'rgba(70,90,130,0.3)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.ellipse(0, r*0.27, r*0.15, r*0.3, 0, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#7a8ca8'; ctx.beginPath(); ctx.ellipse(0, r*0.56, r*0.17, r*0.08, 0, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+    ctx.restore();
+    // ── Jambe droite ────────────────────────────────────────────────────────
+    ctx.save(); ctx.translate(r*0.2, r*0.48); ctx.rotate(legA);
+    ctx.fillStyle = '#b0bfd0'; ctx.strokeStyle = 'rgba(70,90,130,0.3)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.ellipse(0, r*0.27, r*0.15, r*0.3, 0, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#7a8ca8'; ctx.beginPath(); ctx.ellipse(0, r*0.56, r*0.17, r*0.08, 0, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+    ctx.restore();
+    // ── Corps principal ─────────────────────────────────────────────────────
+    const bG = ctx.createLinearGradient(-r*0.48, -r*0.18, r*0.48, r*0.52);
+    bG.addColorStop(0, '#e6edf8'); bG.addColorStop(0.55, '#ccd4e6'); bG.addColorStop(1, '#a8b4cc');
+    ctx.fillStyle = bG; ctx.strokeStyle = 'rgba(70,100,150,0.4)'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.ellipse(0, r*0.18, r*0.44, r*0.55, 0, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = 'rgba(79,195,247,0.38)';
+    ctx.beginPath(); ctx.ellipse(0, r*0.16, r*0.3, r*0.1, 0, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#FFD700';
+    ctx.beginPath(); ctx.arc(r*0.2, r*0.07, r*0.055, 0, Math.PI*2); ctx.fill();
+    // ── Bras gauche ─────────────────────────────────────────────────────────
+    ctx.save(); ctx.translate(-r*0.44, -r*0.06); ctx.rotate(-0.28 - armA);
+    ctx.fillStyle = '#c0cad8'; ctx.strokeStyle = 'rgba(70,90,130,0.3)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.ellipse(0, r*0.26, r*0.13, r*0.3, 0, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#8090ac'; ctx.beginPath(); ctx.ellipse(0, r*0.54, r*0.15, r*0.1, 0, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+    ctx.restore();
+    // ── Bras droit ──────────────────────────────────────────────────────────
+    ctx.save(); ctx.translate(r*0.44, -r*0.06); ctx.rotate(0.28 + armA);
+    ctx.fillStyle = '#c0cad8'; ctx.strokeStyle = 'rgba(70,90,130,0.3)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.ellipse(0, r*0.26, r*0.13, r*0.3, 0, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#8090ac'; ctx.beginPath(); ctx.ellipse(0, r*0.54, r*0.15, r*0.1, 0, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+    ctx.restore();
+    // ── Casque ──────────────────────────────────────────────────────────────
+    const hG = ctx.createRadialGradient(-r*0.18, -r*0.46, r*0.04, 0, -r*0.25, r*0.57);
+    hG.addColorStop(0, 'rgba(175,215,255,0.85)'); hG.addColorStop(0.4, 'rgba(95,140,215,0.6)'); hG.addColorStop(1, 'rgba(45,28,110,0.38)');
+    ctx.fillStyle = hG; ctx.strokeStyle = 'rgba(120,175,230,0.9)'; ctx.lineWidth = 2.2;
+    ctx.beginPath(); ctx.arc(0, -r*0.25, r*0.54, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+    // ── Visière ─────────────────────────────────────────────────────────────
     ctx.save();
-    ctx.beginPath(); ctx.arc(0, -r * 0.15, r * 0.44, 0, Math.PI * 2); ctx.clip();
+    ctx.beginPath(); ctx.arc(0, -r*0.25, r*0.41, 0, Math.PI*2); ctx.clip();
     if (selfieImg) {
-      ctx.drawImage(selfieImg, -r * 0.44, -r * 0.59, r * 0.88, r * 0.88);
+      ctx.drawImage(selfieImg, -r*0.41, -r*0.66, r*0.82, r*0.82);
     } else {
-      // Smiley jaune
-      ctx.fillStyle = '#FFD700';
-      ctx.beginPath(); ctx.arc(0, -r * 0.15, r * 0.4, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = '#333';
-      ctx.beginPath(); ctx.arc(-r * 0.14, -r * 0.24, r * 0.07, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.arc(r * 0.14, -r * 0.24, r * 0.07, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath();
-      ctx.arc(0, -r * 0.08, r * 0.22, 0.2, Math.PI - 0.2);
-      ctx.strokeStyle = '#333'; ctx.lineWidth = r * 0.07; ctx.stroke();
+      const vG = ctx.createRadialGradient(r*0.1, -r*0.38, r*0.03, 0, -r*0.25, r*0.41);
+      vG.addColorStop(0, 'rgba(145,195,255,0.95)'); vG.addColorStop(0.5, 'rgba(75,110,215,0.9)'); vG.addColorStop(1, 'rgba(45,25,115,0.9)');
+      ctx.fillStyle = vG; ctx.fillRect(-r, -r, r*2, r*2);
+      ctx.fillStyle = '#FFD700'; ctx.beginPath(); ctx.arc(0, -r*0.25, r*0.27, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#111';
+      ctx.beginPath(); ctx.arc(-r*0.09, -r*0.32, r*0.05, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(r*0.09, -r*0.32, r*0.05, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(0, -r*0.17, r*0.155, 0.2, Math.PI - 0.2);
+      ctx.strokeStyle = '#111'; ctx.lineWidth = r*0.055; ctx.stroke();
     }
     ctx.restore();
+    // Reflets visière
+    ctx.fillStyle = 'rgba(255,255,255,0.26)';
+    ctx.beginPath(); ctx.ellipse(-r*0.12, -r*0.43, r*0.13, r*0.07, -0.5, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.1)';
+    ctx.beginPath(); ctx.ellipse(-r*0.04, -r*0.34, r*0.07, r*0.04, -0.3, 0, Math.PI*2); ctx.fill();
     ctx.restore();
   };
 
@@ -115,14 +174,20 @@
     if (gameover) return;
     gameover = true; running = false;
     clearInterval(timerInterval);
-    const played = 150 - timerSec;
     let base;
-    if (played < 30) base = 1 + Math.floor(Math.random() * 5);
-    else if (played < 60) base = 5 + Math.floor(Math.random() * 10);
-    else if (played < 100) base = 15 + Math.floor(Math.random() * 15);
-    else if (played < 130) base = 30 + Math.floor(Math.random() * 10);
-    else base = 40 + Math.floor(Math.random() * 10);
-    const finalDust = Math.min(60, base + dust + (success ? 10 : 0));
+    if (success) {
+      // Récompense basée sur le temps restant (rapidité = performance)
+      if (timerSec >= 120) base = 40 + Math.floor(Math.random() * 11); // 40–50 : excellent
+      else if (timerSec >= 60) base = 25 + Math.floor(Math.random() * 16); // 25–40 : bon
+      else base = 15 + Math.floor(Math.random() * 11); // 15–25 : correct
+    } else {
+      // Échec : proportionnel au temps de jeu (engagement)
+      const played = 150 - timerSec;
+      if (played < 30) base = 1 + Math.floor(Math.random() * 5); // 1–5
+      else if (played < 90) base = 5 + Math.floor(Math.random() * 8); // 5–12
+      else base = 10 + Math.floor(Math.random() * 6); // 10–15
+    }
+    const finalDust = Math.min(50, base + dust); // max 50 absolu
     setTimeout(() => {
       window.parent.postMessage({
         source: 'gps0_minijeu',
@@ -237,24 +302,28 @@
       if (!running) return;
       timerSec--;
       _updateTimer();
-      if (timerSec <= 0) window.endGame(false);
+      if (timerSec <= 0) {
+        if (window.GPS0_onTimerExpired) { window.GPS0_onTimerExpired(); }
+        else { window.endGame(false); }
+      }
     }, 1000);
   }
+  // Expose timerSec pour les jeux qui en ont besoin (ex: N9 rage mode)
+  window.GPS0_timerSec = () => timerSec;
 
   async function _boot() {
-    // Attendre que le DOM soit prêt
     livesEl = _q('lives');
     timerEl = _q('timer');
     scoreEl = _q('score-hud');
     _updateLives();
     _updateTimer();
-    _addQuitButton();
     _loadSelfie();
-    // Phase 1: tuto
+    // Phase 1 : tuto
     await _showTuto();
-    // Phase 2: countdown
+    // Phase 2 : countdown
     await _countdown();
-    // Phase 3: démarrer jeu
+    // Phase 3 : jeu (bouton quitter APRÈS le countdown)
+    _addQuitButton();
     running = true;
     _startTimer();
     if (window.gameStart) window.gameStart();

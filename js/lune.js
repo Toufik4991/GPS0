@@ -59,6 +59,15 @@ window.GPS0_Lune = (() => {
   const DISPLAY_MS = 13000; // durée affichage popup
   const MIN_GAP_MS = 8000;  // délai minimum entre deux popups
   let _queue = [], _processing = false, _lastShown = 0, tId = null;
+  let _shownTimestamps = []; // horodatages des pop-ups de la minute écoulée
+
+  function _timeUntilCanShow() {
+    const now = Date.now();
+    _shownTimestamps = _shownTimestamps.filter(t => now - t < 60000);
+    if (_shownTimestamps.length < 2) return Math.max(0, MIN_GAP_MS - (now - _lastShown));
+    // 2 pop-ups dans la dernière minute → attendre que la plus ancienne ait 60s
+    return Math.max(MIN_GAP_MS, _shownTimestamps[0] + 60000 - now);
+  }
 
   function _loadVus() { try { return JSON.parse(localStorage.getItem('gps0_lune_repliques_vues') || '{}'); } catch { return {}; } }
   function _saveVus(v) { try { localStorage.setItem('gps0_lune_repliques_vues', JSON.stringify(v)); } catch {} }
@@ -89,6 +98,7 @@ window.GPS0_Lune = (() => {
     txt.textContent = pick(cat);
     bulle.classList.add('visible');
     GPS0_Audio && GPS0_Audio.playSFX('lune_apparait');
+    _shownTimestamps.push(Date.now());
     _lastShown = Date.now();
     clearTimeout(tId);
     const _fermer = () => {
@@ -107,7 +117,7 @@ window.GPS0_Lune = (() => {
 
   function _dequeux() {
     if (_queue.length === 0) { _processing = false; return; }
-    const wait = Math.max(0, MIN_GAP_MS - (Date.now() - _lastShown));
+    const wait = _timeUntilCanShow();
     setTimeout(() => { const cat = _queue.shift(); _afficher(cat); }, wait);
   }
 

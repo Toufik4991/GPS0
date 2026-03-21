@@ -653,7 +653,7 @@ window.GPS0_App = (() => {
     overlay.style.display = 'flex';
     // Détecter si c'est la dernière zone (level 9 / final)
     const currentZone = GPS0_GPS.zoneActuelle();
-    const isFinalZone = !!(currentZone && currentZone.final);
+    const isFinalZone = !!(currentZone && currentZone.final && succes);
     const finaleBtn = document.getElementById('res-finale');
     const suivantBtn = document.getElementById('res-suivant');
     const recompenseBtn = document.getElementById('res-recompense');

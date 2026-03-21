@@ -55,11 +55,11 @@ function gameStart(){
   // Ennemis (25)
   for(let i=0;i<25;i++){const r=8+Math.random()*50;enemies.push({x:Math.random()*WORLD,y:Math.random()*WORLD,r,vx:(Math.random()-.5)*1.6,vy:(Math.random()-.5)*1.6,col:`hsl(${Math.random()*360},55%,55%)`});}
   // Dust
-  for(let i=0;i<80;i++) dustBlobs.push({x:Math.random()*WORLD,y:Math.random()*WORLD,col:false});
+  for(let i=0;i<20;i++) dustBlobs.push({x:Math.random()*WORLD,y:Math.random()*WORLD,col:false});
   cv.addEventListener('pointermove',e=>{ptarget={x:e.offsetX+camX,y:e.offsetY+camY};});
   cv.addEventListener('pointerdown',e=>{ptarget={x:e.offsetX+camX,y:e.offsetY+camY};});
   // Respawn dust
-  setInterval(()=>{const alive=dustBlobs.filter(d=>!d.col).length;for(let i=alive;i<80;i++)dustBlobs.push({x:Math.random()*WORLD,y:Math.random()*WORLD,col:false});},8000);
+  setInterval(()=>{const alive=dustBlobs.filter(d=>!d.col).length;for(let i=alive;i<20;i++)dustBlobs.push({x:Math.random()*WORLD,y:Math.random()*WORLD,col:false});},8000);
   // IA ennemis
   aiInt=setInterval(()=>{
     enemies.forEach(en=>{
@@ -82,7 +82,7 @@ function gameStart(){
     camX+=(player.x-cv.width/2-camX)*.09;camY+=(player.y-cv.height/2-camY)*.09;
     camX=Math.max(0,Math.min(WORLD-cv.width,camX));camY=Math.max(0,Math.min(WORLD-cv.height,camY));
     // Absorb dust
-    dustBlobs.forEach(d=>{if(d.col)return;const dd=Math.sqrt((player.x-d.x)**2+(player.y-d.y)**2);if(dd<player.r+7){d.col=true;player.r=Math.min(100,player.r+2);addDust(2);for(let i=0;i<4;i++)particles.push({x:d.x,y:d.y,vx:(Math.random()-.5)*3,vy:-2,life:16,col:'#FFD700'});}});
+    dustBlobs.forEach(d=>{if(d.col)return;const dd=Math.sqrt((player.x-d.x)**2+(player.y-d.y)**2);if(dd<player.r+7){d.col=true;player.r=Math.min(100,player.r+2);addDust(3);for(let i=0;i<4;i++)particles.push({x:d.x,y:d.y,vx:(Math.random()-.5)*3,vy:-2,life:16,col:'#FFD700'});}});
     // Enemy interactions
     for(let i=enemies.length-1;i>=0;i--){
       const en=enemies[i],dd=Math.sqrt((player.x-en.x)**2+(player.y-en.y)**2);

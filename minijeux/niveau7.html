@@ -67,7 +67,7 @@ function gameStart(){
     if(cosmo.y>safeBot){cosmo.y=safeBot;cosmo.vy=-Math.abs(cosmo.vy)*.4;}
     // Spawn
     if(frame%Math.max(160-Math.floor(frame/400),70)===0)_spawnObs();
-    if(frame%50===0){const y=H*.12+Math.random()*H*.72;for(let i=0;i<4;i++)dustItems.push({x:W+i*45,y,r:11,col:false});}
+    if(frame%280===0&&dustItems.filter(d=>!d.col).length<3){const y=H*.12+Math.random()*H*.72;dustItems.push({x:W+30,y,r:11,col:false});}
     if(frame%320===0&&Math.random()<.5)powerups.push({x:W+10,y:H*.15+Math.random()*H*.65,type:Math.random()<.5?'shield':'magnet',r:18,col:false});
     // Move
     obstacles=obstacles.filter(o=>{
@@ -115,8 +115,7 @@ function gameStart(){
     if(shield){ctx.strokeStyle='rgba(79,195,247,.7)';ctx.lineWidth=3;ctx.beginPath();ctx.arc(cosmo.x,cosmo.y,cosmo.r+9,0,Math.PI*2);ctx.stroke();}
     particles=particles.filter(p=>p.life>0);
     particles.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.08;p.life--;ctx.fillStyle=p.col;ctx.globalAlpha=p.life/20;ctx.beginPath();ctx.arc(p.x,p.y,3,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;});
-    drawCosmonaut(ctx,cosmo.x,cosmo.y,cosmo.r,thrust?-.3:.08);
-    if(thrust){ctx.fillStyle='rgba(255,140,0,.7)';ctx.beginPath();ctx.ellipse(cosmo.x-18,cosmo.y+14,6,10+Math.random()*7,Math.PI/4,0,Math.PI*2);ctx.fill();}
+    drawCosmonaut(ctx,cosmo.x,cosmo.y,cosmo.r,thrust?-.3:.08,thrust?'fly':'run');
   };
   loop();
 }

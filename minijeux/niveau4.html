@@ -52,7 +52,7 @@ function gameStart(){
   anchors=[];
   for(let i=0;i<13;i++) anchors.push({x:W*.04+i*(W*.08),y:H*.07+Math.random()*H*.12,r:10});
   for(let i=0;i<Math.floor(W/28);i++) spikes.push({x:i*28+14,y:H-26});
-  for(let i=0;i<15;i++) dustItems.push({x:W*.1+i*(W*.07),y:H*.28+Math.random()*H*.42,r:12,col:false});
+  for(let i=0;i<8;i++) dustItems.push({x:W*.1+i*(W*.12),y:H*.2+Math.random()*H*.55,r:12,col:false});
   cv.addEventListener('pointerdown',_tap);
   cv.addEventListener('touchstart',e=>{swStart={y:e.touches[0].clientY};},{passive:true});
   cv.addEventListener('touchmove',e=>{

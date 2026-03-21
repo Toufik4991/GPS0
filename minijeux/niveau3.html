@@ -85,13 +85,13 @@ function gameStart(){
         if(!p.broken&&cosmo.x>p.x&&cosmo.x<p.x+p.w&&cosmo.y+cosmo.r>py&&cosmo.y+cosmo.r<py+p.h+16){
           if(p.type==='toxic'){loseLife();return;}
           if(p.type==='break'){p.broken=true;}
-          cosmo.vy=p.type==='spring'?JUMP_V*1.55:JUMP_V; addDust(1);
+          cosmo.vy=p.type==='spring'?JUMP_V*1.55:JUMP_V;
           for(let i=0;i<5;i++)particles.push({x:cosmo.x,y:py,vx:(Math.random()-.5)*4,vy:-2,life:18,col:p.type==='spring'?'#00ff88':'#a0c840'});
         }
       });
     }
     // Dust aléatoires
-    if(Math.random()<.004&&dustItems.filter(d=>!d.col).length<6)
+    if(Math.random()<.001&&dustItems.filter(d=>!d.col).length<4)
       dustItems.push({x:20+Math.random()*(cv.width-40),y:worldY-cv.height*.3-Math.random()*cv.height*2,col:false});
     dustItems.forEach(d=>{if(d.col)return;const dy=d.y-worldY;if(Math.sqrt((cosmo.x-d.x)**2+(cosmo.y-dy-worldY+d.y)**2)<cosmo.r+13){d.col=true;addDust(4);for(let i=0;i<5;i++)particles.push({x:d.x,y:dy,vx:(Math.random()-.5)*4,vy:-2.5,life:20,col:'#FFD700'});}});
     ctx.clearRect(0,0,W,H);

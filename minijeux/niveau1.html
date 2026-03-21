@@ -56,7 +56,7 @@ function _buildTargets(){
       const hp=[1,2,3][Math.floor(Math.random()*3)];
       targets.push({x:bx+(Math.random()-.5)*50,y:cv.height*.7-38*r-19,
         w:34+hp*4,h:34+hp*4,hp,maxHp:hp,hit:false,dy:0,
-        col:cols[Math.floor(Math.random()*cols.length)],hasDust:Math.random()<.45});
+        col:cols[Math.floor(Math.random()*cols.length)],hasDust:Math.random()<.1});
     }
   }
 }
@@ -152,7 +152,7 @@ function gameStart(){
       });
       ball.vx*=.997; ball.vy+=GRAV; ball.x+=ball.vx; ball.y+=ball.vy;
       const bsx=ball.x-camX;
-      drawCosmonaut(ctx,bsx,ball.y,ball.r,Math.atan2(ball.vy,ball.vx));
+      drawCosmonaut(ctx,bsx,ball.y,ball.r,Math.atan2(ball.vy,ball.vx),'fly');
       // Collisions
       targets.forEach(t=>{
         if(t.hit)return;

@@ -1,6 +1,6 @@
 # 🌙 GPS0 — Game Design Document v3.0
 
-**Version :** 3.11.0 - Bug 14 : shared.js engine, tuto in-game, quit, flash rouge, boussole, 9 mini-jeux
+**Version :** 3.12.0 - Bug 15 : cosmonaute SVG amélioré (jetpack animé, visière dégradée, limbes), pop-ups max 2/min, poussières max 50 (performance), ordre tuto→countdown→jeu, Finir l'aventure conditionnel
 **Date :** 24/03/2026
 **Auteur :** Toufik49
 **Statut :** Opérationnel - Bug 14 appliqué intégralement

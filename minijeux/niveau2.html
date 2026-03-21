@@ -34,13 +34,13 @@ window.NIVEAU = 2;
 window.TUTO_TEXT = "Tape pour faire battre les ailes !<br>Passe entre les colonnes de lave.<br>Évite les parois et ne t'écrase pas.";
 
 const GRAV_B=0.38, JUMP=-6;
-let bird, pipes, dustItems, particles, speed, frame, rafId, ashParts;
+let bird, pipes, dustItems, particles, speed, frame, rafId, ashParts, _pipeCount;
 
 function gameReset(){
   cancelAnimationFrame(rafId);
   bird={x:0,y:0,vy:0,r:22};
   pipes=[]; dustItems=[]; particles=[]; ashParts=[];
-  speed=2.2; frame=0;
+  speed=2.2; frame=0; _pipeCount=0;
 }
 window.gameReset=gameReset;
 
@@ -71,7 +71,7 @@ function gameStart(){
     pipes=pipes.filter(p=>p.x+p.w>-10);
     pipes.forEach(p=>{
       p.x-=speed;
-      if(!p.passed&&p.x+p.w<bird.x){p.passed=true;addDust(2);}
+      if(!p.passed&&p.x+p.w<bird.x){p.passed=true;}
       if(bird.x+bird.r>p.x&&bird.x-bird.r<p.x+p.w){
         if(bird.y-bird.r<p.top||bird.y+bird.r>p.bot)alive=false;
       }
@@ -108,7 +108,7 @@ function gameStart(){
     particles.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.1;p.life--;ctx.fillStyle=`rgba(255,215,0,${p.life/22})`;ctx.beginPath();ctx.arc(p.x,p.y,3,0,Math.PI*2);ctx.fill();});
     // Halo orange cosmonaute
     ctx.fillStyle='rgba(255,100,0,.18)'; ctx.beginPath();ctx.arc(bird.x,bird.y,bird.r+10,0,Math.PI*2);ctx.fill();
-    drawCosmonaut(ctx,bird.x,bird.y,bird.r,bird.vy*.05);
+    drawCosmonaut(ctx,bird.x,bird.y,bird.r,bird.vy*.05,'fly');
   };
   loop();
 }
@@ -116,8 +116,9 @@ function _jump(){if(!GPS0_running())return;bird.vy=JUMP;}
 function _spawnPipe(){
   const H=document.getElementById('cv').clientHeight, W=document.getElementById('cv').clientWidth;
   const gap=H*.32; const topH=H*.08+Math.random()*(H*.55);
+  _pipeCount++;
   pipes.push({x:W+60,top:topH,bot:topH+gap,w:50,passed:false});
-  dustItems.push({x:W+85,y:topH+gap/2+(Math.random()-.5)*50,r:14,col:false});
+  if(_pipeCount%3===0) dustItems.push({x:W+85,y:topH+gap/2+(Math.random()-.5)*50,r:14,col:false});
 }
 function _drawLavaPipe(ctx,x,y,w,h,flip){
   if(h<=0)return;

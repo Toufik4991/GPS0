@@ -118,7 +118,7 @@ function _move(dx,dy){
   if(!GPS0_running())return;
   const nx=cosmo.cx+dx,ny=cosmo.cy+dy;
   if(nx<0||nx>=COLS||ny<0||ny>=ROWS||maze[ny][nx]===1)return;
-  cosmo.cx=nx;cosmo.cy=ny;addDust(1);
+  cosmo.cx=nx;cosmo.cy=ny;
   // Lampe
   lamps.forEach(l=>{
     if(l.col||l.cx!==cosmo.cx||l.cy!==cosmo.cy)return;
