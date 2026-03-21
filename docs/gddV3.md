@@ -1,9 +1,9 @@
 # 🌙 GPS0 — Game Design Document v3.0
 
-**Version :** 3.5.4 - Refonte Auto-Runner + 8 Niveaux Uniques + Horloge Globale
-**Date :** 18/03/2026
+**Version :** 3.7.0 - Bug 10 : Correctifs UI + Refonte Mini-jeu Mario Run + Boss Auto-Runner N9
+**Date :** 21/03/2026
 **Auteur :** Toufik49
-**Statut :** Implementation en cours - Auto-runner operationnel niveaux 1-8
+**Statut :** Opérationnel - Auto-runner N1-N8 + Boss Auto-Runner N9 + Correctifs UI complets
 
 ---
 
@@ -43,23 +43,24 @@
 - Assets fonds d'ecran mini-jeux : assets/backgrounds/fond_ecran1-9.jpeg
 - Service Worker v9 / APP_VERSION 3.1.4
 
-**Changements majeurs v3.5.4 (REFONTE MINI-JEUX) :**
-- **AUTO-RUNNER** : mouvement automatique droite, plus de bouton gauche/droite
-- **Saut tap/hold** : appui court = petit saut (JF×0.55), appui long >220ms = grand saut (JF)
-- **Timer 3 minutes** par mini-jeu (au lieu de 2:30)
-- **8 niveaux distincts** avec mecanique unique chacun :
-  - N1 Tutoriel : parcours initiatique, plateformes simples
-  - N2 Orbe Mobile : plateformes mobiles axe Y (bougent verticalement)
-  - N3 Vent Cosmique : vent lateral oscillant + plateformes glissantes
-  - N4 Nuit Stellaire : obscurite totale, halo lumineux autour du joueur
-  - N5 Eclipse Fragile : toutes plateformes s'effondrent au toucher
-  - N6 Gravite Inversee : zones de gravite inversee, courir au plafond
-  - N7 Vitesse Stellaire : acceleration progressive automatique x1 → x2.5
-  - N8 Labyrinthe Spiral : le plus difficile, mix fragile+mobile+slimes rapides
-- **Power-ups in-game** : bouclier temporaire (5s) + double saut (7s)
-- **Horloge globale** : chrono qui tourne partout SAUF pendant les mini-jeux (pause/resume)
-- Ctrl-bar : 1 seul bouton #bs au lieu de 3 (#zg/#zd supprimés)
-- Service Worker v20 / APP_VERSION 3.5.4
+**Changements majeurs v3.7.0 (Bug 10) :**
+- **Écran permissions** : Suppression caméra — seulement GPS + Pseudo dans la checklist
+- **Caméra iOS Safari** : getUserMedia avec `{ video: {facingMode:"user", width:{ideal:640}, height:{ideal:640}}, audio:false }`, attributs `autoplay playsinline muted`, attente `loadedmetadata`, fallback si caméra indisponible
+- **SVG flottants** : Check distancé 120px du centre retardé à 200ms (layout complet) ; UFO repositionné à `top:15%` pour éviter la zone boussole pendant son animation
+- **Astéroïde** : Suppression définitive de `#energie-pct` (texte %) + suppression des mises à jour `#distance-label` dans boussole.js → asteroid : aucun texte, juste animation visuelle
+- **Pop-ups indices** : `GPS0_Lune.parler()` vérifie `getEtat() !== 'zone'` → jamais de pop-up en zone bleue ✅
+- **Niveau 1 → "Facile"** : Renommage complet dans toutes les occurrences ✅
+- **Timer global** : `#chrono` ajouté au HUD (visible 00:00), se PAUSE en zone bleue (`zone_atteinte` → `_pauseGlobalClock()`) et pendant mini-jeux, reprend à la fin de chaque mini-jeu
+- **Niveau 9 BOSS** : Refonte complète en AUTO-RUNNER Mario Run style :
+  - Le joueur court automatiquement (VX=4.2), input unique = saut (court/long)
+  - Monde 3x la largeur d'écran avec boucle (téléportation à gauche en fin de monde)
+  - 12 plateformes en hauteur + sol complet (pas de trous — combat boss)
+  - 12 ★ ÉTOILES ROUGES dans le monde → chaque collecte = -1 HP Boss
+  - Boss oscille horizontalement en haut d'écran, tire des projectiles toutes les 2.5s→1.9s→1.2s (phases 1→2→3)
+  - 3 phases (9 HP total : 1-6 HP = phase 1, 5-3 HP = phase 2, 2-0 HP = phase 3) avec changement de couleur/taille/vitesse
+  - Barre de vie du boss visible en HUD + bannière de changement de phase
+  - 3 vies joueur, 3 minutes, récompense 25 poussières sur victoire
+- Service Worker v22 / APP_VERSION 3.7.0
 
 ---
 

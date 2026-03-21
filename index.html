@@ -67,6 +67,7 @@
     <header class="hud" role="banner">
       <span class="hud-item"><span aria-hidden="true">✨</span> <span id="poussieres" aria-label="Poussières d'étoiles">0</span></span>
       <span class="hud-item"><span aria-hidden="true">⚡</span> <span id="hud-energie-val" aria-label="Énergie">100%</span></span>
+      <span class="hud-item"><span id="chrono" aria-label="Temps de jeu">00:00</span></span>
       <button class="hud-icon-btn" id="hud-boutique" aria-label="Boutique Lunaire">🏪</button>
       <button class="hud-icon-btn" id="hud-inventaire" aria-label="Inventaire">🎒</button>
       <div class="hud-menu-wrap">
@@ -140,7 +141,7 @@
           </svg>
         </div>
 
-        <div class="distance-label" id="distance-label" aria-live="polite">---</div>
+        <div class="distance-label" id="distance-label" aria-live="polite"></div>
       </div>
 
       <button class="btn-toggle-boussole" id="toggle-boussole" aria-pressed="false" style="display:none" aria-hidden="true">

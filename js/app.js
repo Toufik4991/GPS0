@@ -21,7 +21,7 @@ window.GPS0_App = (() => {
 
   function _fixCosmosFloating() {
     // Repositionne les SVG flottants si trop proches du centre (zone boussole)
-    requestAnimationFrame(() => {
+    setTimeout(() => {
       const cx = window.innerWidth / 2, cy = window.innerHeight / 2;
       const MIN_DIST = 120;
       document.querySelectorAll('.cf').forEach(el => {
@@ -36,7 +36,7 @@ window.GPS0_App = (() => {
           el.style.transform = currentT + ' translate(' + Math.round(Math.cos(angle) * push) + 'px,' + Math.round(Math.sin(angle) * push) + 'px)';
         }
       });
-    });
+    }, 200);
   }
 
   function _splash() {
@@ -287,6 +287,7 @@ window.GPS0_App = (() => {
       GPS0_Audio.playSFX('zone_detectee');
       GPS0_Audio.playSFX('halo_bip');
       GPS0_Boussole.forceEtat('zone');
+      _pauseGlobalClock(); // Zone bleue : horloge en pause
       // Afficher bouton JOUER en haut — le joueur clique quand il veut
       const bjh = document.getElementById('btn-jouer-haut');
       if (bjh) bjh.hidden = false;

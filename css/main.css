@@ -90,7 +90,8 @@ html,body{height:100%;overflow:hidden;font-family:"Trebuchet MS",sans-serif;colo
 .flamme{transform-origin:40px 72px;animation:flame .3s ease-in-out infinite alternate}
 .flamme2{transform-origin:40px 76px;animation:flame .3s ease-in-out infinite alternate-reverse}
 @keyframes flame{from{transform:scaleY(.8);opacity:.6}to{transform:scaleY(1.2);opacity:1}}
-.distance-label{position:absolute;bottom:-30px;left:50%;transform:translateX(-50%);font-size:.82rem;color:var(--accent);font-weight:bold;white-space:nowrap}
+.distance-label{position:absolute;bottom:-30px;left:50%;transform:translateX(-50%);font-size:.82rem;color:var(--accent);font-weight:bold;white-space:nowrap;min-height:1.2em}
+#chrono{color:rgba(200,162,200,.85);font-weight:bold;font-size:.8rem;letter-spacing:0.05em}
 .btn-jouer{position:absolute;bottom:-62px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#4FC3F7,#C8A2C8);color:#0A0A1A;font-weight:bold;font-size:1rem;padding:10px 26px;border-radius:24px;border:none;cursor:pointer;animation:pjour .6s ease-in-out infinite alternate;white-space:nowrap}
 #btn-jouer-haut{position:fixed;top:68px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#69FF47,#4FC3F7);color:#0A0A1A;font-weight:bold;font-size:1.05rem;padding:13px 30px;border-radius:24px;border:none;cursor:pointer;z-index:150;box-shadow:0 0 24px rgba(105,255,71,.5);animation:pjour .6s ease-in-out infinite alternate;white-space:nowrap}
 @keyframes pjour{to{transform:translateX(-50%) scale(1.05);box-shadow:0 0 24px rgba(79,195,247,.6)}}
@@ -179,7 +180,7 @@ button, input { touch-action: manipulation; }
 .energie-cercle-svg{position:absolute;width:240px;height:240px;top:50%;left:50%;transform:translate(-50%,-50%)}
 /* .energie-sable-wrap removed */
 /* #energie-sable removed */
-#energie-pct{position:absolute;font-size:.78rem;font-weight:bold;color:#4FC3F7;text-shadow:0 0 8px rgba(79,195,247,.8);top:50%;left:50%;transform:translate(-50%,-50%);white-space:nowrap;z-index:6;pointer-events:none}
+#energie-pct{display:none}
 
 /* ── SW UPDATE TOAST ── */
 #sw-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:rgba(105,255,71,.15);border:1px solid #69FF47;color:#69FF47;padding:10px 22px;border-radius:24px;font-size:.88rem;font-weight:bold;cursor:pointer;z-index:9999;animation:toast-in .4s ease;backdrop-filter:blur(6px)}
@@ -189,7 +190,7 @@ button, input { touch-action: manipulation; }
 .cosmos-floating{position:fixed;inset:0;z-index:2;pointer-events:none;overflow:hidden}
 .cf{position:absolute;opacity:.88;will-change:transform;line-height:1;font-style:normal}
 .cf-rocket{top:72%;left:-4%;font-size:3.2rem;animation:cf-rise 34s linear infinite}
-.cf-ufo{top:38%;right:-5%;font-size:3.8rem;animation:cf-slide-l 42s linear infinite;animation-delay:-16s}
+.cf-ufo{top:15%;right:-5%;font-size:3.8rem;animation:cf-slide-l 42s linear infinite;animation-delay:-16s}
 .cf-moon{top:16%;right:7%;font-size:3rem;animation:cf-bob 58s ease-in-out infinite;animation-delay:-25s;opacity:.4}
 .cf-star1{top:60%;left:7%;font-size:2.5rem;animation:cf-bob 44s ease-in-out infinite;animation-delay:-9s}
 .cf-star2{top:30%;left:52%;font-size:2.2rem;animation:cf-bob 37s ease-in-out infinite;animation-delay:-19s;opacity:.35}

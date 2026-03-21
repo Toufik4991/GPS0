@@ -58,7 +58,6 @@ window.GPS0_Boussole = (() => {
       case 'off':
         f && f.classList.add('hidden');
         h && (h.dataset.etat = 'off');
-        dl && (dl.textContent = '---');
         tl && (tl.textContent = 'Activer la boussole');
         t && (t.dataset.active = 'false', t.dataset.epuise = 'false');
         bj && (bj.hidden = true);
@@ -72,7 +71,6 @@ window.GPS0_Boussole = (() => {
       case 'epuise':
         f && f.classList.add('hidden');
         h && (h.dataset.etat = 'off');
-        dl && (dl.textContent = 'Recharge ta boussole !');
         tl && (tl.textContent = 'Boussole épuisée ⚡');
         t && (t.dataset.active = 'false', t.dataset.epuise = 'true');
         bj && (bj.hidden = true);
@@ -80,7 +78,6 @@ window.GPS0_Boussole = (() => {
       case 'zone':
         f && f.classList.remove('hidden');
         h && (h.dataset.etat = 'bleu');
-        dl && (dl.textContent = 'Zone atteinte ! ✅');
         tl && (tl.textContent = 'Zone détectée 🎯');
         bj && (bj.hidden = false);
         emit('zone_active', null);
