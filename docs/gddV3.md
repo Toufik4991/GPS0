@@ -1,6 +1,6 @@
 # 🌙 GPS0 — Game Design Document v3.0
 
-**Version :** 3.12.0 - Bug 15 : cosmonaute SVG amélioré (jetpack animé, visière dégradée, limbes), pop-ups max 2/min, poussières max 50 (performance), ordre tuto→countdown→jeu, Finir l'aventure conditionnel
+**Version :** 3.13.0 - Jeu 1 redesign QCM : fronde fixe → tire des ORBES, météorites scroll continu, 8 tirs/recharge, victoire 25✨, ricochet-drift-explosion, SVG background bg-n1
 **Date :** 24/03/2026
 **Auteur :** Toufik49
 **Statut :** Opérationnel - Bug 14 appliqué intégralement
