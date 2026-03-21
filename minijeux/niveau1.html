@@ -7,42 +7,42 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:#0A0A1A;color:#fff;font-family:system-ui,sans-serif;overflow:hidden;height:100dvh;display:flex;flex-direction:column;touch-action:none;user-select:none}
-#hud{display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(0,0,0,.5);flex-shrink:0;z-index:10}
-#lives{font-size:1.3rem;letter-spacing:2px}
+#bg{position:fixed;inset:0;z-index:0;background:radial-gradient(ellipse at 60% 70%,rgba(100,180,255,0.14) 0%,transparent 60%),linear-gradient(135deg,#060818 0%,#0a1428 100%);}
+#hud{position:relative;z-index:20;display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(0,0,0,.65);flex-shrink:0;backdrop-filter:blur(6px)}
+#lives{font-size:1.2rem;letter-spacing:2px}
 #timer{flex:1;text-align:center;font-size:1rem;font-weight:bold;color:#4FC3F7}
-#score-hud{font-size:.9rem;color:#FFD700}
-#game-container{flex:1;position:relative;overflow:hidden}
+#score-hud{font-size:.9rem;color:#FFD700;font-weight:bold}
+#game-container{flex:1;position:relative;overflow:hidden;z-index:1}
 canvas{display:block;width:100%;height:100%}
-#overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(10,10,26,.88);z-index:20;gap:14px;text-align:center;padding:24px}
-#overlay h2{font-size:1.8rem;color:var(--accent,#C8A2C8)}
-#overlay p{font-size:.9rem;color:rgba(255,255,255,.8);max-width:280px}
+#overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,.88);z-index:20;gap:14px;text-align:center;padding:24px}
+#overlay h2{font-size:1.8rem;color:#C8A2C8}
+#overlay p{font-size:.9rem;color:rgba(255,255,255,.8);max-width:280px;line-height:1.5}
 #overlay .btn{padding:12px 32px;border:none;border-radius:14px;font-size:1rem;font-weight:bold;cursor:pointer;background:linear-gradient(135deg,#C8A2C8,#8860a8);color:#fff}
-#selfie-anchor{position:absolute;z-index:5;pointer-events:none}
-
 :root{--accent:#C8A2C8;--gold:#FFD700;--blue:#4FC3F7}
+
 </style>
 </head>
 <body>
+<div id="bg"></div>
 <div id="hud">
-  <span id="lives">&#10084;&#10084;&#10084;</span>
+  <span id="lives">❤❤❤</span>
   <span id="timer">3:00</span>
-  <span id="score-hud">0 &#10024;</span>
+  <span id="score-hud">0 ✨</span>
 </div>
 <div id="game-container">
   <canvas id="cv"></canvas>
-  
+
   <div id="overlay">
     <div style="font-size:3rem">🌑</div>
     <h2>Lune de Verre</h2>
-    <p>Lance des cosmonautes avec ta fronde !<br>Vise les cristaux pour les faire exploser.</p>
-    <button class="btn" id="btn-start">C&#8217;est parti !</button>
+    <p>Lance le cosmonaute avec ta fronde !<br>Fais glisser vers l'arrière &rarr; relâche.<br>Vise les cristaux pour récupérer les ✨.</p>
+    <button class="btn" id="btn-start">C'est parti&nbsp;!</button>
   </div>
-  <canvas id="selfie-cv" width="48" height="48" style="display:none" aria-hidden="true"></canvas>
+  <canvas id="selfie-cv" width="64" height="64" style="display:none" aria-hidden="true"></canvas>
 </div>
 <script>
-// === COMMON ENGINE ===
+// ── COMMON ENGINE ──
 const NIVEAU = 1;
-const DUST_REWARD = (1 === 9) ? 50 : (5 + 1 * 5);
 let lives = 3, dust = 0, running = false, gameover = false;
 let timerSec = 180, timerInterval = null;
 const livesEl = document.getElementById('lives');
@@ -50,277 +50,303 @@ const timerEl = document.getElementById('timer');
 const scoreEl = document.getElementById('score-hud');
 const overlay = document.getElementById('overlay');
 const btnStart = document.getElementById('btn-start');
-
-function updateLivesHUD() {
-  livesEl.textContent = '\u2764'.repeat(lives) + '\u2661'.repeat(Math.max(0, 3 - lives));
-}
-
-function updateTimer() {
-  const m = Math.floor(timerSec / 60), s = timerSec % 60;
-  timerEl.textContent = m + ':' + String(s).padStart(2,'0');
-}
-
-function addDust(n) {
-  dust += n;
-  scoreEl.textContent = dust + ' \u2728';
-}
-
-function loseLife() {
-  if (!running) return;
-  lives--;
-  updateLivesHUD();
-  if (lives <= 0) endGame(false);
-}
-
-function endGame(success) {
-  if (gameover) return;
-  gameover = true;
-  running = false;
-  clearInterval(timerInterval);
-  const finalDust = success ? dust + DUST_REWARD : Math.floor(dust * 0.5);
-  setTimeout(() => {
-    window.parent.postMessage({
-      source: 'gps0_minijeu',
-      success: success,
-      niveau: NIVEAU,
-      poussieres: finalDust
-    }, '*');
-  }, 800);
-}
-
-function startTimer() {
-  updateTimer();
-  timerInterval = setInterval(() => {
-    if (!running) return;
-    timerSec--;
-    updateTimer();
-    if (timerSec <= 0) endGame(false);
-  }, 1000);
-}
-
-// Load selfie
-const selfieCanvas = document.getElementById('selfie-cv');
-const selfieCtx = selfieCanvas.getContext('2d');
-(function loadSelfie() {
-  const data = localStorage.getItem('gps0_avatar_selfie_base64');
-  if (!data) return;
-  const img = new Image();
-  img.onload = () => {
-    selfieCtx.save();
-    selfieCtx.beginPath();
-    selfieCtx.arc(24, 24, 24, 0, Math.PI * 2);
-    selfieCtx.clip();
-    selfieCtx.drawImage(img, 0, 0, 48, 48);
-    selfieCtx.restore();
-  };
-  img.src = data;
-})();
-
-// Tuto overlay auto-dismiss after 5s
-let tutoDismissed = false;
-btnStart.addEventListener('click', startGame);
-setTimeout(() => { if (!tutoDismissed) startGame(); }, 5000);
-
-function startGame() {
-  if (tutoDismissed) return;
-  tutoDismissed = true;
-  overlay.style.display = 'none';
-  running = true;
-  startTimer();
-  initGame();
-}
-
-// === GAME LOGIC ===
-
 const cv = document.getElementById('cv');
 const ctx = cv.getContext('2d');
-let W, H;
-function resize() {
-  W = cv.width = cv.offsetWidth;
-  H = cv.height = cv.offsetHeight;
-}
-window.addEventListener('resize', () => { resize(); if(running) drawAll(); });
 
-// Slingshot physics
-const GRAV = 0.45;
-const SLING_X_RATIO = 0.2;
-const SLING_Y_RATIO = 0.65;
+function updateLivesHUD(){livesEl.textContent='❤'.repeat(lives)+'♡'.repeat(Math.max(0,3-lives));}
+function updateTimer(){const m=Math.floor(timerSec/60),s=timerSec%60;timerEl.textContent=m+':'+(s<10?'0':'')+s;}
+function addDust(n){dust+=n;scoreEl.textContent=dust+' ✨';}
+function loseLife(){if(!running)return;lives--;updateLivesHUD();if(lives<=0)endGame(false);}
 
-let sling, ball, targets, particles, shots, maxShots;
-let dragging = false, dragX = 0, dragY = 0;
-let launched = false, ballVx = 0, ballVy = 0;
-const BALL_R = 18;
-const SLING_MAX = 80;
-
-function initGame() {
-  resize();
-  shots = 0;
-  maxShots = 7;
-  ball = null;
-  targets = [];
-  particles = [];
-  spawnTargets();
-  resetBall();
-  loop();
+function calcDust(){
+  const played = 180 - timerSec;
+  let base;
+  if(played < 30) base = 1 + Math.floor(Math.random()*5);
+  else if(played < 60) base = 5 + Math.floor(Math.random()*10);
+  else if(played < 120) base = 15 + Math.floor(Math.random()*15);
+  else if(played < 150) base = 30 + Math.floor(Math.random()*10);
+  else base = 40 + Math.floor(Math.random()*10);
+  return Math.min(50, base + dust);
 }
 
-function spawnTargets() {
+function endGame(success){
+  if(gameover)return;
+  gameover=true; running=false;
+  clearInterval(timerInterval);
+  const finalDust = success ? Math.min(60, calcDust() + 10) : calcDust();
+  setTimeout(()=>{
+    window.parent.postMessage({source:'gps0_minijeu',success,niveau:NIVEAU,poussieres:finalDust},'*');
+  }, 600);
+}
+
+function startTimer(){
+  updateTimer();
+  timerInterval=setInterval(()=>{
+    if(!running)return;
+    timerSec--;updateTimer();
+    if(timerSec<=0)endGame({'9':true}.hasOwnProperty(String(NIVEAU)) ? false : false);
+  },1000);
+}
+
+// Selfie canvas
+let selfieImg = null;
+function loadSelfie(){
+  const b64 = localStorage.getItem('gps0_avatar_selfie_base64');
+  if(!b64)return;
+  const img = new Image();
+  img.onload = ()=>{ selfieImg = img; };
+  img.src = b64;
+}
+loadSelfie();
+
+function drawSelfie(x, y, r){
+  if(!selfieImg)return;
+  ctx.save();
+  ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.clip();
+  ctx.drawImage(selfieImg, x-r, y-r, r*2, r*2);
+  ctx.restore();
+}
+
+function drawCosmonaut(x, y, r, angle){
+  ctx.save();
+  ctx.translate(x, y);
+  if(angle)ctx.rotate(angle);
+  // Body (suit)
+  ctx.beginPath();
+  ctx.ellipse(0, r*0.5, r*0.55, r*0.7, 0, 0, Math.PI*2);
+  ctx.fillStyle='#dde4ee'; ctx.fill();
+  // Helmet
+  ctx.beginPath(); ctx.arc(0, -r*0.15, r*0.55, 0, Math.PI*2);
+  ctx.fillStyle='rgba(60,120,200,0.3)'; ctx.fill();
+  ctx.beginPath(); ctx.arc(0, -r*0.15, r*0.55, 0, Math.PI*2);
+  ctx.strokeStyle='#8ab4d4'; ctx.lineWidth=2; ctx.stroke();
+  // Selfie face
+  if(selfieImg){
+    ctx.save(); ctx.beginPath(); ctx.arc(0,-r*0.15,r*0.45,0,Math.PI*2); ctx.clip();
+    ctx.drawImage(selfieImg,-r*0.45,-r*0.6,r*0.9,r*0.9); ctx.restore();
+  } else {
+    ctx.fillStyle='rgba(79,195,247,.5)';
+    ctx.beginPath(); ctx.arc(0,-r*0.15,r*0.4,0,Math.PI*2); ctx.fill();
+  }
+  ctx.restore();
+}
+
+function resizeCanvas(){
+  const gc = document.getElementById('game-container');
+  cv.width = gc.clientWidth; cv.height = gc.clientHeight;
+}
+resizeCanvas();
+window.addEventListener('resize', ()=>{resizeCanvas(); if(running) onResize && onResize();});
+
+btnStart.addEventListener('click', ()=>{
+  overlay.style.display='none';
+  running=true;
+  startTimer();
+  gameStart();
+}, {once:true});
+
+// ── GAME SPECIFIC ──
+
+const GRAV = 0.45, MAX_SHOTS = 15;
+let shots_left = MAX_SHOTS, phase = 'idle'; // idle | aiming | flying
+let sling = {x:0,y:0}, anchor = {x:0,y:0};
+let ball = null, trail = [];
+let targets = [], particles = [];
+let camX = 0, WORLD_W = 0;
+
+function onResize() {
+  sling.x = cv.width * 0.18;
+  sling.y = cv.height * 0.72;
+  anchor.x = sling.x; anchor.y = sling.y;
+  if(WORLD_W < cv.width * 3) WORLD_W = cv.width * 3;
+}
+
+function buildTargets() {
   targets = [];
-  const cols = 4;
-  for (let i = 0; i < cols; i++) {
-    const x = W * 0.55 + i * (W * 0.1);
-    const ht = 2 + Math.floor(Math.random() * 3);
-    for (let j = 0; j < ht; j++) {
-      targets.push({ x, y: H * 0.75 - j * 36, r: 16, alive: true, dust: 5 + Math.floor(Math.random() * 10) });
+  const cols = ['rgba(180,220,255,0.9)', 'rgba(140,200,255,0.8)', 'rgba(200,240,255,0.85)'];
+  // Structures procedurales: colonnes de blocs
+  for(let g = 0; g < 7; g++) {
+    const bx = cv.width * 0.5 + g * (cv.width * 0.3);
+    const rows = 2 + Math.floor(Math.random()*4);
+    for(let r = 0; r < rows; r++) {
+      targets.push({
+        x: bx + (Math.random()-0.5)*60,
+        y: cv.height*0.72 - 36*r - 18,
+        w: 36, h: 36,
+        hp: 2, hit: false, dy: 0,
+        col: cols[Math.floor(Math.random()*cols.length)],
+        hasDust: Math.random() < 0.4
+      });
     }
   }
 }
 
-function resetBall() {
-  sling = { x: W * SLING_X_RATIO, y: H * SLING_Y_RATIO };
-  ball = { x: sling.x, y: sling.y - BALL_R, vx: 0, vy: 0 };
-  launched = false;
-  dragging = false;
-}
-
-function loop() {
-  if (!running) return;
-  update();
-  drawAll();
+function gameStart() {
+  onResize(); WORLD_W = cv.width * 3;
+  buildTargets();
   requestAnimationFrame(loop);
 }
 
-function update() {
-  if (!launched) return;
-  ball.x += ball.vx;
-  ball.y += ball.vy;
-  ball.vy += GRAV;
+let touchStart = null;
+cv.addEventListener('pointerdown', e => {
+  if(!running || phase !== 'idle') return;
+  const dx = e.offsetX - sling.x, dy = e.offsetY - sling.y;
+  if(Math.sqrt(dx*dx+dy*dy) < 60) { phase = 'aiming'; touchStart = {x: e.offsetX, y: e.offsetY}; }
+});
+cv.addEventListener('pointermove', e => {
+  if(phase !== 'aiming') return;
+  const dx = Math.min(80, Math.max(-80, e.offsetX - sling.x));
+  const dy = Math.min(80, Math.max(-80, e.offsetY - sling.y));
+  anchor = {x: sling.x + dx, y: sling.y + dy};
+});
+cv.addEventListener('pointerup', e => {
+  if(phase !== 'aiming') return;
+  const dx = sling.x - anchor.x, dy = sling.y - anchor.y;
+  const spd = Math.sqrt(dx*dx+dy*dy);
+  if(spd < 10) { phase = 'idle'; anchor = {...sling}; return; }
+  ball = {x: anchor.x + camX, y: anchor.y, vx: dx*0.22, vy: dy*0.22, r: 20};
+  trail = [];
+  phase = 'flying'; anchor = {...sling};
+  shots_left--;
+  if(shots_left <= 0 && !ball) endGame(false);
+});
 
-  // Collide with targets
-  for (const t of targets) {
-    if (!t.alive) continue;
-    const dx = ball.x - t.x, dy = ball.y - t.y;
-    if (Math.sqrt(dx*dx + dy*dy) < BALL_R + t.r) {
-      t.alive = false;
-      addDust(t.dust);
-      for (let i = 0; i < 8; i++) particles.push({ x: t.x, y: t.y, vx: (Math.random()-0.5)*5, vy: (Math.random()-0.5)*5, life: 40, color: '#FFD700' });
+function loop() {
+  if(!running) return;
+  requestAnimationFrame(loop);
+  const W = cv.width, H = cv.height;
+  ctx.clearRect(0,0,W,H);
+
+  // BG stars
+  ctx.fillStyle='rgba(0,0,0,0)';
+  ctx.clearRect(0,0,W,H);
+
+  // Camera follow ball
+  if(ball) {
+    const target = ball.x - camX - W*0.3;
+    if(target > 0) camX += target * 0.08;
+    camX = Math.max(0, Math.min(WORLD_W - W, camX));
+  }
+
+  // Draw targets
+  targets.forEach(t => {
+    if(t.hit) {
+      t.y += t.dy; t.dy += 0.3;
+      if(t.y > H+50) return;
     }
-  }
-
-  // Update particles
-  particles = particles.filter(p => { p.x += p.vx; p.y += p.vy; p.vy += 0.1; p.life--; return p.life > 0; });
-
-  // Out of bounds
-  if (ball.y > H + 50 || ball.x > W + 50 || ball.x < -50) {
-    shots++;
-    if (shots >= maxShots) {
-      const alive = targets.filter(t => t.alive).length;
-      endGame(alive === 0);
-    } else {
-      resetBall();
-    }
-  }
-
-  // All targets destroyed
-  if (targets.every(t => !t.alive)) endGame(true);
-}
-
-function drawAll() {
-  ctx.clearRect(0, 0, W, H);
-  // Ground
-  ctx.fillStyle = '#1a1a3a';
-  ctx.fillRect(0, H * 0.8, W, H * 0.2);
-  ctx.fillStyle = '#2a2a5a';
-  ctx.fillRect(0, H * 0.78, W, 8);
-
-  // Slingshot
-  ctx.strokeStyle = '#8B6914';
-  ctx.lineWidth = 6;
-  ctx.beginPath(); ctx.moveTo(sling.x - 15, H * 0.8); ctx.lineTo(sling.x - 8, sling.y - 5); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(sling.x + 15, H * 0.8); ctx.lineTo(sling.x + 8, sling.y - 5); ctx.stroke();
-
-  // Rubber band
-  if (!launched) {
-    const bx = ball.x, by = ball.y;
-    ctx.strokeStyle = 'rgba(180,120,60,.8)'; ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.moveTo(sling.x - 8, sling.y - 5); ctx.lineTo(bx, by); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(sling.x + 8, sling.y - 5); ctx.lineTo(bx, by); ctx.stroke();
-  }
-
-  // Ball (selfie or emoji)
-  if (selfieCanvas.width > 0 && selfieCtx.getImageData(0,0,1,1).data[3] > 0) {
     ctx.save();
-    ctx.beginPath(); ctx.arc(ball.x, ball.y, BALL_R, 0, Math.PI*2); ctx.clip();
-    ctx.drawImage(selfieCanvas, ball.x - BALL_R, ball.y - BALL_R, BALL_R*2, BALL_R*2);
+    ctx.fillStyle = t.col;
+    ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+    ctx.lineWidth = 2;
+    const tx = t.x - camX;
+    ctx.beginPath();
+    roundRect(ctx, tx-t.w/2, t.y-t.h/2, t.w, t.h, 6);
+    ctx.fill(); ctx.stroke();
+    if(t.hasDust && !t.hit) {
+      ctx.fillStyle='#FFD700';
+      ctx.font='14px system-ui'; ctx.textAlign='center';
+      ctx.fillText('✨', tx, t.y+6);
+    }
     ctx.restore();
-  } else {
-    ctx.font = `${BALL_R*2}px serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText('👨‍🚀', ball.x, ball.y);
+  });
+
+  // Draw ground
+  ctx.fillStyle='rgba(40,60,100,0.6)';
+  ctx.fillRect(0, H*0.72+20, W, H);
+
+  // Draw sling
+  ctx.strokeStyle='#8a6a40'; ctx.lineWidth=4;
+  ctx.beginPath(); ctx.moveTo(sling.x-14, sling.y); ctx.lineTo(sling.x-14, sling.y+30); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(sling.x+14, sling.y); ctx.lineTo(sling.x+14, sling.y+30); ctx.stroke();
+
+  if(phase === 'aiming') {
+    // Rubber band
+    ctx.strokeStyle='#c8a264'; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.moveTo(sling.x-14, sling.y); ctx.lineTo(anchor.x, anchor.y); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(sling.x+14, sling.y); ctx.lineTo(anchor.x, anchor.y); ctx.stroke();
+    // Trajectory preview
+    let px = anchor.x + camX, py = anchor.y;
+    let pvx = (sling.x - anchor.x)*0.22, pvy = (sling.y - anchor.y)*0.22;
+    ctx.fillStyle='rgba(255,255,255,0.4)';
+    for(let i=0;i<18;i++) {
+      px+=pvx; py+=pvy; pvy+=GRAV;
+      ctx.beginPath(); ctx.arc(px-camX, py, 3, 0, Math.PI*2); ctx.fill();
+    }
+    // Cosmonaute visant
+    drawCosmonaut(anchor.x, anchor.y, 20, 0);
   }
 
-  // Targets
-  for (const t of targets) {
-    if (!t.alive) continue;
-    ctx.fillStyle = '#4FC3F7';
-    ctx.beginPath(); ctx.arc(t.x, t.y, t.r, 0, Math.PI*2); ctx.fill();
-    ctx.strokeStyle = '#0097d6'; ctx.lineWidth = 2; ctx.stroke();
-    ctx.fillStyle = '#fff'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText('✨', t.x, t.y);
+  // Ball in flight
+  if(ball) {
+    trail.push({x: ball.x - camX, y: ball.y});
+    if(trail.length > 20) trail.shift();
+    trail.forEach((p,i) => {
+      const a = i/trail.length*0.5;
+      ctx.fillStyle=`rgba(79,195,247,${a})`;
+      ctx.beginPath(); ctx.arc(p.x, p.y, ball.r*(i/trail.length*0.6+0.2), 0, Math.PI*2);
+      ctx.fill();
+    });
+    ball.vx *= 0.995; ball.vy += GRAV;
+    ball.x += ball.vx; ball.y += ball.vy;
+    const bsx = ball.x - camX;
+    drawCosmonaut(bsx, ball.y, ball.r, Math.atan2(ball.vy, ball.vx));
+
+    // Collision targets
+    targets.forEach(t => {
+      if(t.hit) return;
+      const dx = (ball.x - t.x), dy = (ball.y - t.y);
+      if(Math.abs(dx) < t.w/2 + ball.r && Math.abs(dy) < t.h/2 + ball.r) {
+        t.hit = true; t.dy = -4 + Math.random()*2;
+        t.hp--;
+        // Particles
+        for(let i=0;i<8;i++) particles.push({x:t.x-camX,y:t.y,vx:(Math.random()-.5)*5,vy:-3+Math.random()*2,life:30,col:t.col});
+        if(t.hasDust) { addDust(3); t.hasDust = false; }
+      }
+    });
+
+    // Hit ground
+    if(ball.y > H*0.72 + 20) {
+      ball = null; phase = 'idle';
+      if(shots_left <= 0) {
+        const alive = targets.filter(t=>!t.hit).length;
+        endGame(alive === 0);
+      }
+    }
+    // Out of world
+    if(ball && ball.x > WORLD_W + 200) { ball = null; phase = 'idle'; }
   }
 
   // Particles
-  for (const p of particles) {
-    ctx.globalAlpha = p.life / 40;
-    ctx.fillStyle = p.color;
+  particles = particles.filter(p => p.life > 0);
+  particles.forEach(p => {
+    p.x+=p.vx; p.y+=p.vy; p.vy+=0.15; p.life--;
+    ctx.fillStyle = p.col; ctx.globalAlpha = p.life/30;
     ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI*2); ctx.fill();
+    ctx.globalAlpha=1;
+  });
+
+  // Idle cosmonaute in sling
+  if(phase === 'idle') {
+    drawCosmonaut(sling.x, sling.y, 20, 0);
   }
-  ctx.globalAlpha = 1;
 
-  // Shots left
-  ctx.fillStyle = 'rgba(255,255,255,.6)'; ctx.font = '14px sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
-  ctx.fillText(`Tirs: ${maxShots - shots}`, 10, 10);
+  // HUD shots
+  ctx.fillStyle='rgba(255,255,255,.8)';
+  ctx.font='bold 13px system-ui'; ctx.textAlign='left';
+  ctx.fillText('Tirs: ' + shots_left + '/' + MAX_SHOTS, 8, cv.height-10);
+
+  // Check win
+  if(targets.length > 0 && targets.every(t=>t.hit)) { setTimeout(()=>endGame(true), 500); }
 }
 
-// Touch/mouse
-function getPos(e) {
-  const r = cv.getBoundingClientRect();
-  const src = e.touches ? e.touches[0] : e;
-  return { x: src.clientX - r.left, y: src.clientY - r.top };
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y); ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r); ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h); ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r); ctx.quadraticCurveTo(x,y,x+r,y);
+  ctx.closePath();
 }
-function onDown(e) {
-  if (!running || launched) return;
-  e.preventDefault();
-  const p = getPos(e);
-  const dx = p.x - ball.x, dy = p.y - ball.y;
-  if (Math.sqrt(dx*dx+dy*dy) < BALL_R + 20) dragging = true;
-}
-function onMove(e) {
-  if (!dragging || !running) return;
-  e.preventDefault();
-  const p = getPos(e);
-  const dx = p.x - sling.x, dy = p.y - sling.y;
-  const dist = Math.sqrt(dx*dx+dy*dy);
-  const clamped = Math.min(dist, SLING_MAX);
-  const ang = Math.atan2(dy, dx);
-  ball.x = sling.x + Math.cos(ang) * clamped;
-  ball.y = sling.y + Math.sin(ang) * clamped;
-}
-function onUp(e) {
-  if (!dragging || !running) return;
-  e.preventDefault();
-  dragging = false;
-  const power = 0.22;
-  ball.vx = -(ball.x - sling.x) * power;
-  ball.vy = -(ball.y - sling.y) * power;
-  launched = true;
-  shots++;
-}
-cv.addEventListener('touchstart', onDown, { passive: false });
-cv.addEventListener('touchmove', onMove, { passive: false });
-cv.addEventListener('touchend', onUp, { passive: false });
-cv.addEventListener('mousedown', onDown);
-window.addEventListener('mousemove', onMove);
-window.addEventListener('mouseup', onUp);
 
 </script>
 </body>

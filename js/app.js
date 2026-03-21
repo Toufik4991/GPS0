@@ -20,10 +20,10 @@ window.GPS0_App = (() => {
   }
 
   function _fixCosmosFloating() {
-    // Repositionne les SVG flottants si trop proches du centre (zone boussole) — 180px minimum
+    // Repositionne les SVG flottants si trop proches du centre (zone boussole) — 250px minimum
     setTimeout(() => {
       const cx = window.innerWidth / 2, cy = window.innerHeight / 2;
-      const MIN_DIST = 180;
+      const MIN_DIST = 250;
       document.querySelectorAll('.cf').forEach(el => {
         for (let attempt = 0; attempt < 12; attempt++) {
           const r = el.getBoundingClientRect();
@@ -300,7 +300,8 @@ window.GPS0_App = (() => {
       if (bpp) bpp.hidden = false;
     });
     GPS0_GPS.on('jeu_termine', () => {
-      GPS0_Finale && GPS0_Finale.lancer && GPS0_Finale.lancer();
+      // La finale est déclenchée via le bouton 'Finir l'aventure' dans _afficherResultats
+      // (uniquement au point GPS 9 avec final:true) — ne pas lancer ici
     });
     GPS0_GPS.on('erreur', msg => console.warn('[GPS0] GPS:', msg));
 
@@ -529,18 +530,73 @@ window.GPS0_App = (() => {
     }
     _pauseGlobalClock();
     document.getElementById('app').classList.remove('visible');
-    const iframe = document.createElement('iframe');
-    iframe.src = 'minijeux/niveau' + niveau + '.html';
-    iframe.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;border:none;z-index:1000;background:#0A0A1A';
-    iframe.setAttribute('title', 'Mini-jeu niveau ' + niveau);
-    document.body.appendChild(iframe);
-    const handler = e => {
-      if (!e.data || e.data.source !== 'gps0_minijeu') return;
-      window.removeEventListener('message', handler);
-      iframe.remove();
-      document.dispatchEvent(new CustomEvent(e.data.success ? 'minijeu:complete' : 'minijeu:failed', { detail: e.data }));
-    };
-    window.addEventListener('message', handler);
+    _afficherCountdown(niveau).then(() => {
+      const iframe = document.createElement('iframe');
+      iframe.src = 'minijeux/niveau' + niveau + '.html';
+      iframe.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;border:none;z-index:1000;background:#0A0A1A';
+      iframe.setAttribute('title', 'Mini-jeu niveau ' + niveau);
+      document.body.appendChild(iframe);
+      const handler = e => {
+        if (!e.data || e.data.source !== 'gps0_minijeu') return;
+        window.removeEventListener('message', handler);
+        iframe.remove();
+        document.dispatchEvent(new CustomEvent(e.data.success ? 'minijeu:complete' : 'minijeu:failed', { detail: e.data }));
+      };
+      window.addEventListener('message', handler);
+    });
+  }
+
+  function _afficherCountdown(niveau) {
+    return new Promise(resolve => {
+      const ov = document.createElement('div');
+      ov.id = 'countdown-overlay';
+      // Cosmonaut info
+      const selfieB64 = typeof GPS0_Avatar !== 'undefined' ? GPS0_Avatar.getSelfie() : null;
+      const luneNames = ['','Verre','Cendre','Lierre','Givre','Ombre','Fer','Tempête','Cristal','Éclipse'];
+      const luneEmojis = ['','🌑','🌒','🌓','🌔','🌕','🌖','🌗','🌘','🌑'];
+      const n = niveau || 1;
+      // Draw selfie on canvas
+      const cosmoHtml = selfieB64
+        ? `<canvas id="cdCountCv" width="72" height="72" class="countdown-cosmo" style="border-radius:50%;border:3px solid rgba(79,195,247,.7)"></canvas>`
+        : `<div class="countdown-cosmo" style="background:rgba(79,195,247,.2);border-radius:50%;width:72px;height:72px;border:3px solid rgba(79,195,247,.7);display:flex;align-items:center;justify-content:center;font-size:2.5rem">🚀</div>`;
+      const luneLabel = `<div style="font-size:1.1rem;color:rgba(200,162,200,.9);font-weight:bold;letter-spacing:.05em">${luneEmojis[n]} Lune ${luneNames[n] || n}</div>`;
+      ov.innerHTML = cosmoHtml + luneLabel + '<div id="cdNum" class="countdown-num">5</div>';
+      ov.style.cssText = 'position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px';
+      document.body.appendChild(ov);
+
+      // Draw selfie if available
+      if (selfieB64) {
+        const cvEl = document.getElementById('cdCountCv');
+        if (cvEl) {
+          const img = new Image();
+          img.onload = () => {
+            const ctx = cvEl.getContext('2d');
+            ctx.beginPath(); ctx.arc(36, 36, 33, 0, Math.PI * 2); ctx.clip();
+            ctx.drawImage(img, 0, 0, 72, 72);
+          };
+          img.src = selfieB64;
+        }
+      }
+
+      const numEl = document.getElementById('cdNum');
+      let count = 5;
+      const tick = () => {
+        if (!numEl) return;
+        if (count > 0) {
+          numEl.textContent = count;
+          numEl.className = 'countdown-num';
+          void numEl.offsetWidth; // reflow
+          numEl.className = 'countdown-num';
+          count--;
+          setTimeout(tick, 1000);
+        } else {
+          numEl.textContent = 'GO!';
+          numEl.className = 'countdown-go';
+          setTimeout(() => { ov.remove(); resolve(); }, 600);
+        }
+      };
+      setTimeout(tick, 200);
+    });
   }
 
   // === HORLOGE GLOBALE (pause pendant mini-jeux) ===
@@ -590,12 +646,28 @@ window.GPS0_App = (() => {
     document.getElementById('res-titre').textContent = succes ? 'Lune complétée !' : 'Presque...';
     document.getElementById('res-poussieres').textContent = poussieres > 0 ? '+' + poussieres + ' ✨' : '';
     overlay.style.display = 'flex';
+    // Détecter si c'est la dernière zone (level 9 / final)
+    const currentZone = GPS0_GPS.zoneActuelle();
+    const isFinalZone = !!(currentZone && currentZone.final);
+    const finaleBtn = document.getElementById('res-finale');
+    const suivantBtn = document.getElementById('res-suivant');
+    const recompenseBtn = document.getElementById('res-recompense');
+    if (isFinalZone) {
+      // Cacher suivant+recompense, montrer finale
+      if (suivantBtn) suivantBtn.style.display = 'none';
+      if (recompenseBtn) recompenseBtn.style.display = 'none';
+      if (finaleBtn) finaleBtn.style.display = '';
+    } else {
+      if (suivantBtn) suivantBtn.style.display = '';
+      if (recompenseBtn) recompenseBtn.style.display = '';
+      if (finaleBtn) finaleBtn.style.display = 'none';
+    }
     // Bind result buttons
     document.getElementById('res-rejouer').onclick = () => {
       overlay.style.display = 'none';
       if (_resultNiveau) _lancerMiniJeu(_resultNiveau);
     };
-    document.getElementById('res-recompense').onclick = () => {
+    if (recompenseBtn) recompenseBtn.onclick = () => {
       overlay.style.display = 'none';
       if (poussieres > 0) { GPS0_Economie.ajouterPoussieres(poussieres); GPS0_Economie.updateHUD(); }
       if (_resultNiveau) GPS0_Economie.setCooldown(_resultNiveau);
@@ -603,13 +675,20 @@ window.GPS0_App = (() => {
       document.getElementById('btn-prochain-point').hidden = true;
       GPS0_GPS.zoneSuivante(); _majObjectif();
       GPS0_Boussole.forceEtat('off');
+      _resumeGlobalClock();
     };
-    document.getElementById('res-suivant').onclick = () => {
+    if (suivantBtn) suivantBtn.onclick = () => {
       overlay.style.display = 'none';
       document.getElementById('btn-jouer-haut').hidden = true;
       document.getElementById('btn-prochain-point').hidden = true;
       GPS0_GPS.zoneSuivante(); _majObjectif();
       GPS0_Boussole.forceEtat('off');
+      _resumeGlobalClock();
+    };
+    if (finaleBtn) finaleBtn.onclick = () => {
+      overlay.style.display = 'none';
+      if (poussieres > 0) { GPS0_Economie.ajouterPoussieres(poussieres); GPS0_Economie.updateHUD(); }
+      GPS0_Finale && GPS0_Finale.lancer && GPS0_Finale.lancer();
     };
   }
 

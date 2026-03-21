@@ -56,8 +56,9 @@ window.GPS0_Lune = (() => {
       "Meme les aliens rigolent de tes trajectoires."
     ]
   };
-  const COOLDOWN = 60000;
-  let cooling = false, tId = null, dernierT = 0;
+  const DISPLAY_MS = 13000; // durée affichage popup
+  const MIN_GAP_MS = 8000;  // délai minimum entre deux popups
+  let _queue = [], _processing = false, _lastShown = 0, tId = null;
 
   function _loadVus() { try { return JSON.parse(localStorage.getItem('gps0_lune_repliques_vues') || '{}'); } catch { return {}; } }
   function _saveVus(v) { try { localStorage.setItem('gps0_lune_repliques_vues', JSON.stringify(v)); } catch {} }
@@ -77,28 +78,42 @@ window.GPS0_Lune = (() => {
     return pool[real];
   }
 
-  function parler(cat) {
-    const now = Date.now();
-    if (cooling || (now - dernierT) < COOLDOWN) return;
+  function _afficher(cat) {
     // Ne pas afficher en zone bleue (bouton JOUER visible, superposition)
-    if (typeof GPS0_Boussole !== 'undefined' && GPS0_Boussole.getEtat() === 'zone') return;
-    cooling = true; dernierT = now;
+    if (typeof GPS0_Boussole !== 'undefined' && GPS0_Boussole.getEtat() === 'zone') {
+      _processing = false; _dequeux(); return;
+    }
     const bulle = document.getElementById('lune-bulle');
     const txt = document.getElementById('lune-texte');
-    if (!bulle || !txt) return;
+    if (!bulle || !txt) { _processing = false; _dequeux(); return; }
     txt.textContent = pick(cat);
     bulle.classList.add('visible');
     GPS0_Audio && GPS0_Audio.playSFX('lune_apparait');
+    _lastShown = Date.now();
     clearTimeout(tId);
-    tId = setTimeout(() => { bulle.classList.remove('visible'); cooling = false; }, 20000);
-    // Bouton fermer manuel
+    const _fermer = () => {
+      clearTimeout(tId);
+      bulle.classList.remove('visible');
+      setTimeout(() => { _processing = false; _dequeux(); }, 400);
+    };
+    tId = setTimeout(_fermer, DISPLAY_MS);
     const closeBtn = document.getElementById('lune-close');
     if (closeBtn) {
-      const handler = () => { clearTimeout(tId); bulle.classList.remove('visible'); cooling = false; };
       closeBtn.removeEventListener('click', closeBtn._luneCb);
-      closeBtn._luneCb = handler;
-      closeBtn.addEventListener('click', handler, { once: true });
+      closeBtn._luneCb = _fermer;
+      closeBtn.addEventListener('click', _fermer, { once: true });
     }
+  }
+
+  function _dequeux() {
+    if (_queue.length === 0) { _processing = false; return; }
+    const wait = Math.max(0, MIN_GAP_MS - (Date.now() - _lastShown));
+    setTimeout(() => { const cat = _queue.shift(); _afficher(cat); }, wait);
+  }
+
+  function parler(cat) {
+    _queue.push(cat);
+    if (!_processing) { _processing = true; _dequeux(); }
   }
 
   let _survId = null;

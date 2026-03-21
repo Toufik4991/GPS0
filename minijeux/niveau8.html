@@ -7,42 +7,42 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:#0A0A1A;color:#fff;font-family:system-ui,sans-serif;overflow:hidden;height:100dvh;display:flex;flex-direction:column;touch-action:none;user-select:none}
-#hud{display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(0,0,0,.5);flex-shrink:0;z-index:10}
-#lives{font-size:1.3rem;letter-spacing:2px}
+#bg{position:fixed;inset:0;z-index:0;background:radial-gradient(ellipse at 30% 60%,rgba(0,150,200,0.12) 0%,transparent 50%),radial-gradient(ellipse at 70% 30%,rgba(200,0,150,0.08) 0%,transparent 50%),linear-gradient(135deg,#050814 0%,#081020 100%);}
+#hud{position:relative;z-index:20;display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(0,0,0,.65);flex-shrink:0;backdrop-filter:blur(6px)}
+#lives{font-size:1.2rem;letter-spacing:2px}
 #timer{flex:1;text-align:center;font-size:1rem;font-weight:bold;color:#4FC3F7}
-#score-hud{font-size:.9rem;color:#FFD700}
-#game-container{flex:1;position:relative;overflow:hidden}
+#score-hud{font-size:.9rem;color:#FFD700;font-weight:bold}
+#game-container{flex:1;position:relative;overflow:hidden;z-index:1}
 canvas{display:block;width:100%;height:100%}
-#overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(10,10,26,.88);z-index:20;gap:14px;text-align:center;padding:24px}
-#overlay h2{font-size:1.8rem;color:var(--accent,#C8A2C8)}
-#overlay p{font-size:.9rem;color:rgba(255,255,255,.8);max-width:280px}
+#overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,.88);z-index:20;gap:14px;text-align:center;padding:24px}
+#overlay h2{font-size:1.8rem;color:#C8A2C8}
+#overlay p{font-size:.9rem;color:rgba(255,255,255,.8);max-width:280px;line-height:1.5}
 #overlay .btn{padding:12px 32px;border:none;border-radius:14px;font-size:1rem;font-weight:bold;cursor:pointer;background:linear-gradient(135deg,#C8A2C8,#8860a8);color:#fff}
-#selfie-anchor{position:absolute;z-index:5;pointer-events:none}
-
 :root{--accent:#C8A2C8;--gold:#FFD700;--blue:#4FC3F7}
+
 </style>
 </head>
 <body>
+<div id="bg"></div>
 <div id="hud">
-  <span id="lives">&#10084;&#10084;&#10084;</span>
+  <span id="lives">❤❤❤</span>
   <span id="timer">3:00</span>
-  <span id="score-hud">0 &#10024;</span>
+  <span id="score-hud">0 ✨</span>
 </div>
 <div id="game-container">
   <canvas id="cv"></canvas>
-  
+
   <div id="overlay">
     <div style="font-size:3rem">🌘</div>
     <h2>Lune de Cristal</h2>
-    <p>Swipe ou utilise les flèches pour traverser.<br>Évite les voitures et l'eau !</p>
-    <button class="btn" id="btn-start">C&#8217;est parti !</button>
+    <p>Swipe haut pour avancer, gauche/droite pour bifurquer.<br>Évite les vagues de cristaux.<br>Saute sur les plateformes en zone rivière.</p>
+    <button class="btn" id="btn-start">C'est parti&nbsp;!</button>
   </div>
-  <canvas id="selfie-cv" width="48" height="48" style="display:none" aria-hidden="true"></canvas>
+  <canvas id="selfie-cv" width="64" height="64" style="display:none" aria-hidden="true"></canvas>
 </div>
 <script>
-// === COMMON ENGINE ===
+// ── COMMON ENGINE ──
 const NIVEAU = 8;
-const DUST_REWARD = (8 === 9) ? 50 : (5 + 8 * 5);
 let lives = 3, dust = 0, running = false, gameover = false;
 let timerSec = 180, timerInterval = null;
 const livesEl = document.getElementById('lives');
@@ -50,292 +50,278 @@ const timerEl = document.getElementById('timer');
 const scoreEl = document.getElementById('score-hud');
 const overlay = document.getElementById('overlay');
 const btnStart = document.getElementById('btn-start');
-
-function updateLivesHUD() {
-  livesEl.textContent = '\u2764'.repeat(lives) + '\u2661'.repeat(Math.max(0, 3 - lives));
-}
-
-function updateTimer() {
-  const m = Math.floor(timerSec / 60), s = timerSec % 60;
-  timerEl.textContent = m + ':' + String(s).padStart(2,'0');
-}
-
-function addDust(n) {
-  dust += n;
-  scoreEl.textContent = dust + ' \u2728';
-}
-
-function loseLife() {
-  if (!running) return;
-  lives--;
-  updateLivesHUD();
-  if (lives <= 0) endGame(false);
-}
-
-function endGame(success) {
-  if (gameover) return;
-  gameover = true;
-  running = false;
-  clearInterval(timerInterval);
-  const finalDust = success ? dust + DUST_REWARD : Math.floor(dust * 0.5);
-  setTimeout(() => {
-    window.parent.postMessage({
-      source: 'gps0_minijeu',
-      success: success,
-      niveau: NIVEAU,
-      poussieres: finalDust
-    }, '*');
-  }, 800);
-}
-
-function startTimer() {
-  updateTimer();
-  timerInterval = setInterval(() => {
-    if (!running) return;
-    timerSec--;
-    updateTimer();
-    if (timerSec <= 0) endGame(false);
-  }, 1000);
-}
-
-// Load selfie
-const selfieCanvas = document.getElementById('selfie-cv');
-const selfieCtx = selfieCanvas.getContext('2d');
-(function loadSelfie() {
-  const data = localStorage.getItem('gps0_avatar_selfie_base64');
-  if (!data) return;
-  const img = new Image();
-  img.onload = () => {
-    selfieCtx.save();
-    selfieCtx.beginPath();
-    selfieCtx.arc(24, 24, 24, 0, Math.PI * 2);
-    selfieCtx.clip();
-    selfieCtx.drawImage(img, 0, 0, 48, 48);
-    selfieCtx.restore();
-  };
-  img.src = data;
-})();
-
-// Tuto overlay auto-dismiss after 5s
-let tutoDismissed = false;
-btnStart.addEventListener('click', startGame);
-setTimeout(() => { if (!tutoDismissed) startGame(); }, 5000);
-
-function startGame() {
-  if (tutoDismissed) return;
-  tutoDismissed = true;
-  overlay.style.display = 'none';
-  running = true;
-  startTimer();
-  initGame();
-}
-
-// === GAME LOGIC ===
-
 const cv = document.getElementById('cv');
 const ctx = cv.getContext('2d');
-let W, H;
-function resize() { W = cv.width = cv.offsetWidth; H = cv.height = cv.offsetHeight; }
-window.addEventListener('resize', () => { resize(); if(running) drawAll(); });
 
-const CELL_SIZE = 60, ROWS_VISIBLE = 10;
-let px, py, targetPx, targetPy, moving, lanes, dustItems, camOffsetY, stepCount;
-let swipeStart = null;
+function updateLivesHUD(){livesEl.textContent='❤'.repeat(lives)+'♡'.repeat(Math.max(0,3-lives));}
+function updateTimer(){const m=Math.floor(timerSec/60),s=timerSec%60;timerEl.textContent=m+':'+(s<10?'0':'')+s;}
+function addDust(n){dust+=n;scoreEl.textContent=dust+' ✨';}
+function loseLife(){if(!running)return;lives--;updateLivesHUD();if(lives<=0)endGame(false);}
 
-function initGame() {
-  resize();
-  px = Math.floor(W / CELL_SIZE / 2);
-  py = ROWS_VISIBLE - 2;
-  targetPx = px; targetPy = py;
-  moving = false;
-  camOffsetY = 0;
-  stepCount = 0;
-  lanes = [];
-  dustItems = [];
-  for (let r = 0; r < ROWS_VISIBLE + 5; r++) generateLane(r);
-  loop();
+function calcDust(){
+  const played = 180 - timerSec;
+  let base;
+  if(played < 30) base = 1 + Math.floor(Math.random()*5);
+  else if(played < 60) base = 5 + Math.floor(Math.random()*10);
+  else if(played < 120) base = 15 + Math.floor(Math.random()*15);
+  else if(played < 150) base = 30 + Math.floor(Math.random()*10);
+  else base = 40 + Math.floor(Math.random()*10);
+  return Math.min(50, base + dust);
 }
 
-function generateLane(row) {
-  const types = ['safe', 'safe', 'road', 'road', 'road', 'water'];
-  const type = row < 2 ? 'safe' : types[Math.floor(Math.random() * types.length)];
-  const cars = [];
-  const logs = [];
-  if (type === 'road') {
-    const dir = Math.random() < 0.5 ? 1 : -1;
-    const count = 1 + Math.floor(Math.random() * 3);
-    const speed = 1 + Math.random() * 2;
-    for (let i = 0; i < count; i++) cars.push({ x: Math.random() * (W / CELL_SIZE), dir, speed });
-  }
-  if (type === 'water') {
-    const dir = Math.random() < 0.5 ? 1 : -1;
-    const count = 2 + Math.floor(Math.random() * 3);
-    const speed = 0.8 + Math.random();
-    for (let i = 0; i < count; i++) logs.push({ x: i * 5 * Math.random() * (W / CELL_SIZE), dir, speed, w: 2 + Math.floor(Math.random() * 2) });
-  }
-  const hasDust = type === 'safe' && Math.random() < 0.3;
-  if (hasDust) dustItems.push({ col: Math.floor(Math.random() * Math.floor(W / CELL_SIZE)), row, alive: true });
-  lanes.push({ type, cars, logs, row });
+function endGame(success){
+  if(gameover)return;
+  gameover=true; running=false;
+  clearInterval(timerInterval);
+  const finalDust = success ? Math.min(60, calcDust() + 10) : calcDust();
+  setTimeout(()=>{
+    window.parent.postMessage({source:'gps0_minijeu',success,niveau:NIVEAU,poussieres:finalDust},'*');
+  }, 600);
 }
 
-function loop() {
-  if (!running) return;
-  updateLane();
-  drawAll();
+function startTimer(){
+  updateTimer();
+  timerInterval=setInterval(()=>{
+    if(!running)return;
+    timerSec--;updateTimer();
+    if(timerSec<=0)endGame({'9':true}.hasOwnProperty(String(NIVEAU)) ? false : false);
+  },1000);
+}
+
+// Selfie canvas
+let selfieImg = null;
+function loadSelfie(){
+  const b64 = localStorage.getItem('gps0_avatar_selfie_base64');
+  if(!b64)return;
+  const img = new Image();
+  img.onload = ()=>{ selfieImg = img; };
+  img.src = b64;
+}
+loadSelfie();
+
+function drawSelfie(x, y, r){
+  if(!selfieImg)return;
+  ctx.save();
+  ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.clip();
+  ctx.drawImage(selfieImg, x-r, y-r, r*2, r*2);
+  ctx.restore();
+}
+
+function drawCosmonaut(x, y, r, angle){
+  ctx.save();
+  ctx.translate(x, y);
+  if(angle)ctx.rotate(angle);
+  // Body (suit)
+  ctx.beginPath();
+  ctx.ellipse(0, r*0.5, r*0.55, r*0.7, 0, 0, Math.PI*2);
+  ctx.fillStyle='#dde4ee'; ctx.fill();
+  // Helmet
+  ctx.beginPath(); ctx.arc(0, -r*0.15, r*0.55, 0, Math.PI*2);
+  ctx.fillStyle='rgba(60,120,200,0.3)'; ctx.fill();
+  ctx.beginPath(); ctx.arc(0, -r*0.15, r*0.55, 0, Math.PI*2);
+  ctx.strokeStyle='#8ab4d4'; ctx.lineWidth=2; ctx.stroke();
+  // Selfie face
+  if(selfieImg){
+    ctx.save(); ctx.beginPath(); ctx.arc(0,-r*0.15,r*0.45,0,Math.PI*2); ctx.clip();
+    ctx.drawImage(selfieImg,-r*0.45,-r*0.6,r*0.9,r*0.9); ctx.restore();
+  } else {
+    ctx.fillStyle='rgba(79,195,247,.5)';
+    ctx.beginPath(); ctx.arc(0,-r*0.15,r*0.4,0,Math.PI*2); ctx.fill();
+  }
+  ctx.restore();
+}
+
+function resizeCanvas(){
+  const gc = document.getElementById('game-container');
+  cv.width = gc.clientWidth; cv.height = gc.clientHeight;
+}
+resizeCanvas();
+window.addEventListener('resize', ()=>{resizeCanvas(); if(running) onResize && onResize();});
+
+btnStart.addEventListener('click', ()=>{
+  overlay.style.display='none';
+  running=true;
+  startTimer();
+  gameStart();
+}, {once:true});
+
+// ── GAME SPECIFIC ──
+
+const CELL_W=60, CELL_H=48;
+let cosmo = {col:0, row:0};
+let worldRow = 0; // how many rows scrolled
+let lanes = []; // generated lanes
+let dustItems = [], particles = [];
+let idleTimer = 0, frameCount = 0;
+let camOffY = 0;
+
+function genLane(row) {
+  if(row === 0) return {type:'safe',crystals:[]};
+  const rng=Math.random();
+  if(rng<0.15) return {type:'safe',crystals:[]};
+  if(rng<0.5) {
+    const dir=Math.random()<.5?1:-1;
+    const spd=1+Math.random()*2.5;
+    const crystals=[];
+    const count=2+Math.floor(Math.random()*3);
+    for(let i=0;i<count;i++) crystals.push({x:(i*4+Math.random()*3)*CELL_W,vx:spd*dir,w:CELL_W*0.7,h:CELL_H*0.6,col:`hsl(${170+Math.random()*80},80%,65%)`});
+    return {type:'crystal',crystals};
+  }
+  // River
+  const dir=Math.random()<.5?1:-1;
+  const spd=0.8+Math.random()*1.2;
+  const platforms=[];
+  for(let i=0;i<3;i++) platforms.push({x:i*CELL_W*2.5+Math.random()*CELL_W,vx:spd*dir,w:CELL_W*1.2,h:CELL_H*0.5});
+  return {type:'river',platforms};
+}
+
+function gameStart() {
+  const W=cv.width, H=cv.height;
+  const COLS=Math.ceil(W/CELL_W)+1;
+  cosmo.col=Math.floor(COLS/2); cosmo.row=0; worldRow=0;
+  lanes=[]; dustItems=[]; particles=[]; idleTimer=0; frameCount=0;
+  // Generate initial lanes
+  for(let r=-1;r<20;r++) lanes.push({row:r,...genLane(r)});
+
+  let swipeStart=null;
+  cv.addEventListener('pointerdown',e=>{swipeStart={x:e.clientX,y:e.clientY};idleTimer=0;});
+  cv.addEventListener('pointerup',e=>{
+    if(!swipeStart||!running)return;
+    const dx=e.clientX-swipeStart.x, dy=e.clientY-swipeStart.y;
+    if(Math.abs(dx)>Math.abs(dy)){
+      if(dx>20)moveCosmo(1,0); else if(dx<-20)moveCosmo(-1,0);
+    } else {
+      if(dy<-20)moveCosmo(0,-1); else if(dy>20)moveCosmo(0,1);
+    }
+    swipeStart=null;
+  });
+
   requestAnimationFrame(loop);
 }
 
-let interp = 0;
-let fromPx, fromPy;
+const COLS_GRID=()=>Math.ceil(cv.width/CELL_W)+1;
 
-function move(dc, dr) {
-  if (moving) return;
-  const nx = px + dc, ny = py + dr;
-  const cols = Math.floor(W / CELL_SIZE);
-  if (nx < 0 || nx >= cols) return;
-  fromPx = px; fromPy = py;
-  targetPx = nx; targetPy = ny;
-  moving = true; interp = 0;
-  stepCount++;
-}
-
-function updateLane() {
-  // Interpolate movement
-  if (moving) {
-    interp += 0.15;
-    if (interp >= 1) { px = targetPx; py = targetPy; moving = false; interp = 1; }
-  }
-
-  // Camera: follow player forward
-  const realRow = py + camOffsetY;
-  if (targetPy < 2) {
-    camOffsetY++;
-    // Generate new lane at top
-    const topRow = lanes[0].row - 1;
-    generateLane(topRow);
-    lanes.sort((a, b) => a.row - b.row);
-    // Add dust check
-    if (camOffsetY > 100) { endGame(true); return; }
-  }
-
-  // Move cars and logs
-  const cols = Math.floor(W / CELL_SIZE);
-  for (const lane of lanes) {
-    for (const c of lane.cars) {
-      c.x += c.dir * c.speed * 0.03;
-      if (c.x > cols + 2) c.x = -2;
-      if (c.x < -2) c.x = cols + 2;
-    }
-    for (const l of lane.logs) {
-      l.x += l.dir * l.speed * 0.025;
-      if (l.x > cols + 4) l.x = -4;
-      if (l.x < -4) l.x = cols + 4;
-    }
-  }
-
-  // Collision
-  const effPx = moving ? fromPx + (targetPx - fromPx) * interp : px;
-  const effPy = moving ? fromPy + (targetPy - fromPy) * interp : py;
-  const lane = lanes.find(l => l.row === Math.round(effPy));
-  if (lane) {
-    if (lane.type === 'road') {
-      for (const c of lane.cars) {
-        if (Math.abs(c.x - effPx) < 1.2) { loseLife(); if(lives>0){px=Math.floor(W/CELL_SIZE/2);py=ROWS_VISIBLE-2;targetPx=px;targetPy=py;camOffsetY=0;} return; }
-      }
-    }
-    if (lane.type === 'water') {
-      let onLog = false;
-      for (const l of lane.logs) { if (effPx >= l.x - 0.5 && effPx <= l.x + l.w + 0.5) { onLog = true; break; } }
-      if (!onLog) { loseLife(); if(lives>0){px=Math.floor(W/CELL_SIZE/2);py=ROWS_VISIBLE-2;targetPx=px;targetPy=py;camOffsetY=0;} return; }
-    }
-  }
-
-  // Collect dust
-  for (const d of dustItems) {
-    if (!d.alive) continue;
-    if (d.col === Math.round(effPx) && d.row === Math.round(effPy)) { d.alive = false; addDust(12); }
+function moveCosmo(dc,dr) {
+  const nc=cosmo.col+dc, nr=cosmo.row+dr;
+  if(nc<0||nc>=COLS_GRID())return;
+  cosmo.col=nc; cosmo.row=nr; idleTimer=0;
+  addDust(1);
+  // Advance world if player moves up
+  if(nr < worldRow + 3) {
+    // Scroll up
+    worldRow = nr - 3;
+    // Generate more lanes ahead
+    const topRow=lanes.reduce((mn,l)=>Math.min(mn,l.row),999);
+    while(topRow > worldRow - 8) lanes.push({row:topRow-1,...genLane(Math.abs(topRow-1))});
+    lanes=lanes.filter(l=>l.row<worldRow+20);
   }
 }
 
-function drawAll() {
-  ctx.fillStyle = '#0a1a0a'; ctx.fillRect(0, 0, W, H);
-  const cols = Math.floor(W / CELL_SIZE);
-  const effPx = moving ? fromPx + (targetPx - fromPx) * interp : px;
-  const effPy = moving ? fromPy + (targetPy - fromPy) * interp : py;
+function loop() {
+  if(!running)return;
+  requestAnimationFrame(loop);
+  const W=cv.width, H=cv.height;
+  frameCount++; idleTimer++;
 
-  for (const lane of lanes) {
-    const screenRow = lane.row - effPy + ROWS_VISIBLE * 0.7;
-    const sy = screenRow * CELL_SIZE;
-    if (sy < -CELL_SIZE || sy > H + CELL_SIZE) continue;
+  // Idle push back
+  if(idleTimer>180){cosmo.row++;idleTimer=0;}
 
+  // Move crystals/platforms
+  lanes.forEach(lane=>{
+    if(lane.type==='crystal') lane.crystals.forEach(c=>{c.x+=c.vx;if(c.x>W+100)c.x=-c.w-50;if(c.x<-c.w-100)c.x=W+50;});
+    if(lane.type==='river') lane.platforms.forEach(p=>{p.x+=p.vx;if(p.x>W+100)p.x=-p.w-50;if(p.x<-p.w-100)p.x=W+50;});
+  });
+
+  // Camera smooth scroll
+  const targetCamY = H/2 - (cosmo.row - worldRow)*CELL_H;
+  camOffY += (targetCamY - camOffY) * 0.12;
+
+  // Check collision / death
+  const playerX = cosmo.col*CELL_W + CELL_W/2;
+  const lane = lanes.find(l=>l.row===cosmo.row);
+  if(lane) {
+    if(lane.type==='crystal') {
+      lane.crystals.forEach(c=>{
+        const cx=c.x+c.w/2, cy=0;
+        const px=playerX;
+        if(Math.abs(px-cx)<c.w/2+20){
+          // Hit crystal → push back 3 rows
+          cosmo.row+=3; idleTimer=0;
+          for(let i=0;i<8;i++)particles.push({x:playerX,y:camOffY,vx:(Math.random()-.5)*5,vy:-3+Math.random()*2,life:24,col:'rgba(150,220,255,0.9)'});
+        }
+      });
+    }
+    if(lane.type==='river') {
+      // Must be on a platform
+      let onPlatform=false;
+      lane.platforms.forEach(p=>{if(playerX>p.x&&playerX<p.x+p.w)onPlatform=true;});
+      if(!onPlatform) loseLife();
+    }
+  }
+
+  // Dust collection
+  if(frameCount%90===0) {
+    dustItems.push({x:cosmo.col*CELL_W+CELL_W/2+(Math.random()-.5)*CELL_W*3,row:cosmo.row-2-Math.floor(Math.random()*4),col:false});
+  }
+  dustItems.forEach(d=>{
+    if(d.col)return;
+    if(d.row===cosmo.row&&Math.abs(d.x-playerX)<CELL_W*0.7){d.col=true;addDust(5);for(let i=0;i<5;i++)particles.push({x:d.x,y:0,vx:(Math.random()-.5)*4,vy:-3,life:20,col:'#FFD700'});}
+  });
+  dustItems=dustItems.filter(d=>!d.col&&d.row>=worldRow-2);
+
+  // Draw
+  ctx.clearRect(0,0,W,H);
+
+  // BG prismatic
+  const bgGrd=ctx.createLinearGradient(0,0,W,H);
+  bgGrd.addColorStop(0,'rgba(10,5,30,0.95)');
+  bgGrd.addColorStop(1,'rgba(5,20,40,0.95)');
+  ctx.fillStyle=bgGrd; ctx.fillRect(0,0,W,H);
+
+  // Lanes
+  lanes.forEach(lane=>{
+    const laneY=(lane.row-worldRow)*CELL_H+camOffY;
+    if(laneY<-CELL_H*2||laneY>H+CELL_H)return;
     // Lane BG
-    if (lane.type === 'road') ctx.fillStyle = '#1a1a1a';
-    else if (lane.type === 'water') ctx.fillStyle = '#0a2a4a';
-    else ctx.fillStyle = '#0a2a0a';
-    ctx.fillRect(0, sy, W, CELL_SIZE);
-
-    // Lane details
-    if (lane.type === 'road') {
-      ctx.strokeStyle = 'rgba(255,255,100,.15)'; ctx.lineWidth = 2; ctx.setLineDash([20,20]);
-      ctx.beginPath(); ctx.moveTo(0, sy + CELL_SIZE/2); ctx.lineTo(W, sy + CELL_SIZE/2); ctx.stroke(); ctx.setLineDash([]);
-      for (const c of lane.cars) {
-        const cx = c.x * CELL_SIZE;
-        ctx.fillStyle = c.dir > 0 ? '#ff4444' : '#4444ff';
-        ctx.fillRect(cx, sy + 8, CELL_SIZE * 1.5, CELL_SIZE - 16);
-        ctx.font = '22px serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
-        ctx.fillText(c.dir > 0 ? '🚗' : '🚕', cx + CELL_SIZE * 0.75, sy + CELL_SIZE/2);
-      }
-    } else if (lane.type === 'water') {
-      for (const l of lane.logs) {
-        ctx.fillStyle = '#8B5E3C';
-        ctx.fillRect(l.x * CELL_SIZE, sy + 10, l.w * CELL_SIZE, CELL_SIZE - 20);
-      }
-    } else {
-      // Trees on sides
+    if(lane.type==='safe'){ctx.fillStyle='rgba(30,50,80,0.6)';ctx.fillRect(0,laneY,W,CELL_H);}
+    if(lane.type==='crystal'){ctx.fillStyle='rgba(10,20,40,0.7)';ctx.fillRect(0,laneY,W,CELL_H);
+      lane.crystals.forEach(c=>{
+        const grad=ctx.createLinearGradient(c.x,laneY,c.x+c.w,laneY+c.h);
+        grad.addColorStop(0,c.col); grad.addColorStop(1,'rgba(255,255,255,0.3)');
+        ctx.fillStyle=grad; ctx.fillRect(c.x,laneY+CELL_H*0.2,c.w,c.h);
+        ctx.strokeStyle='rgba(255,255,255,0.5)';ctx.lineWidth=1;ctx.strokeRect(c.x,laneY+CELL_H*0.2,c.w,c.h);
+      });
     }
-
-    // Dust
-    for (const d of dustItems) {
-      if (!d.alive || d.row !== lane.row) continue;
-      ctx.font = '22px serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
-      ctx.fillText('✨', d.col * CELL_SIZE + CELL_SIZE/2, sy + CELL_SIZE/2);
+    if(lane.type==='river'){
+      ctx.fillStyle='rgba(20,60,120,0.7)';ctx.fillRect(0,laneY,W,CELL_H);
+      lane.platforms.forEach(p=>{ctx.fillStyle='rgba(150,220,255,0.8)';ctx.fillRect(p.x,laneY+CELL_H*0.2,p.w,p.h);});
     }
-  }
+  });
 
-  // Player
-  const spx = effPx * CELL_SIZE + CELL_SIZE/2;
-  const spy = ROWS_VISIBLE * 0.7 * CELL_SIZE + CELL_SIZE/2;
-  if (selfieCanvas.width > 0 && selfieCtx.getImageData(0,0,1,1).data[3] > 0) {
-    ctx.save(); ctx.beginPath(); ctx.arc(spx, spy, 24, 0, Math.PI*2); ctx.clip();
-    ctx.drawImage(selfieCanvas, spx-24, spy-24, 48, 48); ctx.restore();
-  } else {
-    ctx.font = '40px serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
-    ctx.fillText('🐸', spx, spy);
-  }
+  // Grid lines
+  ctx.strokeStyle='rgba(100,150,200,0.1)';ctx.lineWidth=1;
+  for(let x=0;x<W;x+=CELL_W){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
 
-  // Step counter
-  ctx.fillStyle = 'rgba(255,255,255,.5)'; ctx.font = '13px sans-serif'; ctx.textAlign='right'; ctx.textBaseline='top';
-  ctx.fillText(`${stepCount} pas`, W-10, 10);
+  // Dust
+  dustItems.forEach(d=>{
+    if(d.col)return;
+    const dy2=(d.row-worldRow)*CELL_H+camOffY+CELL_H/2;
+    ctx.fillStyle='#FFD700';ctx.font='16px system-ui';ctx.textAlign='center';ctx.fillText('✨',d.x,dy2+5);
+  });
+
+  // Particles
+  particles=particles.filter(p=>p.life>0);
+  particles.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.1;p.life--;ctx.fillStyle=p.col;ctx.globalAlpha=p.life/24;ctx.beginPath();ctx.arc(p.x,p.y,4,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;});
+
+  // Cosmonaut
+  const cosmoX=cosmo.col*CELL_W+CELL_W/2;
+  const cosmoY=(cosmo.row-worldRow)*CELL_H+camOffY+CELL_H/2;
+  drawCosmonaut(cosmoX,cosmoY,22,0);
+
+  // Score (rows advanced)
+  ctx.fillStyle='rgba(255,255,255,.5)';ctx.font='12px system-ui';ctx.textAlign='right';
+  ctx.fillText('Avancée: '+Math.max(0,-cosmo.row),W-8,H-10);
 }
-
-// Swipe controls
-cv.addEventListener('touchstart', e => { e.preventDefault(); const t = e.touches[0]; swipeStart = { x: t.clientX, y: t.clientY }; }, { passive: false });
-cv.addEventListener('touchend', e => {
-  e.preventDefault();
-  if (!swipeStart || !running) return;
-  const t = e.changedTouches[0];
-  const dx = t.clientX - swipeStart.x, dy = t.clientY - swipeStart.y;
-  if (Math.abs(dx) > Math.abs(dy)) { if (dx > 20) move(1, 0); else if (dx < -20) move(-1, 0); }
-  else { if (dy < -20) move(0, -1); else if (dy > 20) move(0, 1); }
-  swipeStart = null;
-}, { passive: false });
-window.addEventListener('keydown', e => {
-  if (!running) return;
-  if (e.key === 'ArrowLeft') move(-1, 0);
-  if (e.key === 'ArrowRight') move(1, 0);
-  if (e.key === 'ArrowUp') move(0, -1);
-  if (e.key === 'ArrowDown') move(0, 1);
-});
 
 </script>
 </body>

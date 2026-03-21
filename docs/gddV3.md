@@ -1,9 +1,62 @@
 # 🌙 GPS0 — Game Design Document v3.0
 
-**Version :** 3.9.0 - Bug 12 : Refonte mini-jeux + UI Lunaire + Navigation GPS améliorée
-**Date :** 22/03/2026
+**Version :** 3.10.0 - Bug 13 : Méga-correctif UI/UX + 9 mini-jeux refontes
+**Date :** 23/03/2026
 **Auteur :** Toufik49
-**Statut :** Opérationnel - Bug 12 appliqué intégralement
+**Statut :** Opérationnel - Bug 13 appliqué intégralement
+
+---
+
+## Changements v3.10.0 (Bug 13)
+
+### B. Pop-ups Lune
+- Fond opaque `rgba(0,0,0,0.85)`, texte blanc gras
+- Durée d'affichage : **13 secondes**
+- Délai minimum entre deux pop-ups : **8 secondes** (système de queue FIFO)
+
+### C. Énergie HUD
+- Emoji ⚡ remplacé par **SVG éclair doré** (#FFD700) avec drop-shadow lumineux
+
+### D. SVG flottants cosmos
+- Opacité globale réduite de **-40%** sur tous les éléments flottants
+- Zone d'exclusion autour du centre portée à **250px** (était 180px)
+
+### E. Halos astéroïde
+- Keyframes de lueur améliorées : `drop-shadow` plus intense + `transform:scale(1.15)` au pic
+- Couleurs par zone : rouge / orange / vert / bleu
+
+### F. État astéroïde
+- **Inactif** (`data-etat="off"`) : `grayscale(1) brightness(0.5)`, animation en pause
+- **Actif zone** (`data-etat="zone"`) : animation 2s, lueur vive
+
+### G. Compte à rebours avant mini-jeu
+- Overlay fullscreen 5→4→3→2→1→GO! avant chaque mini-jeu
+- Affiche selfie du cosmonaute + nom de la lune
+
+### H. Économie poussières (mini-jeux)
+- Formule temps-basée : `poussieres = calcDust()` variant selon temps joué
+- Palette : 1-6pts (<30s) → 5-15pts (<60s) → 15-30pts (<120s) → 30-40pts (<150s) → 40-50pts (>150s) + bonus +10 si victoire, max 60
+
+### I. Cosmonaute + selfie
+- Selfie avatar visible sur le personnage dans chaque mini-jeu
+- Backgrounds thématiques par lune (pas de fond noir uni)
+
+### J. Fin de jeu
+- Bouton "🏆 Finir l'aventure !" **uniquement au point GPS 9** (zone avec `final:true`)
+- Les autres zones : bouton "Suivant" habituel
+
+### K. 9 mini-jeux refontes complètes
+| # | Lune | Mécanique |
+|---|------|-----------|
+| 1 | Verre | Slingshot / Angry Birds — fronde DRAG, blocs de cristal |
+| 2 | Cendre | Flappy Bird — gravité forte, colonnes de lave |
+| 3 | Lierre | Doodle Jump — plateformes jungle, tilt/swipe |
+| 4 | Givre | Swing / Pendule — TAP pour s'accrocher, pics de glace |
+| 5 | Ombre | Labyrinthe 31×31 — rayon lumière 90px, pièges d'ombre |
+| 6 | Fer | Agar.io — croissance par absorption, IA ennemis |
+| 7 | Tempête | Jetpack Joyride — défilement, obstacles typés, power-ups |
+| 8 | Cristal | Crossy Road — vue dessus, vagues cristaux, rivières |
+| 9 | Éclipse | Boss Fight 3 phases — projectiles dorés à renvoyer |
 
 ---
 

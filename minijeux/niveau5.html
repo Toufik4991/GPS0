@@ -7,42 +7,42 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:#0A0A1A;color:#fff;font-family:system-ui,sans-serif;overflow:hidden;height:100dvh;display:flex;flex-direction:column;touch-action:none;user-select:none}
-#hud{display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(0,0,0,.5);flex-shrink:0;z-index:10}
-#lives{font-size:1.3rem;letter-spacing:2px}
+#bg{position:fixed;inset:0;z-index:0;background:radial-gradient(ellipse at 50% 50%,rgba(60,0,100,0.12) 0%,transparent 70%),linear-gradient(180deg,#020004 0%,#000000 100%);}
+#hud{position:relative;z-index:20;display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(0,0,0,.65);flex-shrink:0;backdrop-filter:blur(6px)}
+#lives{font-size:1.2rem;letter-spacing:2px}
 #timer{flex:1;text-align:center;font-size:1rem;font-weight:bold;color:#4FC3F7}
-#score-hud{font-size:.9rem;color:#FFD700}
-#game-container{flex:1;position:relative;overflow:hidden}
+#score-hud{font-size:.9rem;color:#FFD700;font-weight:bold}
+#game-container{flex:1;position:relative;overflow:hidden;z-index:1}
 canvas{display:block;width:100%;height:100%}
-#overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(10,10,26,.88);z-index:20;gap:14px;text-align:center;padding:24px}
-#overlay h2{font-size:1.8rem;color:var(--accent,#C8A2C8)}
-#overlay p{font-size:.9rem;color:rgba(255,255,255,.8);max-width:280px}
+#overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,.88);z-index:20;gap:14px;text-align:center;padding:24px}
+#overlay h2{font-size:1.8rem;color:#C8A2C8}
+#overlay p{font-size:.9rem;color:rgba(255,255,255,.8);max-width:280px;line-height:1.5}
 #overlay .btn{padding:12px 32px;border:none;border-radius:14px;font-size:1rem;font-weight:bold;cursor:pointer;background:linear-gradient(135deg,#C8A2C8,#8860a8);color:#fff}
-#selfie-anchor{position:absolute;z-index:5;pointer-events:none}
-
 :root{--accent:#C8A2C8;--gold:#FFD700;--blue:#4FC3F7}
+
 </style>
 </head>
 <body>
+<div id="bg"></div>
 <div id="hud">
-  <span id="lives">&#10084;&#10084;&#10084;</span>
+  <span id="lives">❤❤❤</span>
   <span id="timer">3:00</span>
-  <span id="score-hud">0 &#10024;</span>
+  <span id="score-hud">0 ✨</span>
 </div>
 <div id="game-container">
   <canvas id="cv"></canvas>
-  
+
   <div id="overlay">
     <div style="font-size:3rem">🌕</div>
     <h2>Lune d'Ombre</h2>
-    <p>Tu ne vois que ce que ta lampe éclaire.<br>Trouve la sortie dans le labyrinthe !</p>
-    <button class="btn" id="btn-start">C&#8217;est parti !</button>
+    <p>Swipe ou flèches pour te déplacer.<br>Une lumière éclaire tes alentours.<br>Trouve la 🚪 sortie dorée !</p>
+    <button class="btn" id="btn-start">C'est parti&nbsp;!</button>
   </div>
-  <canvas id="selfie-cv" width="48" height="48" style="display:none" aria-hidden="true"></canvas>
+  <canvas id="selfie-cv" width="64" height="64" style="display:none" aria-hidden="true"></canvas>
 </div>
 <script>
-// === COMMON ENGINE ===
+// ── COMMON ENGINE ──
 const NIVEAU = 5;
-const DUST_REWARD = (5 === 9) ? 50 : (5 + 5 * 5);
 let lives = 3, dust = 0, running = false, gameover = false;
 let timerSec = 180, timerInterval = null;
 const livesEl = document.getElementById('lives');
@@ -50,245 +50,274 @@ const timerEl = document.getElementById('timer');
 const scoreEl = document.getElementById('score-hud');
 const overlay = document.getElementById('overlay');
 const btnStart = document.getElementById('btn-start');
-
-function updateLivesHUD() {
-  livesEl.textContent = '\u2764'.repeat(lives) + '\u2661'.repeat(Math.max(0, 3 - lives));
-}
-
-function updateTimer() {
-  const m = Math.floor(timerSec / 60), s = timerSec % 60;
-  timerEl.textContent = m + ':' + String(s).padStart(2,'0');
-}
-
-function addDust(n) {
-  dust += n;
-  scoreEl.textContent = dust + ' \u2728';
-}
-
-function loseLife() {
-  if (!running) return;
-  lives--;
-  updateLivesHUD();
-  if (lives <= 0) endGame(false);
-}
-
-function endGame(success) {
-  if (gameover) return;
-  gameover = true;
-  running = false;
-  clearInterval(timerInterval);
-  const finalDust = success ? dust + DUST_REWARD : Math.floor(dust * 0.5);
-  setTimeout(() => {
-    window.parent.postMessage({
-      source: 'gps0_minijeu',
-      success: success,
-      niveau: NIVEAU,
-      poussieres: finalDust
-    }, '*');
-  }, 800);
-}
-
-function startTimer() {
-  updateTimer();
-  timerInterval = setInterval(() => {
-    if (!running) return;
-    timerSec--;
-    updateTimer();
-    if (timerSec <= 0) endGame(false);
-  }, 1000);
-}
-
-// Load selfie
-const selfieCanvas = document.getElementById('selfie-cv');
-const selfieCtx = selfieCanvas.getContext('2d');
-(function loadSelfie() {
-  const data = localStorage.getItem('gps0_avatar_selfie_base64');
-  if (!data) return;
-  const img = new Image();
-  img.onload = () => {
-    selfieCtx.save();
-    selfieCtx.beginPath();
-    selfieCtx.arc(24, 24, 24, 0, Math.PI * 2);
-    selfieCtx.clip();
-    selfieCtx.drawImage(img, 0, 0, 48, 48);
-    selfieCtx.restore();
-  };
-  img.src = data;
-})();
-
-// Tuto overlay auto-dismiss after 5s
-let tutoDismissed = false;
-btnStart.addEventListener('click', startGame);
-setTimeout(() => { if (!tutoDismissed) startGame(); }, 5000);
-
-function startGame() {
-  if (tutoDismissed) return;
-  tutoDismissed = true;
-  overlay.style.display = 'none';
-  running = true;
-  startTimer();
-  initGame();
-}
-
-// === GAME LOGIC ===
-
 const cv = document.getElementById('cv');
 const ctx = cv.getContext('2d');
-let W, H;
-function resize() { W = cv.width = cv.offsetWidth; H = cv.height = cv.offsetHeight; }
-window.addEventListener('resize', () => { resize(); if(running) drawAll(); });
 
-const CELL = 56, LIGHT_R = 90;
-let maze, cols, rows, px, py, ex, ey, dustItems, mx, my;
+function updateLivesHUD(){livesEl.textContent='❤'.repeat(lives)+'♡'.repeat(Math.max(0,3-lives));}
+function updateTimer(){const m=Math.floor(timerSec/60),s=timerSec%60;timerEl.textContent=m+':'+(s<10?'0':'')+s;}
+function addDust(n){dust+=n;scoreEl.textContent=dust+' ✨';}
+function loseLife(){if(!running)return;lives--;updateLivesHUD();if(lives<=0)endGame(false);}
 
-function initGame() {
-  resize();
-  cols = Math.floor(W / CELL); rows = Math.floor(H / CELL);
-  if (cols % 2 === 0) cols--;
-  if (rows % 2 === 0) rows--;
-  maze = generateMaze(cols, rows);
-  px = CELL * 1 + CELL / 2; py = CELL * 1 + CELL / 2;
-  ex = CELL * (cols - 2) + CELL / 2; ey = CELL * (rows - 2) + CELL / 2;
-  mx = px; my = py;
-  dustItems = [];
-  // Scatter dust in open cells
-  for (let r = 0; r < rows; r++) {
-    for (let c = 0; c < cols; c++) {
-      if (maze[r][c] === 0 && Math.random() < 0.12) {
-        dustItems.push({ x: c * CELL + CELL / 2, y: r * CELL + CELL / 2, alive: true });
-      }
-    }
-  }
-  loop();
+function calcDust(){
+  const played = 180 - timerSec;
+  let base;
+  if(played < 30) base = 1 + Math.floor(Math.random()*5);
+  else if(played < 60) base = 5 + Math.floor(Math.random()*10);
+  else if(played < 120) base = 15 + Math.floor(Math.random()*15);
+  else if(played < 150) base = 30 + Math.floor(Math.random()*10);
+  else base = 40 + Math.floor(Math.random()*10);
+  return Math.min(50, base + dust);
 }
 
-function generateMaze(cols, rows) {
-  const g = Array.from({ length: rows }, () => Array(cols).fill(1));
-  function carve(c, r) {
-    g[r][c] = 0;
-    const dirs = [[0,-2],[0,2],[-2,0],[2,0]].sort(() => Math.random() - 0.5);
-    for (const [dc, dr] of dirs) {
-      const nc = c + dc, nr = r + dr;
-      if (nr > 0 && nr < rows && nc > 0 && nc < cols && g[nr][nc] === 1) {
-        g[r + dr/2][c + dc/2] = 0;
-        carve(nc, nr);
-      }
-    }
-  }
-  carve(1, 1);
-  g[rows-2][cols-2] = 0;
-  return g;
+function endGame(success){
+  if(gameover)return;
+  gameover=true; running=false;
+  clearInterval(timerInterval);
+  const finalDust = success ? Math.min(60, calcDust() + 10) : calcDust();
+  setTimeout(()=>{
+    window.parent.postMessage({source:'gps0_minijeu',success,niveau:NIVEAU,poussieres:finalDust},'*');
+  }, 600);
 }
 
-function loop() {
-  if (!running) return;
-  update();
-  drawAll();
+function startTimer(){
+  updateTimer();
+  timerInterval=setInterval(()=>{
+    if(!running)return;
+    timerSec--;updateTimer();
+    if(timerSec<=0)endGame({'9':true}.hasOwnProperty(String(NIVEAU)) ? false : false);
+  },1000);
+}
+
+// Selfie canvas
+let selfieImg = null;
+function loadSelfie(){
+  const b64 = localStorage.getItem('gps0_avatar_selfie_base64');
+  if(!b64)return;
+  const img = new Image();
+  img.onload = ()=>{ selfieImg = img; };
+  img.src = b64;
+}
+loadSelfie();
+
+function drawSelfie(x, y, r){
+  if(!selfieImg)return;
+  ctx.save();
+  ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.clip();
+  ctx.drawImage(selfieImg, x-r, y-r, r*2, r*2);
+  ctx.restore();
+}
+
+function drawCosmonaut(x, y, r, angle){
+  ctx.save();
+  ctx.translate(x, y);
+  if(angle)ctx.rotate(angle);
+  // Body (suit)
+  ctx.beginPath();
+  ctx.ellipse(0, r*0.5, r*0.55, r*0.7, 0, 0, Math.PI*2);
+  ctx.fillStyle='#dde4ee'; ctx.fill();
+  // Helmet
+  ctx.beginPath(); ctx.arc(0, -r*0.15, r*0.55, 0, Math.PI*2);
+  ctx.fillStyle='rgba(60,120,200,0.3)'; ctx.fill();
+  ctx.beginPath(); ctx.arc(0, -r*0.15, r*0.55, 0, Math.PI*2);
+  ctx.strokeStyle='#8ab4d4'; ctx.lineWidth=2; ctx.stroke();
+  // Selfie face
+  if(selfieImg){
+    ctx.save(); ctx.beginPath(); ctx.arc(0,-r*0.15,r*0.45,0,Math.PI*2); ctx.clip();
+    ctx.drawImage(selfieImg,-r*0.45,-r*0.6,r*0.9,r*0.9); ctx.restore();
+  } else {
+    ctx.fillStyle='rgba(79,195,247,.5)';
+    ctx.beginPath(); ctx.arc(0,-r*0.15,r*0.4,0,Math.PI*2); ctx.fill();
+  }
+  ctx.restore();
+}
+
+function resizeCanvas(){
+  const gc = document.getElementById('game-container');
+  cv.width = gc.clientWidth; cv.height = gc.clientHeight;
+}
+resizeCanvas();
+window.addEventListener('resize', ()=>{resizeCanvas(); if(running) onResize && onResize();});
+
+btnStart.addEventListener('click', ()=>{
+  overlay.style.display='none';
+  running=true;
+  startTimer();
+  gameStart();
+}, {once:true});
+
+// ── GAME SPECIFIC ──
+
+const CELL = 28, ROWS = 31, COLS = 31, LIGHT_R = 90;
+let maze = [], cosmo = {cx:1,cy:1}, exit_ = {cx:COLS-2,cy:ROWS-2};
+let dustItems = [], traps = [], particles = [];
+let blindTimer = 0;
+
+// DFS maze generator
+function genMaze(C, R) {
+  const m = Array.from({length:R}, ()=>Array(C).fill(1));
+  function carve(x,y) {
+    m[y][x]=0;
+    const dirs=[[0,-2],[2,0],[0,2],[-2,0]].sort(()=>Math.random()-.5);
+    dirs.forEach(([dx,dy])=>{
+      const nx=x+dx,ny=y+dy;
+      if(nx>=0&&nx<C&&ny>=0&&ny<R&&m[ny][nx]===1){m[y+dy/2][x+dx/2]=0;carve(nx,ny);}
+    });
+  }
+  carve(1,1); m[ROWS-2][COLS-2]=0; return m;
+}
+
+function gameStart() {
+  maze = genMaze(COLS, ROWS);
+  cosmo = {cx:1,cy:1};
+  exit_ = {cx:COLS-2, cy:ROWS-2};
+  dustItems=[];
+  // Place dusts in dead-ends
+  for(let y=1;y<ROWS-1;y+=2) for(let x=1;x<COLS-1;x+=2) {
+    if(maze[y][x]===0&&Math.random()<0.12&&!(x===1&&y===1)&&!(x===COLS-2&&y===ROWS-2))
+      dustItems.push({cx:x,cy:y,col:false});
+  }
+  traps=[];
+  for(let i=0;i<8;i++) {
+    let tx,ty;
+    do{tx=1+Math.floor(Math.random()*(COLS-2));ty=1+Math.floor(Math.random()*(ROWS-2));}
+    while(maze[ty][tx]!==0||Math.sqrt((tx-1)**2+(ty-1)**2)<5);
+    traps.push({cx:tx,cy:ty,phase:0,timer:Math.random()*200});
+  }
+  blindTimer=0;
+  particles=[];
+
+  // Touch swipe
+  let ts=null;
+  cv.addEventListener('touchstart',e=>{ts={x:e.touches[0].clientX,y:e.touches[0].clientY};},{passive:true});
+  cv.addEventListener('touchend',e=>{
+    if(!ts||!running)return;
+    const dx=e.changedTouches[0].clientX-ts.x, dy=e.changedTouches[0].clientY-ts.y;
+    if(Math.abs(dx)>Math.abs(dy)){if(dx>20)move(1,0);else if(dx<-20)move(-1,0);}
+    else{if(dy>20)move(0,1);else if(dy<-20)move(0,-1);}
+    ts=null;
+  },{passive:true});
+  document.addEventListener('keydown',e=>{
+    if(!running)return;
+    if(e.key==='ArrowLeft')move(-1,0);
+    if(e.key==='ArrowRight')move(1,0);
+    if(e.key==='ArrowUp')move(0,-1);
+    if(e.key==='ArrowDown')move(0,1);
+  });
+
   requestAnimationFrame(loop);
 }
 
-const SPEED = 3;
-let moveDir = { x: 0, y: 0 };
-
-function update() {
-  let nx = px + moveDir.x * SPEED;
-  let ny = py + moveDir.y * SPEED;
-  const r = 14;
-
-  // Wall collision
-  if (!isWall(nx, py, r)) px = nx;
-  if (!isWall(px, ny, r)) py = ny;
-
-  mx = px; my = py;
-
-  // Collect dust
-  for (const d of dustItems) {
-    if (!d.alive) continue;
-    if (Math.abs(d.x - px) < 22 && Math.abs(d.y - py) < 22) { d.alive = false; addDust(10); }
-  }
-
-  // Reach exit
-  if (Math.abs(px - ex) < 24 && Math.abs(py - ey) < 24) endGame(true);
+function move(dx,dy) {
+  const nx=cosmo.cx+dx, ny=cosmo.cy+dy;
+  if(nx<0||nx>=COLS||ny<0||ny>=ROWS)return;
+  if(maze[ny][nx]===1)return;
+  cosmo.cx=nx; cosmo.cy=ny;
+  addDust(1);
+  // Check exit
+  if(cosmo.cx===exit_.cx&&cosmo.cy===exit_.cy) endGame(true);
+  // Check dust
+  dustItems.forEach(d=>{if(!d.col&&d.cx===cosmo.cx&&d.cy===cosmo.cy){d.col=true;addDust(5);for(let i=0;i<8;i++)particles.push({x:cosmo.cx*CELL+CELL/2,y:cosmo.cy*CELL+CELL/2,vx:(Math.random()-.5)*4,vy:-3+Math.random()*2,life:25,col:'#FFD700'});}});
+  // Check traps
+  traps.forEach(t=>{if(t.phase===0&&t.cx===cosmo.cx&&t.cy===cosmo.cy){blindTimer=Math.max(blindTimer,100);}});
 }
 
-function isWall(x, y, r) {
-  const corners = [[x-r, y-r],[x+r, y-r],[x-r, y+r],[x+r, y+r],[x, y-r],[x, y+r],[x-r, y],[x+r, y]];
-  for (const [cx, cy] of corners) {
-    const gc = Math.floor(cx / CELL), gr = Math.floor(cy / CELL);
-    if (gr < 0 || gr >= rows || gc < 0 || gc >= cols) return true;
-    if (maze[gr][gc] === 1) return true;
-  }
-  return false;
-}
+function loop() {
+  if(!running)return;
+  requestAnimationFrame(loop);
+  const W=cv.width, H=cv.height;
+  if(blindTimer>0)blindTimer--;
 
-function drawAll() {
-  ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
+  // Traps animate
+  traps.forEach(t=>{ t.timer--; if(t.timer<=0){t.phase=t.phase===0?1:0;t.timer=180+Math.random()*120;} });
 
-  // Draw maze under light
+  // Camera: center on cosmo
+  const camPxX = cosmo.cx*CELL + CELL/2;
+  const camPxY = cosmo.cy*CELL + CELL/2;
+  const offX = W/2 - camPxX;
+  const offY = H/2 - camPxY;
+
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#000';
+  ctx.fillRect(0,0,W,H);
+
+  // Draw revealed cells (within light)
+  const lightPx = {x: camPxX, y: camPxY};
+  const LR = blindTimer>0 ? 28 : LIGHT_R;
+
   ctx.save();
-  // Clip to light circle
-  ctx.beginPath(); ctx.arc(mx, my, LIGHT_R, 0, Math.PI*2); ctx.clip();
+  // Clip to circle of light
+  ctx.beginPath(); ctx.arc(W/2, H/2, LR, 0, Math.PI*2); ctx.clip();
 
-  // Draw walls
-  for (let r = 0; r < rows; r++) {
-    for (let c = 0; c < cols; c++) {
-      if (maze[r][c] === 1) {
-        ctx.fillStyle = '#1a1a4a';
-        ctx.fillRect(c * CELL, r * CELL, CELL, CELL);
-        ctx.strokeStyle = '#2a2a6a'; ctx.lineWidth = 1;
-        ctx.strokeRect(c * CELL, r * CELL, CELL, CELL);
+  // Walls & floor
+  for(let y=0;y<ROWS;y++) {
+    for(let x=0;x<COLS;x++) {
+      const px=x*CELL+offX, py=y*CELL+offY;
+      if(maze[y][x]===1) {
+        ctx.fillStyle='rgba(30,20,60,0.98)';
+        ctx.fillRect(px,py,CELL,CELL);
+        ctx.strokeStyle='rgba(80,60,120,0.3)'; ctx.lineWidth=0.5;
+        ctx.strokeRect(px,py,CELL,CELL);
       } else {
-        ctx.fillStyle = '#0a0820';
-        ctx.fillRect(c * CELL, r * CELL, CELL, CELL);
+        ctx.fillStyle='rgba(8,4,20,0.9)';
+        ctx.fillRect(px,py,CELL,CELL);
       }
     }
   }
 
-  // Exit marker
-  ctx.font = '28px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.fillText('🚀', ex, ey);
+  // Exit door
+  const ex=exit_.cx*CELL+offX, ey=exit_.cy*CELL+offY;
+  const egrd=ctx.createRadialGradient(ex+CELL/2,ey+CELL/2,2,ex+CELL/2,ey+CELL/2,CELL);
+  egrd.addColorStop(0,'rgba(255,215,0,0.9)'); egrd.addColorStop(1,'rgba(255,215,0,0)');
+  ctx.fillStyle=egrd; ctx.fillRect(ex,ey,CELL,CELL);
+  ctx.font='16px system-ui'; ctx.textAlign='center';
+  ctx.fillText('🚪',ex+CELL/2,ey+CELL/2+6);
 
   // Dust
-  for (const d of dustItems) {
-    if (!d.alive) continue;
-    ctx.font = '18px serif'; ctx.fillText('✨', d.x, d.y);
-  }
+  dustItems.forEach(d=>{
+    if(d.col)return;
+    const px=d.cx*CELL+offX+CELL/2, py=d.cy*CELL+offY+CELL/2;
+    ctx.fillStyle='#FFD700'; ctx.font='14px system-ui'; ctx.textAlign='center';
+    ctx.fillText('✨',px,py+5);
+  });
+
+  // Traps (visible only when active)
+  traps.forEach(t=>{
+    if(t.phase===0)return;
+    const px=t.cx*CELL+offX+CELL/2, py=t.cy*CELL+offY+CELL/2;
+    ctx.fillStyle='rgba(100,0,200,0.6)'; ctx.beginPath(); ctx.arc(px,py,CELL*0.4,0,Math.PI*2); ctx.fill();
+  });
+
+  // Cosmo
+  drawCosmonaut(W/2, H/2, 14, 0);
 
   ctx.restore();
 
-  // Vignette around light
-  const grad = ctx.createRadialGradient(mx, my, LIGHT_R * 0.7, mx, my, LIGHT_R);
-  grad.addColorStop(0, 'rgba(0,0,0,0)'); grad.addColorStop(1, 'rgba(0,0,0,0.98)');
-  ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H);
+  // Vignette shadow beyond light
+  const radGrd = ctx.createRadialGradient(W/2,H/2,LR*0.75,W/2,H/2,LR*1.1+30);
+  radGrd.addColorStop(0,'rgba(0,0,0,0)');
+  radGrd.addColorStop(1,'rgba(0,0,0,1)');
+  ctx.fillStyle=radGrd; ctx.fillRect(0,0,W,H);
 
-  // Player glyph above vignette
-  if (selfieCanvas.width > 0 && selfieCtx.getImageData(0,0,1,1).data[3] > 0) {
-    ctx.save(); ctx.beginPath(); ctx.arc(mx, my, 18, 0, Math.PI*2); ctx.clip();
-    ctx.drawImage(selfieCanvas, mx - 18, my - 18, 36, 36); ctx.restore();
-  } else {
-    ctx.font = '30px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText('🔦', mx, my);
+  // Particles
+  particles=particles.filter(p=>p.life>0);
+  particles.forEach(p=>{
+    p.x+=p.vx;p.y+=p.vy;p.vy+=.1;p.life--;
+    const px2=p.x+offX-camPxX+W/2, py2=p.y+offY-camPxY+H/2;
+    ctx.fillStyle=p.col; ctx.globalAlpha=p.life/25;
+    ctx.beginPath(); ctx.arc(px2, py2,3,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=1;
+  });
+
+  if(blindTimer>0) {
+    ctx.fillStyle='rgba(80,0,180,0.35)';
+    ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='rgba(255,255,255,.6)'; ctx.font='13px system-ui'; ctx.textAlign='center';
+    ctx.fillText('⚫ Piège d\'ombre !', W/2, H*0.88);
   }
-}
 
-// Controls: swipe on canvas
-let t0x, t0y;
-cv.addEventListener('touchstart', e => { e.preventDefault(); const t = e.touches[0]; t0x = t.clientX; t0y = t.clientY; }, { passive: false });
-cv.addEventListener('touchmove', e => {
-  e.preventDefault();
-  const t = e.touches[0];
-  const dx = t.clientX - t0x, dy = t.clientY - t0y;
-  if (Math.abs(dx) > Math.abs(dy)) moveDir = { x: dx > 0 ? 1 : -1, y: 0 };
-  else moveDir = { x: 0, y: dy > 0 ? 1 : -1 };
-}, { passive: false });
-cv.addEventListener('touchend', e => { e.preventDefault(); moveDir = { x: 0, y: 0 }; }, { passive: false });
-window.addEventListener('keydown', e => {
-  if (e.key === 'ArrowLeft') moveDir = { x: -1, y: 0 };
-  if (e.key === 'ArrowRight') moveDir = { x: 1, y: 0 };
-  if (e.key === 'ArrowUp') moveDir = { x: 0, y: -1 };
-  if (e.key === 'ArrowDown') moveDir = { x: 0, y: 1 };
-});
-window.addEventListener('keyup', () => moveDir = { x: 0, y: 0 });
+  // Mini map hint
+  ctx.fillStyle='rgba(255,255,255,.3)'; ctx.font='11px system-ui'; ctx.textAlign='left';
+  ctx.fillText('🚪 Trouve la sortie dorée !', 8, H-10);
+}
 
 </script>
 </body>
