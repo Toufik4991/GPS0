@@ -76,8 +76,8 @@ html,body{height:100%;overflow:hidden;font-family:"Trebuchet MS",sans-serif;colo
 .asteroide-wrapper{position:relative;width:200px;height:200px;display:flex;align-items:center;justify-content:center;cursor:pointer}
 .asteroide-svg{position:absolute;animation:ast-glow 2s ease-in-out infinite;will-change:filter}
 .ast-body{transition:filter .5s}
-@keyframes ast-glow{0%,100%{filter:drop-shadow(0 0 8px rgba(79,195,247,.35))}50%{filter:drop-shadow(0 0 22px rgba(79,195,247,.8))}}
-.asteroide-wrapper[data-etat="off"] .asteroide-svg{animation-play-state:paused;filter:grayscale(1) brightness(.5);transition:filter .5s ease}
+@keyframes ast-glow{0%,100%{filter:brightness(1.15) drop-shadow(0 0 12px rgba(79,195,247,.55))}50%{filter:brightness(1.45) drop-shadow(0 0 28px rgba(79,195,247,.95))}}
+.asteroide-wrapper[data-etat="off"] .asteroide-svg{animation:none;filter:grayscale(1) brightness(.45);transition:filter .5s ease}
 .asteroide-wrapper:not([data-etat="off"]):not([data-etat="epuise"]) .asteroide-svg{transition:filter .5s ease}
 .asteroide-wrapper[data-etat="off"] .energie-ast-overlay{opacity:.35}
 .asteroide-wrapper[data-etat="zone"] .asteroide-svg{animation-duration:2s}
