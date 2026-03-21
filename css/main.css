@@ -188,7 +188,7 @@ button, input { touch-action: manipulation; }
 
 /* ── COSMOS FLOTTANTS ── */
 .cosmos-floating{position:fixed;inset:0;z-index:2;pointer-events:none;overflow:hidden}
-.cf{position:absolute;opacity:.88;will-change:transform;line-height:1;font-style:normal}
+.cf{position:absolute;opacity:.18;will-change:transform;line-height:1;font-style:normal}
 .cf-rocket{top:72%;left:-4%;font-size:3.2rem;animation:cf-rise 34s linear infinite}
 .cf-ufo{top:15%;right:-5%;font-size:3.8rem;animation:cf-slide-l 42s linear infinite;animation-delay:-16s}
 .cf-moon{top:16%;right:7%;font-size:3rem;animation:cf-bob 58s ease-in-out infinite;animation-delay:-25s;opacity:.4}
@@ -218,8 +218,10 @@ button, input { touch-action: manipulation; }
 .fragment-carte{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:14px;padding:12px 16px;cursor:pointer;transition:background .2s}
 .fragment-carte:hover{background:rgba(200,162,200,.15)}
 .fragment-carte:disabled{opacity:.45;cursor:not-allowed}
-.fragment-icone{font-size:1.6rem;flex-shrink:0}
+.fragment-icone{font-size:1.6rem;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.fragment-svg{font-size:1rem;line-height:0}
 .fragment-infos{flex:1;text-align:left}
+.fragment-rarete{font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;opacity:.85;display:block;margin-bottom:1px}
 .fragment-nom{font-weight:bold;font-size:.92rem}
 .fragment-desc{font-size:.76rem;color:rgba(255,255,255,.6);margin-top:2px}
 .fragment-prix{font-size:.88rem;color:#FFD700;font-weight:bold;white-space:nowrap}
@@ -233,7 +235,8 @@ button, input { touch-action: manipulation; }
 .inv-stat strong{color:var(--gold)}
 .inv-sep{border:none;border-top:1px solid rgba(200,162,200,.15);margin:4px 0}
 .inv-fragment-row{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:10px 14px}
-.inv-frag-icone{font-size:1.5rem;flex-shrink:0}
+.inv-frag-icone{font-size:1.5rem;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.inv-frag-svg{font-size:1rem;line-height:0}
 .inv-frag-infos{flex:1;text-align:left}
 .inv-frag-nom{font-weight:bold;font-size:.88rem}
 .inv-frag-qty{font-size:.78rem;color:var(--accent)}
@@ -242,19 +245,6 @@ button, input { touch-action: manipulation; }
 
 /* ── FRAGMENT ACHETER ── */
 .fragment-acheter{background:linear-gradient(135deg,var(--accent),#9a72c8);color:#0A0A1A;font-weight:bold;font-size:.75rem;border-radius:8px;padding:5px 10px;white-space:nowrap;flex-shrink:0}
-
-/* ── INVENTAIRE ── */
-.inv-stats{display:flex;flex-direction:column;gap:8px;background:rgba(255,255,255,.05);border-radius:12px;padding:12px 16px}
-.inv-stat{font-size:.9rem;color:rgba(255,255,255,.85)}
-.inv-stat strong{color:var(--gold)}
-.inv-sep{border:none;border-top:1px solid rgba(200,162,200,.15);margin:4px 0}
-.inv-fragment-row{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:10px 14px}
-.inv-frag-icone{font-size:1.5rem;flex-shrink:0}
-.inv-frag-infos{flex:1;text-align:left}
-.inv-frag-nom{font-weight:bold;font-size:.88rem}
-.inv-frag-qty{font-size:.78rem;color:var(--accent)}
-.inv-frag-use{background:linear-gradient(135deg,var(--accent),#9a72c8);border:none;border-radius:8px;color:#0A0A1A;font-weight:bold;font-size:.8rem;cursor:pointer;padding:6px 12px;white-space:nowrap}
-.inv-frag-use:disabled{opacity:.35;cursor:not-allowed}
 
 /* == TUTORIEL (ancien, gardé pour compatibilité) == */
 .tuto-steps{display:flex;flex-direction:column;gap:10px}

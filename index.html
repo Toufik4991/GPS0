@@ -288,18 +288,21 @@
   <!-- MODAL DEMO -->
   <dialog id="modal-demo" aria-modal="true" aria-labelledby="demo-titre">
     <div class="modal-box">
-      <h2 id="demo-titre">&#127918; Tester un niveau</h2>
+      <h2 id="demo-titre">&#127918; Tester une Lune</h2>
       <p style="font-size:0.85rem;color:rgba(255,255,255,0.7);text-align:center">Mode demo sans GPS</p>
-      <div class="difficulte-grille" role="group" style="margin:12px 0">
-        <button class="diff-carte demo-niveau-btn" data-niveau="1"><span class="diff-emoji">&#127807;</span><span class="diff-nom">Facile</span><span class="diff-desc">Premiers pas</span></button>
-        <button class="diff-carte demo-niveau-btn" data-niveau="2"><span class="diff-emoji">&#11088;</span><span class="diff-nom">Niveau 2</span><span class="diff-desc">Slimes</span></button>
-        <button class="diff-carte demo-niveau-btn" data-niveau="3"><span class="diff-emoji">&#11088;&#11088;</span><span class="diff-nom">Niveau 3</span><span class="diff-desc">Plus de slimes</span></button>
-        <button class="diff-carte demo-niveau-btn" data-niveau="4"><span class="diff-emoji">&#127744;</span><span class="diff-nom">Niveau 4</span><span class="diff-desc">Plateformes mobiles</span></button>
-        <button class="diff-carte demo-niveau-btn" data-niveau="5"><span class="diff-emoji">&#9889;</span><span class="diff-nom">Niveau 5</span><span class="diff-desc">Lasers</span></button>
-        <button class="diff-carte demo-niveau-btn" data-niveau="6"><span class="diff-emoji">&#128128;</span><span class="diff-nom">Niveau 6</span><span class="diff-desc">Slimes+Lasers+Pics</span></button>
-        <button class="diff-carte demo-niveau-btn" data-niveau="7"><span class="diff-emoji">&#128293;</span><span class="diff-nom">Niveau 7</span><span class="diff-desc">Champion</span></button>
-        <button class="diff-carte demo-niveau-btn" data-niveau="8"><span class="diff-emoji">&#128165;</span><span class="diff-nom">Niveau 8</span><span class="diff-desc">OMEGA</span></button>
-        <button class="diff-carte demo-niveau-btn" data-niveau="9"><span class="diff-emoji">&#127942;</span><span class="diff-nom">Niveau 9</span><span class="diff-desc">Final Boss</span></button>
+      <div style="margin:8px 0 4px;display:flex;justify-content:center">
+        <button id="debug-toggle" style="padding:8px 20px;border-radius:20px;border:1px solid rgba(255,255,255,.15);font-size:.82rem;font-weight:bold;cursor:pointer;transition:all .2s;background:rgba(50,50,50,.4);color:rgba(255,255,255,.35)">&#9898; Debug OFF</button>
+      </div>
+      <div class="difficulte-grille" role="group" style="margin:10px 0">
+        <button class="diff-carte demo-niveau-btn" data-niveau="1"><span class="diff-emoji">&#128302;</span><span class="diff-nom">Lune de Verre</span><span class="diff-desc">Miroirs</span></button>
+        <button class="diff-carte demo-niveau-btn" data-niveau="2"><span class="diff-emoji">&#128293;</span><span class="diff-nom">Lune de Cendre</span><span class="diff-desc">Gravité inversée</span></button>
+        <button class="diff-carte demo-niveau-btn" data-niveau="3"><span class="diff-emoji">&#127807;</span><span class="diff-nom">Lune de Lierre</span><span class="diff-desc">Plantes</span></button>
+        <button class="diff-carte demo-niveau-btn" data-niveau="4"><span class="diff-emoji">&#10052;</span><span class="diff-nom">Lune de Givre</span><span class="diff-desc">Glace</span></button>
+        <button class="diff-carte demo-niveau-btn" data-niveau="5"><span class="diff-emoji">&#128123;</span><span class="diff-nom">Lune d'Ombre</span><span class="diff-desc">Invisibilité</span></button>
+        <button class="diff-carte demo-niveau-btn" data-niveau="6"><span class="diff-emoji">&#129302;</span><span class="diff-nom">Lune de Fer</span><span class="diff-desc">Aimant</span></button>
+        <button class="diff-carte demo-niveau-btn" data-niveau="7"><span class="diff-emoji">&#127786;</span><span class="diff-nom">Lune de Tempête</span><span class="diff-desc">Vent</span></button>
+        <button class="diff-carte demo-niveau-btn" data-niveau="8"><span class="diff-emoji">&#128142;</span><span class="diff-nom">Lune de Cristal</span><span class="diff-desc">Cristaux</span></button>
+        <button class="diff-carte demo-niveau-btn" data-niveau="9"><span class="diff-emoji">&#127758;</span><span class="diff-nom">Lune d'Éclipse</span><span class="diff-desc">Boss Final</span></button>
       </div>
       <p style="font-size:0.72rem;color:rgba(255,255,255,0.35);text-align:center;margin-top:4px"><span id="debug-version">v?</span></p>
       <button id="demo-fermer" class="btn-ghost">Fermer</button>

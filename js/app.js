@@ -20,20 +20,25 @@ window.GPS0_App = (() => {
   }
 
   function _fixCosmosFloating() {
-    // Repositionne les SVG flottants si trop proches du centre (zone boussole)
+    // Repositionne les SVG flottants si trop proches du centre (zone boussole) — 180px minimum
     setTimeout(() => {
       const cx = window.innerWidth / 2, cy = window.innerHeight / 2;
-      const MIN_DIST = 120;
+      const MIN_DIST = 180;
       document.querySelectorAll('.cf').forEach(el => {
-        const r = el.getBoundingClientRect();
-        const ecx = r.left + r.width / 2, ecy = r.top + r.height / 2;
-        const dx = ecx - cx, dy = ecy - cy;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < MIN_DIST && dist > 0) {
-          const angle = Math.atan2(dy, dx);
-          const push = MIN_DIST - dist + 20;
-          const currentT = el.style.transform || '';
-          el.style.transform = currentT + ' translate(' + Math.round(Math.cos(angle) * push) + 'px,' + Math.round(Math.sin(angle) * push) + 'px)';
+        for (let attempt = 0; attempt < 12; attempt++) {
+          const r = el.getBoundingClientRect();
+          const ecx = r.left + r.width / 2, ecy = r.top + r.height / 2;
+          const dx = ecx - cx, dy = ecy - cy;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist >= MIN_DIST) break;
+          if (dist > 2) {
+            const angle = Math.atan2(dy, dx);
+            const push = MIN_DIST - dist + 30;
+            el.style.transform = (el.style.transform || '') + ' translate(' + Math.round(Math.cos(angle) * push) + 'px,' + Math.round(Math.sin(angle) * push) + 'px)';
+          } else {
+            const angle = Math.random() * Math.PI * 2;
+            el.style.transform = 'translate(' + Math.round(Math.cos(angle) * MIN_DIST) + 'px,' + Math.round(Math.sin(angle) * MIN_DIST) + 'px)';
+          }
         }
       });
     }, 200);
@@ -330,8 +335,7 @@ window.GPS0_App = (() => {
       const flash = () => { if (svg) { svg.classList.add('flash'); setTimeout(() => svg.classList.remove('flash'), 420); } };
 
       if (etat === 'zone') {
-        flash();
-        const z = GPS0_GPS.zoneActuelle(); if (z) _lancerMiniJeu(z.mini_jeu);
+        // Zone bleue : seul le bouton JOUER lance le mini-jeu — pas l'astéroïde
         return;
       }
       if (etat === 'epuise') {
@@ -390,9 +394,20 @@ window.GPS0_App = (() => {
     });
 
     document.getElementById('menu-debug')?.addEventListener('click', () => {
-      const mdp = prompt('🔒 Mot de passe debug :');
-      if (mdp !== 'jules') { if (mdp !== null) alert('Mot de passe incorrect.'); return; }
+      const isOn = localStorage.getItem('gps0_debug_on') === '1';
+      if (!isOn) {
+        const mdp = prompt('🔒 Mot de passe debug :');
+        if (mdp !== 'jules') { if (mdp !== null) alert('Mot de passe incorrect.'); return; }
+        localStorage.setItem('gps0_debug_on', '1');
+      }
+      _majToggleDebug();
       document.getElementById('modal-demo').showModal();
+    });
+    document.getElementById('debug-toggle')?.addEventListener('click', () => {
+      if (localStorage.getItem('gps0_debug_on') === '1') {
+        localStorage.removeItem('gps0_debug_on');
+        _majToggleDebug();
+      }
     });
     document.getElementById('menu-guide')?.addEventListener('click', () => {
       _ouvrirTuto();
@@ -479,7 +494,8 @@ window.GPS0_App = (() => {
             _ouvrirInventaire();
           }
         };
-        row.innerHTML = '<span class="inv-frag-icone">' + (fr.emoji||'🌙') + '</span>'
+        const invIcone = fr.svg ? '<span class="inv-frag-icone inv-frag-svg">' + fr.svg + '</span>' : '<span class="inv-frag-icone">' + (fr.emoji || '🌙') + '</span>';
+        row.innerHTML = invIcone
           + '<span class="inv-frag-infos"><span class="inv-frag-nom">' + fr.nom + '</span>'
           + '<span class="inv-frag-qty">x' + qty + (qty === 0 ? ' — vide' : '') + '</span></span>';
         row.appendChild(useBtn);
@@ -541,6 +557,16 @@ window.GPS0_App = (() => {
     _clockActive = true;
   }
 
+  function _majToggleDebug() {
+    const isOn = localStorage.getItem('gps0_debug_on') === '1';
+    const btn = document.getElementById('debug-toggle');
+    if (!btn) return;
+    btn.textContent = isOn ? '🟢 Debug ON — cliquer pour désactiver' : '⚫ Debug OFF';
+    btn.style.background = isOn ? 'rgba(50,120,50,.4)' : 'rgba(50,50,50,.4)';
+    btn.style.color = isOn ? '#69FF47' : 'rgba(255,255,255,.35)';
+    btn.style.cursor = isOn ? 'pointer' : 'default';
+  }
+
   function _ouvrirBoutique() {
     const modal = document.getElementById('modal-boutique');
     if (!modal) return;
@@ -556,7 +582,9 @@ window.GPS0_App = (() => {
       const btn = document.createElement('button');
       btn.className = 'fragment-carte';
       btn.disabled = poussieres < fr.prix;
-            btn.innerHTML = '<span class="fragment-icone">' + (fr.emoji||'🌟') + '</span><span class="fragment-infos"><span class="fragment-nom">' + fr.nom + '</span><span class="fragment-desc">' + fr.desc + '</span></span><span class="fragment-prix">' + fr.prix + ' ✨</span><span class="fragment-acheter">ACHETER</span>';
+      const icone = fr.svg ? '<span class="fragment-icone fragment-svg">' + fr.svg + '</span>' : '<span class="fragment-icone">' + (fr.emoji || '🌟') + '</span>';
+      const rarete = fr.rarete ? '<span class="fragment-rarete" style="color:' + fr.couleur + '">' + fr.rarete + '</span>' : '';
+      btn.innerHTML = icone + '<span class="fragment-infos">' + rarete + '<span class="fragment-nom">' + fr.nom + '</span><span class="fragment-desc">' + fr.desc + '</span></span><span class="fragment-prix">' + fr.prix + ' ✨</span><span class="fragment-acheter">ACHETER</span>';
       btn.onclick = () => {
         if (typeof GPS0_Economie !== 'undefined' && typeof GPS0_Economie.acheterFragment === 'function') {
           const ok = GPS0_Economie.acheterFragment(fr.id, fr.prix);

@@ -1,307 +1,246 @@
-﻿<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover"><title>GPS0 - BOSS FINAL</title><style>
-*{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;overflow:hidden;background:#0A0A1A;color:#fff;font-family:"Trebuchet MS",sans-serif;touch-action:none}
-#hud{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(0,0,0,.82);backdrop-filter:blur(6px);border-bottom:1px solid rgba(255,100,100,.25);font-weight:bold;font-size:.82rem}
-#mj-phase{color:#ff6d00;white-space:nowrap;font-size:.78rem}
-#mj-v{color:#FF6B6B;letter-spacing:2px;white-space:nowrap}
-#boss-hp-wrap{flex:1;height:10px;background:rgba(255,255,255,.1);border-radius:5px;overflow:hidden;border:1px solid rgba(255,100,100,.4);min-width:60px}
-#boss-hp-bar{height:100%;background:linear-gradient(90deg,#ff1744,#ff6d00);border-radius:5px;transition:width .3s}
-#mj-timer{color:#4FC3F7;white-space:nowrap;font-weight:bold}
-#btn-q{background:none;border:1px solid rgba(255,255,255,.3);color:rgba(255,255,255,.6);padding:4px 10px;border-radius:8px;cursor:pointer;font-size:.8rem;flex-shrink:0}
-#monde{position:fixed;top:0;left:0;right:0;bottom:110px;overflow:hidden;background:url('../assets/backgrounds/fond_ecran9.jpeg') center/cover no-repeat}
-.bg-s{position:absolute;inset:0;background-image:radial-gradient(circle,rgba(255,255,255,.35) 1px,transparent 1px);background-size:50px 50px;animation:dr 35s linear infinite;pointer-events:none}
-@keyframes dr{to{transform:translateX(50px)}}
-.plate{position:absolute;border-radius:8px;background:linear-gradient(180deg,#5a5a6e,#3a3a4e);border-top:2px solid rgba(200,162,200,.4);box-shadow:0 4px 12px rgba(0,0,0,.5)}
-.plate.sol{background:linear-gradient(180deg,#4a4a5e,#2a2a3e);border-top:2px solid rgba(79,195,247,.3)}
-#joueur{position:absolute;width:40px;height:52px;display:flex;flex-direction:column;align-items:center;pointer-events:none;z-index:20}
-#casque{width:36px;height:36px;border-radius:50%;background:rgba(79,195,247,.15);border:2px solid rgba(79,195,247,.6);overflow:hidden;flex-shrink:0}
-#ts{width:100%;height:100%;image-rendering:pixelated;background-color:#9a72c8;background-size:cover;background-position:center}
-#corps{width:28px;height:20px;border-radius:4px;background:linear-gradient(180deg,#C8A2C8,#9a72c8);display:flex;align-items:center;justify-content:center;margin-top:1px}
-#corps::after{content:"";width:8px;height:8px;border-radius:50%;background:#FFD700}
-#jambes{display:flex;gap:4px;margin-top:1px}
-.jambe{width:10px;height:10px;border-radius:2px;background:#9a72c8}
-#boss-el{position:fixed;pointer-events:none;z-index:15}
-.proj{position:fixed;height:10px;border-radius:5px;background:linear-gradient(90deg,#ff1744,#ff6d00);box-shadow:0 0 10px rgba(255,23,68,.7);z-index:18;pointer-events:none}
-@keyframes sc{from{opacity:.7;transform:scale(.9)}to{opacity:1;transform:scale(1.1)}}
-@keyframes rd-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
-#ctrl-bar{position:fixed;bottom:0;left:0;right:0;height:110px;z-index:45;display:flex;align-items:center;justify-content:center;padding:8px}
-#bs{width:100%;max-width:600px;height:80px;border-radius:14px;border:2px solid rgba(255,100,100,.25);background:rgba(255,100,100,.05);color:rgba(255,255,255,.25);font-size:2.5rem;cursor:pointer;touch-action:none;user-select:none;-webkit-user-select:none}
-#lune{position:fixed;top:58px;left:50%;transform:translateX(-50%);background:rgba(10,10,26,.95);border:1px solid rgba(255,255,255,.4);border-radius:14px;padding:8px 14px;font-size:.9rem;color:#fff;font-weight:bold;opacity:0;transition:opacity .4s;max-width:90vw;z-index:60;pointer-events:none;white-space:nowrap}
-#lune.v{opacity:1}
-#phase-banner{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);font-size:1.8rem;font-weight:900;color:#ff6d00;text-shadow:0 0 24px #ff6d00,0 0 48px rgba(255,109,0,.5);z-index:80;opacity:0;transition:opacity .5s;pointer-events:none;text-align:center;white-space:nowrap}
-#phase-banner.show{opacity:1}
-.joueur-inv{animation:jinv .2s steps(2,end) infinite}
-@keyframes jinv{0%{opacity:1}50%{opacity:0}}
-#tuto{position:fixed;inset:0;z-index:100;background:rgba(10,10,26,.94);backdrop-filter:blur(8px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:32px}
-#tuto h2{color:#ff6d00;font-size:1.3rem;text-align:center;font-weight:bold}
-#tuto p{color:rgba(255,255,255,.85);text-align:center;font-size:.9rem;line-height:1.6;max-width:300px;font-weight:bold}
-.ti{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.06);border-radius:12px;padding:10px 16px;width:100%;max-width:300px;font-size:.85rem;font-weight:bold}
-#btn-st{padding:14px 32px;background:linear-gradient(135deg,#ff6d00,#ff1744);border:none;border-radius:16px;color:#fff;font-weight:bold;font-size:1rem;cursor:pointer;margin-top:8px;box-shadow:0 0 20px rgba(255,109,0,.4)}
-#ov{position:fixed;inset:0;z-index:100;display:none;background:rgba(10,10,26,.95);backdrop-filter:blur(10px);flex-direction:column;align-items:center;justify-content:center;gap:20px}
-#ov.v{display:flex}
-#ot{font-size:2rem;font-weight:900}
-#ot.win{color:#69FF47}
-#ot.lose{color:#FF6B6B}
-.bo{padding:14px 32px;border:none;border-radius:16px;font-weight:bold;font-size:1rem;cursor:pointer}
-#bb{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.3);color:#fff}
-#br{background:linear-gradient(135deg,#C8A2C8,#9a72c8);color:#0A0A1A}
-</style></head>
-<body>
-<div id="hud"><span id="mj-phase">PHASE 1/3</span><span id="mj-v">❤️❤️❤️</span><div id="boss-hp-wrap"><div id="boss-hp-bar" style="width:100%"></div></div><span id="mj-timer">3:00</span><button id="btn-q">Quitter</button></div>
-<div id="lune"></div>
-<div id="monde"><div class="bg-s"></div></div>
-<div id="boss-el"></div>
-<div id="joueur"><div id="casque"><div id="ts"></div></div><div id="corps"></div><div id="jambes"><div class="jambe"></div><div class="jambe"></div></div></div>
-<div id="phase-banner"></div>
-<div id="ctrl-bar"><button id="bs">⬆</button></div>
-<div id="tuto">
-  <h2>⚔️ BOSS FINAL — Le Gardien Cosmique</h2>
-  <p>Le boss court automatiquement !<br>Saute pour esquiver ses projectiles.<br>Collecte les <span style="color:#ff1744;font-weight:900">★ ÉTOILES ROUGES</span> pour infliger des dégâts !</p>
-  <div class="ti"><span>⬆</span><span>Appui court = petit saut | Appui long = grand saut</span></div>
-  <div class="ti"><span style="color:#ff1744">★</span><span>Étoile rouge touchée = -1 HP Boss !</span></div>
-  <div class="ti"><span>💥</span><span>Projectile touché = -1 vie — 3 vies max</span></div>
-  <button id="btn-st">Affronter le Boss ! 🔥</button>
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover"><title>GPS0 - Lune d'Eclipse</title><style>
+*{margin:0;padding:0;box-sizing:border-box;user-select:none;-webkit-user-select:none;touch-action:none}
+body{overflow:hidden;width:100vw;height:100vh;font-family:system-ui,sans-serif}
+canvas{position:fixed;inset:0;width:100%;height:100%}
+#hud{position:fixed;top:0;left:0;right:0;height:50px;display:flex;align-items:center;justify-content:space-between;padding:0 14px;z-index:10;border-bottom:1px solid rgba(255,255,255,.12)}
+#htimer{font-weight:bold;font-size:.92rem}
+#btn-q{background:none;border:1px solid rgba(255,255,255,.2);border-radius:8px;color:rgba(255,255,255,.5);padding:4px 10px;font-size:.76rem;cursor:pointer}
+#overlay,#results{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:20;padding:24px;text-align:center}
+#results{display:none;z-index:30}
+h2{font-size:1.35rem}p{font-size:.88rem;max-width:290px;line-height:1.5;opacity:.85}
+.ti{display:flex;align-items:center;gap:8px;font-size:.82rem;opacity:.65}
+.btn-go{border:none;border-radius:14px;color:#0A0A1A;font-weight:bold;font-size:1rem;padding:13px 30px;cursor:pointer;margin-top:6px}
+body{background:#020008}#hud{background:rgba(2,0,8,.92)}#htimer{color:#C8A2C8}
+h2{color:#C8A2C8}p{color:rgba(220,180,255,.85)}.ti{color:rgba(200,162,200,.65)}
+.btn-go{background:linear-gradient(135deg,#C8A2C8,#9a72c8)}
+#boss-hp-wrap{flex:1;height:12px;background:rgba(255,255,255,.1);border-radius:6px;overflow:hidden;min-width:80px}
+#boss-hp-bar{height:100%;background:linear-gradient(90deg,#ff1744,#ff6d00);border-radius:6px;transition:width .3s}
+#phase-label{position:fixed;top:60px;left:50%;transform:translateX(-50%);color:#FFD700;font-size:.9rem;font-weight:bold;z-index:15;background:rgba(2,0,8,.75);padding:4px 14px;border-radius:10px}
+#mechanic-label{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);color:rgba(200,162,200,.65);font-size:.8rem;z-index:15;background:rgba(2,0,8,.7);padding:4px 12px;border-radius:10px}
+</style></head><body>
+<canvas id="c"></canvas>
+<div id="hud">
+  <span id="htimer">3:00</span>
+  <span>&#x1F311; Lune d'Eclipse</span>
+  <div id="boss-hp-wrap"><div id="boss-hp-bar" style="width:100%"></div></div>
+  <button id="btn-q">Quitter</button>
 </div>
-<div id="ov">
-  <div id="ot"></div>
-  <div id="os" style="color:rgba(255,255,255,.7);font-size:.9rem;text-align:center;max-width:280px"></div>
-  <div style="display:flex;flex-direction:column;gap:10px;margin-top:16px;width:min(300px,90vw);align-items:stretch">
-    <button class="bo" id="bc" style="display:none">🎁 Prendre la récompense (25 ✨)</button>
-    <button class="bo" id="br" style="display:none">🔄 Recommencer</button>
-    <button class="bo" id="bb" style="display:none">❌ Abandonner</button>
-  </div>
+<div id="phase-label">BOSS — Phase 1/3</div>
+<div id="mechanic-label">TAP = Inverser la gravit\xe9</div>
+<div id="overlay" style="background:rgba(2,0,8,.93)">
+  <h2>&#x1F311; Lune d'Eclipse</h2>
+  <p>Le Boss Final t'attend ! 3 phases, 3 m\xe9caniques combinees.</p>
+  <div class="ti">&#x1FA90; <span>Phase 1 : gravit\xe9 invers\xe9e — \xe9vite les attaques</span></div>
+  <div class="ti">&#x1F50E; <span>Phase 2 : miroirs — redirige les lasers vers le boss</span></div>
+  <div class="ti">&#x1F47B; <span>Phase 3 : fant\xF4me — traverse les ultimes attaques</span></div>
+  <button class="btn-go" id="btn-start">Affronter le Boss !</button>
 </div>
-<script>(function(){
+<div id="results" style="background:rgba(2,0,8,.95)"></div>
+<script>
 'use strict';
-var W=window.innerWidth,H=window.innerHeight;
-var MONDE_W=Math.round(W*3);
-var G=0.52,JF=-15,VX=4.2;
-var BOSS_MAX_HP=9;
-var jx=80,jy,vy=0,inAir=true,sauts=1;
-var vies=3,invincible=false,invT=0;
-var jumpStartMs=0;
-var bossHp=BOSS_MAX_HP,phase=0;
-var bossX=W/2-45,bossY=65,bossVx=1.5;
-var bossW=90,bossH=90;
-var bossT=0,bossHitCd=0;
-var tempsRestant=180,timerMs=0;
-var running=false,camX=0,lastTs=0;
-var projTimer=0,projInterval=2500;
-var monde=document.getElementById('monde');
-var jEl=document.getElementById('joueur');
-var bEl=document.getElementById('boss-el');
-var timerEl=document.getElementById('mj-timer');
-var phaseEl=document.getElementById('mj-phase');
-try{var sv=window.parent.GPS0_Avatar&&window.parent.GPS0_Avatar.getSelfie();if(sv){var ts=document.getElementById('ts');if(ts)ts.style.backgroundImage='url('+sv+')';}}catch(e){}
-function sfx(n){try{if(window.parent.GPS0_Audio)window.parent.GPS0_Audio.playSFX(n);}catch(e){}}
-function lune(txt){var el=document.getElementById('lune');if(!el)return;el.textContent=txt;el.classList.add('v');sfx('lune_apparait');setTimeout(function(){el.classList.remove('v');},3500);}
-var soY=Math.round(H-65);
-var plates=[];
-var solEl=document.createElement('div');
-solEl.className='plate sol';
-solEl.style.cssText='position:absolute;left:0;top:'+soY+'px;width:'+MONDE_W+'px;height:65px';
-monde.appendChild(solEl);
-plates.push({x:0,y:soY,w:MONDE_W,h:65,sol:true});
-var platData=[
-  {x:Math.round(W*.08),y:soY-130,w:120,h:18},
-  {x:Math.round(W*.55),y:soY-165,w:120,h:18},
-  {x:Math.round(W*1.05),y:soY-130,w:120,h:18},
-  {x:Math.round(W*1.55),y:soY-155,w:120,h:18},
-  {x:Math.round(W*2.05),y:soY-130,w:120,h:18},
-  {x:Math.round(W*2.55),y:soY-155,w:120,h:18},
-  {x:Math.round(W*.32),y:soY-210,w:100,h:18},
-  {x:Math.round(W*.82),y:soY-195,w:100,h:18},
-  {x:Math.round(W*1.32),y:soY-210,w:100,h:18},
-  {x:Math.round(W*1.82),y:soY-195,w:100,h:18},
-  {x:Math.round(W*2.32),y:soY-210,w:100,h:18},
-  {x:Math.round(W*2.82),y:soY-195,w:100,h:18}
+const C=document.getElementById('c'),X=C.getContext('2d');
+let W=window.innerWidth,H=window.innerHeight;C.width=W;C.height=H;
+const selfieImg=new Image();const sd=localStorage.getItem('gps0_avatar_selfie_base64');if(sd)selfieImg.src=sd;
+const TOTAL=180,BOSS_HP_MAX=9;
+let started=false,done=false,poussieres=0,raf=null,elapsed=0,startTs=0,lastTs=0,winTime=0;
+let lives=3,bossHp=BOSS_HP_MAX,phase=0,secretFound=false;
+// Phase 1 state (gravity)
+let py=0,vy=0,gravDir=1,gravFlipped=false,gravT=0;
+const G=0.45,GRAV_MAX=5,FLOOR=H-80,CEIL=55,PX=W*0.25;
+// Phase 2 state (mirrors)
+let mirrors=[
+  {x:W*0.3,y:H*0.3,type:'/'},
+  {x:W*0.5,y:H*0.6,type:'\\'},
+  {x:W*0.65,y:H*0.25,type:'/'},
 ];
-platData.forEach(function(d){
-  var e=document.createElement('div');e.className='plate';
-  e.style.cssText='position:absolute;left:'+d.x+'px;top:'+d.y+'px;width:'+d.w+'px;height:'+d.h+'px';
-  monde.appendChild(e);plates.push(d);
-});
-var dustPlatIdx=[1,2,3,4,5,6,7,8,9,10,11,12];
-var dusts=[],dustCds=[];
-function mkDust(di){
-  var p=plates[dustPlatIdx[di]];if(!p)return null;
-  var ox=p.w/2-12;
-  var e=document.createElementNS('http://www.w3.org/2000/svg','svg');
-  e.setAttribute('viewBox','-1 -1 22 22');e.setAttribute('width','24');e.setAttribute('height','24');
-  e.style.cssText='position:absolute;left:'+(p.x+ox)+'px;top:'+(p.y-30)+'px;filter:drop-shadow(0 0 8px #ff1744) drop-shadow(0 0 18px rgba(255,23,68,.6));animation:sc 1s ease-in-out infinite alternate,rd-bob 1.8s ease-in-out infinite;pointer-events:none;';
-  var star=document.createElementNS('http://www.w3.org/2000/svg','polygon');
-  var pts=[];for(var k=0;k<10;k++){var a=Math.PI/5*k-Math.PI/2;var r=k%2===0?9:4.5;pts.push((10+r*Math.cos(a)).toFixed(2)+','+(10+r*Math.sin(a)).toFixed(2));}
-  star.setAttribute('points',pts.join(' '));star.setAttribute('fill','#ff1744');star.setAttribute('stroke','#ff6d00');star.setAttribute('stroke-width','0.8');
-  e.appendChild(star);monde.appendChild(e);
-  return{e:e,wx:p.x+ox,wy:p.y-30,col:false};
+// Phase 3 state (ghost)
+let ghostT=0,ghostCdT=0,touching=false,isGhost=false;
+const GHOST_MAX=3,GHOST_CD=4;
+// Boss
+let bossX=W*0.72,bossY=H*0.35,bossVx=1.8,bossVy=0.5;
+// Projectiles
+let projs=[];let projTimer=0,projInterval=3;
+function addProj(){
+  const angle=Math.atan2(py-bossY,PX-bossX);
+  projs.push({x:bossX,y:bossY,vx:Math.cos(angle)*4,vy:Math.sin(angle)*4,w:20,h:8,reflected:false});
 }
-dustPlatIdx.forEach(function(pi,di){var d=mkDust(di);if(d){dusts.push(d);dustCds.push(0);}});
-var bossColors=['#7c4dff','#ff6d00','#ff1744'];
-var bossSizes=[90,110,130];
-function renderBoss(){
-  var c=bossColors[phase],sz=bossSizes[phase];bossW=bossH=sz;
-  bEl.style.width=sz+'px';bEl.style.height=sz+'px';
-  var ex1=sz*0.32,ex2=sz*0.68,ey=sz*0.38,er=sz*0.12;
-  var horns=phase>=1?('<polygon points="'+sz*.22+','+sz*.17+' '+sz*.30+',0 '+sz*.38+','+sz*.17+'" fill="'+c+'"/><polygon points="'+sz*.62+','+sz*.17+' '+sz*.70+',0 '+sz*.78+','+sz*.17+'" fill="'+c+'"/>'):''
-  var core=phase>=2?('<circle cx="'+sz/2+'" cy="'+sz*.72+'" r="'+sz*.16+'" fill="rgba(255,23,68,.55)" stroke="#ff1744" stroke-width="2"/>'):''
-  bEl.innerHTML='<svg width="'+sz+'" height="'+sz+'" viewBox="0 0 '+sz+' '+sz+'"><defs><radialGradient id="bg'+phase+'"><stop offset="0%" stop-color="'+c+'"/><stop offset="100%" stop-color="#000"/></radialGradient></defs>'
-    +'<ellipse cx="'+sz/2+'" cy="'+sz/2+'" rx="'+(sz/2-2)+'" ry="'+(sz/2-2)+'" fill="url(#bg'+phase+')" stroke="'+c+'" stroke-width="3"/>'
-    +horns
-    +'<circle cx="'+ex1+'" cy="'+ey+'" r="'+(er+2)+'" fill="#fff"/><circle cx="'+ex2+'" cy="'+ey+'" r="'+(er+2)+'" fill="#fff"/>'
-    +'<circle cx="'+ex1+'" cy="'+ey+'" r="'+er+'" fill="#000"/><circle cx="'+ex2+'" cy="'+ey+'" r="'+er+'" fill="#000"/>'
-    +'<path d="M '+sz*.28+' '+sz*.66+' Q '+sz/2+' '+sz*.56+' '+sz*.72+' '+sz*.66+'" stroke="'+c+'" stroke-width="3" fill="none"/>'
-    +core+'</svg>';
+function bossColor(){return phase===0?'#7700aa':phase===1?'#FF6600':'#FF0000';}
+function bossSize(){return 60+phase*12;}
+const SRC2={x:40,y:H/2};
+function traceRay2(){
+  let pts=[{x:SRC2.x,y:SRC2.y}],dx=1,dy=0,cx=SRC2.x,cy=SRC2.y,hit=false;
+  for(let b=0;b<6;b++){
+    let bt=1e9,bm=null;
+    for(const m of mirrors){
+      const fx=m.x-cx,fy=m.y-cy,A=1,B=-2*(fx*dx+fy*dy),CC=fx*fx+fy*fy-22*22,D=B*B-4*A*CC;
+      if(D<0)continue;const t=(-B-Math.sqrt(D))/(2*A);if(t>2&&t<bt){bt=t;bm=m;}
+    }
+    const tbx=(bossX-cx)*dx+(bossY-cy)*dy;
+    const nx=cx+dx*tbx-bossX,ny=cy+dy*tbx-bossY;
+    if(tbx>0&&tbx<(bm?bt:1e9)&&Math.sqrt(nx*nx+ny*ny)<bossSize()/2){
+      pts.push({x:bossX,y:bossY});hit=true;break;
+    }
+    let wt=1e9;
+    if(dx>0)wt=Math.min(wt,(W+50-cx)/dx);else if(dx<0)wt=Math.min(wt,(-50-cx)/dx);
+    if(dy>0)wt=Math.min(wt,(H+50-cy)/dy);else if(dy<0)wt=Math.min(wt,(-50-cy)/dy);
+    if(bm&&bt<wt){cx+=dx*bt;cy+=dy*bt;pts.push({x:cx,y:cy});if(bm.type=='/'){const t=dx;dx=-dy;dy=-t;}else{const t=dx;dx=dy;dy=t;}}
+    else{pts.push({x:cx+dx*wt,y:cy+dy*wt});break;}
+  }
+  return{pts,hit};
 }
-function updBossHP(){
-  var pct=(bossHp/BOSS_MAX_HP)*100;
+function draw(){
+  X.clearRect(0,0,W,H);
+  const bg=X.createLinearGradient(0,0,0,H);
+  bg.addColorStop(0,'#020008');bg.addColorStop(1,'#0a0020');
+  X.fillStyle=bg;X.fillRect(0,0,W,H);
+  for(let i=0;i<50;i++){X.fillStyle='rgba(200,162,200,.15)';X.beginPath();X.arc((i*137)%W,(i*89)%H,.8,0,Math.PI*2);X.fill();}
+  // Boss
+  const bs2=bossSize();
+  const gbo=X.createRadialGradient(bossX,bossY,bs2*0.2,bossX,bossY,bs2+20);
+  gbo.addColorStop(0,'rgba(200,0,255,.5)');gbo.addColorStop(1,'transparent');
+  X.fillStyle=gbo;X.beginPath();X.arc(bossX,bossY,bs2+20,0,Math.PI*2);X.fill();
+  X.fillStyle=bossColor();X.beginPath();X.arc(bossX,bossY,bs2,0,Math.PI*2);X.fill();
+  X.font=(bs2*0.7)+'px serif';X.textAlign='center';X.textBaseline='middle';
+  X.fillText('\uD83D\uDC7E',bossX,bossY);
+  // Phase-specific rendering
+  if(phase===0){
+    // Floor/ceiling indicator
+    X.fillStyle='#FF3300';X.fillRect(0,FLOOR,W,H-FLOOR);
+    X.fillStyle='rgba(255,100,0,.2)';X.fillRect(0,CEIL,W,3);
+    // Gravity arrow
+    X.font='bold 20px serif';X.textAlign='center';X.fillStyle='rgba(255,200,100,.7)';X.fillText(gravDir>0?'\uD83D\uDC47':'\uD83D\uDC46',PX,H*0.5);
+  }
+  if(phase===1){
+    // Ray source
+    const gs=X.createRadialGradient(SRC2.x,SRC2.y,2,SRC2.x,SRC2.y,28);
+    gs.addColorStop(0,'rgba(255,255,180,.8)');gs.addColorStop(1,'transparent');
+    X.fillStyle=gs;X.beginPath();X.arc(SRC2.x,SRC2.y,28,0,Math.PI*2);X.fill();
+    X.font='18px serif';X.textAlign='center';X.textBaseline='middle';X.fillText('\uD83D\uDCA1',SRC2.x,SRC2.y);
+    // Mirrors
+    mirrors.forEach(m=>{
+      X.strokeStyle='rgba(150,230,255,.75)';X.lineWidth=3;X.lineCap='round';
+      const angle=m.type==='/'?-Math.PI/4:Math.PI/4;
+      X.save();X.translate(m.x,m.y);X.rotate(angle);X.beginPath();X.moveTo(-22,0);X.lineTo(22,0);X.stroke();X.restore();
+      X.fillStyle='rgba(200,162,200,.4)';X.font='10px system-ui';X.textAlign='center';X.textBaseline='top';X.fillText('TAP',m.x,m.y+26);
+    });
+    // Ray
+    const {pts,hit}=traceRay2();
+    if(pts.length>1){
+      X.strokeStyle='rgba(255,255,80,.85)';X.lineWidth=3;X.shadowColor='rgba(255,255,0,.6)';X.shadowBlur=10;
+      X.beginPath();X.moveTo(pts[0].x,pts[0].y);for(let i=1;i<pts.length;i++)X.lineTo(pts[i].x,pts[i].y);X.stroke();X.shadowBlur=0;
+      if(hit&&!done){bossHp--;updateBossHp();if(bossHp<=3&&phase<2){phase=2;phaseTransition();}}
+    }
+  }
+  if(phase===2){
+    // Ghost bar
+    const pct=isGhost?1-ghostT/GHOST_MAX:ghostCdT>0?1-ghostCdT/GHOST_CD:1;
+    document.getElementById('mechanic-label').textContent=isGhost?'\uD83D\uDC7B FANT\xD4ME !':ghostCdT>0?'\u23F3 Rechargement...':'MAINTENIR = Fant\xF4me';
+  }
+  // Projectiles
+  projs.forEach(p=>{
+    X.fillStyle=p.reflected?'rgba(255,255,0,.8)':'rgba(255,50,200,.7)';
+    X.fillRect(p.x-p.w/2,p.y-p.h/2,p.w,p.h);
+  });
+  // Player
+  const alpha=isGhost?0.3:1;X.globalAlpha=alpha;
+  if(isGhost){X.shadowColor='rgba(200,162,200,.9)';X.shadowBlur=18;}
+  X.fillStyle='#888';X.beginPath();X.ellipse(PX,py+14,12,9,0,0,Math.PI*2);X.fill();
+  if(sd&&selfieImg.complete){X.save();X.beginPath();X.arc(PX,py,13,0,Math.PI*2);X.clip();X.drawImage(selfieImg,PX-13,py-13,26,26);X.restore();}
+  else{X.font='17px serif';X.textAlign='center';X.textBaseline='middle';X.fillText('\uD83E\uDDD1\u200D\uD83D\uDE80',PX,py);}
+  X.globalAlpha=1;X.shadowBlur=0;
+  for(let i=0;i<lives;i++){X.font='14px serif';X.textAlign='left';X.textBaseline='middle';X.fillText('\uD83D\uDC9C',8+i*24,H/2);}
+}
+function phaseTransition(){
+  const pl=document.getElementById('phase-label');
+  const ml=document.getElementById('mechanic-label');
+  if(phase===1){pl.textContent='Phase 2/3 — MIROIRS';ml.textContent='TAP miroir = pivoter 45\xB0';}
+  if(phase===2){pl.textContent='Phase 3/3 — FANT\xD4ME';ml.textContent='MAINTENIR = Fant\xF4me (3s)';}
+  bossVx*=1.5;projInterval=Math.max(1.5,projInterval-0.7);
+}
+function updateBossHp(){
+  const pct=Math.max(0,bossHp/BOSS_HP_MAX)*100;
   document.getElementById('boss-hp-bar').style.width=pct+'%';
-  document.getElementById('boss-hp-bar').style.background=['linear-gradient(90deg,#7c4dff,#C8A2C8)','linear-gradient(90deg,#ff6d00,#FFD700)','linear-gradient(90deg,#ff1744,#ff6d00)'][phase]||'';
+  if(bossHp<=6&&phase<1){phase=1;phaseTransition();}
+  if(bossHp<=0){done=true;winTime=elapsed;_end(true);}
 }
-function setPhase(p){
-  phase=p;bossVx=1.5+p*0.55;projInterval=2500-p*650;
-  renderBoss();updBossHP();
-  phaseEl.textContent='PHASE '+(p+1)+'/3';
-  if(p>0){
-    var banner=document.getElementById('phase-banner');
-    banner.textContent=['PHASE 2 — FUREUR !','PHASE 3 — RAGE COSMIQUE !'][p-1]||'';
-    banner.classList.add('show');setTimeout(function(){banner.classList.remove('show');},2200);
-  }
-  lune(['Saute sur les etoiles rouges pour le blesser !','Il s\'enerve, les tirs accelerent !','Phase finale ! Tout ou rien !'][p]);
-}
-function hitBoss(){
-  if(bossHitCd>0)return;
-  bossHitCd=700;bossHp--;
-  sfx('boss_hit');
-  bEl.style.filter='brightness(4) saturate(0)';setTimeout(function(){bEl.style.filter='';},220);
-  updBossHP();
-  if(bossHp<=0){winGame();return;}
-  var np=bossHp<=3?2:bossHp<=6?1:0;
-  if(np>phase)setPhase(np);
-}
-var lives_str=['','','❤️','❤️❤️','❤️❤️❤️'];
-function updVies(){document.getElementById('mj-v').textContent=lives_str[Math.max(0,vies)]||'';}
-function perdre(){
-  if(invincible)return;
-  invincible=true;invT=1400;vies--;
-  sfx('ennemi_touche');updVies();
-  lune(vies===1?'Derniere chance !':(vies===0?'...':(Math.random()>.5?'Atterris sur les etoiles !':'Esquive les tirs !')));
-  if(vies<=0){running=false;setTimeout(loseGame,400);return;}
-  jEl.classList.add('joueur-inv');
-}
-function winGame(){
-  running=false;
-  try{if(window.parent.GPS0_Audio)window.parent.GPS0_Audio.playMusiqueFinale();}catch(e){}
-  var ov=document.getElementById('ov');ov.classList.add('v');
-  document.getElementById('ot').textContent='BOSS VAINCU !';document.getElementById('ot').className='win';
-  document.getElementById('os').textContent='Incroyable ! Le cosmos est libere ! Tu gagnes 25 poussieres !';
-  document.getElementById('bc').style.display='block';
-  document.getElementById('br').style.display='none';
-  document.getElementById('bb').style.display='block';
-}
-function loseGame(){
-  running=false;
-  var ov=document.getElementById('ov');ov.classList.add('v');
-  document.getElementById('ot').textContent='Defaite Cosmique';document.getElementById('ot').className='lose';
-  document.getElementById('os').textContent=vies<=0?'Tu n\'as plus de vies... Reessaie !':'Le temps est ecoule. Reessaie !';
-  document.getElementById('bc').style.display='none';
-  document.getElementById('br').style.display='block';
-  document.getElementById('bb').style.display='block';
-}
-function pm(ok){try{window.parent.postMessage({source:'gps0_minijeu',success:ok,niveau:9,poussieres:ok?25:0,etoiles:ok?3:0},'*');}catch(e){}}
-document.getElementById('btn-q').addEventListener('click',function(){pm(false);});
-document.getElementById('bc').addEventListener('click',function(){pm(true);});
-document.getElementById('br').addEventListener('click',function(){location.reload();});
-document.getElementById('bb').addEventListener('click',function(){pm(false);});
-var bs=document.getElementById('bs');
-bs.addEventListener('touchstart',function(e){e.preventDefault();if(!running)return;jumpStartMs=Date.now();},{passive:false});
-bs.addEventListener('touchend',function(e){e.preventDefault();doJump();},{passive:false});
-bs.addEventListener('mousedown',function(){if(!running)return;jumpStartMs=Date.now();});
-bs.addEventListener('mouseup',function(){doJump();});
-function doJump(){
-  if(!running||sauts<=0)return;
-  var held=Date.now()-jumpStartMs;
-  vy=held>220?JF:JF*0.58;
-  sauts--;inAir=true;
-  sfx('saut_cosmonaute');
-}
-monde.style.width=MONDE_W+'px';monde.style.right='auto';
-var projs=[];
-function fireProj(){
-  var goRight=bossX<W/2;
-  var pw=Math.round(W*.42);
-  var sx=goRight?0:W-pw;
-  var py=Math.round(bossY+bossH/2+(Math.random()-.5)*70);
-  py=Math.max(58,Math.min(py,soY-30));
-  var e=document.createElement('div');e.className='proj';
-  e.style.cssText='width:'+pw+'px;left:'+sx+'px;top:'+py+'px';
-  document.body.appendChild(e);
-  projs.push({x:sx,y:py,w:pw,h:10,vx:goRight?(5+phase*.8):-(5+phase*.8),e:e});
-  sfx('laser_warning');
-}
-function loop(ts){
-  requestAnimationFrame(loop);
-  if(!running)return;
-  var dt=ts-lastTs;if(dt>60)dt=60;lastTs=ts;
-  timerMs+=dt;
-  if(timerMs>=1000){
-    timerMs-=1000;tempsRestant--;
-    var mn=Math.floor(tempsRestant/60),sc=tempsRestant%60;
-    timerEl.textContent=mn+':'+(sc<10?'0':'')+sc;
-    if(tempsRestant<=30)timerEl.style.color='#FF6B6B';
-    if(tempsRestant<=0){running=false;loseGame();return;}
-  }
-  if(invincible){invT-=dt;if(invT<=0){invincible=false;invT=0;jEl.classList.remove('joueur-inv');}}
-  if(bossHitCd>0)bossHitCd-=dt;
-  jx+=VX;
-  if(jx>MONDE_W-60){jx=80;camX=0;}
-  vy=Math.min(vy+G,22);jy+=vy;
-  inAir=true;
-  for(var i=0;i<plates.length;i++){
-    var p=plates[i];
-    var cx=jx+20,foot=jy+52;
-    if(cx>p.x+4&&cx<p.x+p.w-4){
-      if(vy>=0&&foot>=p.y&&foot<=p.y+p.h+Math.abs(vy)+5){
-        jy=p.y-52;vy=0;inAir=false;sauts=1;
-      }else if(vy<0&&jy<=p.y+p.h&&jy>=p.y-10){
-        vy=Math.abs(vy)*0.3;
-      }
-    }
-  }
-  if(jy>soY+150){jy=soY-52;vy=0;perdre();}
-  var tgt=Math.max(0,Math.min(jx-W*.35,MONDE_W-W));
-  camX+=(tgt-camX)*.10;
-  monde.style.transform='translateX('+(-Math.round(camX))+'px)';
-  var jSx=Math.round(jx-camX);
-  jEl.style.left=jSx+'px';jEl.style.top=jy+'px';
-  bossT+=dt*.001;
-  bossX+=bossVx;
-  bossY=62+Math.sin(bossT*1.6)*18;
-  if(bossX<8||bossX>W-bossW-8)bossVx=-bossVx;
-  bEl.style.left=bossX+'px';bEl.style.top=bossY+'px';
+function tick(ts){
+  if(!started||done)return;
+  if(!startTs)startTs=ts;
+  const dt=Math.min((ts-lastTs)/1000,0.05);lastTs=ts;
+  elapsed=(ts-startTs)/1000;
+  const rem=Math.max(0,TOTAL-elapsed);
+  document.getElementById('htimer').textContent=mm(rem);
+  if(rem<=0&&!done){done=true;_end(false);return;}
+  // Boss movement
+  bossX+=bossVx;bossY+=bossVy;
+  if(bossX<W*0.5||bossX>W-40)bossVx*=-1;
+  if(bossY<70||bossY>H*0.65)bossVy*=-1;
+  // Projectiles
   projTimer+=dt;
-  if(projTimer>=projInterval){projTimer=0;fireProj();}
-  for(var pi=projs.length-1;pi>=0;pi--){
-    var pr=projs[pi];pr.x+=pr.vx;pr.e.style.left=pr.x+'px';
-    if(pr.x<-pr.w-20||pr.x>W+20){pr.e.remove();projs.splice(pi,1);continue;}
-    if(!invincible&&jSx+4<pr.x+pr.w&&jSx+36>pr.x&&jy+4<pr.y+pr.h&&jy+48>pr.y){perdre();}
-  }
-  for(var di=0;di<dusts.length;di++){
-    var d=dusts[di];
-    if(d.col){dustCds[di]-=dt;if(dustCds[di]<=0){d.col=false;d.e.style.display='';}continue;}
-    var djx=jx+20-(d.wx+12),djy=jy+26-(d.wy+12);
-    if(Math.sqrt(djx*djx+djy*djy)<32){
-      d.col=true;d.e.style.display='none';dustCds[di]=4500;
-      sfx('collecte_poussiere');
-      hitBoss();if(!running)return;
+  if(projTimer>=projInterval){projTimer=0;addProj();}
+  for(let i=projs.length-1;i>=0;i--){
+    const p=projs[i];p.x+=p.vx;p.y+=p.vy;
+    if(p.x<-40||p.x>W+40||p.y<-40||p.y>H+40){projs.splice(i,1);continue;}
+    if(!isGhost&&Math.abs(p.x-PX)<20&&Math.abs(p.y-py)<20){
+      projs.splice(i,1);lives--;
+      if(lives<=0){done=true;_end(false);return;}
+    }
+    if(phase===1&&p.reflected&&Math.sqrt((p.x-bossX)**2+(p.y-bossY)**2)<bossSize()){
+      projs.splice(i,1);bossHp--;updateBossHp();
     }
   }
+  // Phase 0: gravity
+  if(phase===0){
+    if(gravFlipped){gravT+=dt;if(gravT>=GRAV_MAX){gravDir=1;gravFlipped=false;gravT=0;}}
+    vy+=G*gravDir;py+=vy;
+    if(gravDir===1&&py+22>=FLOOR){py=FLOOR-22;vy=0;}
+    if(gravDir===-1&&py-16<=CEIL){py=CEIL+16;vy=0;}
+  }
+  // Phase 3: ghost
+  if(phase===2){
+    if(py+18<FLOOR)vy+=G,py+=vy;else{py=FLOOR-18;vy=0;}
+    if(touching&&ghostCdT<=0){isGhost=true;ghostT=Math.min(GHOST_MAX,ghostT+dt);if(ghostT>=GHOST_MAX){isGhost=false;ghostT=0;ghostCdT=GHOST_CD;}}
+    else isGhost=false;
+    if(ghostCdT>0)ghostCdT=Math.max(0,ghostCdT-dt);
+    // Check secret finding
+    if(Math.abs(PX-bossX)<bossSize()+20&&Math.abs(py-bossY)<bossSize()+20&&isGhost&&!secretFound)secretFound=true;
+  }
+  draw();raf=requestAnimationFrame(tick);
 }
-document.getElementById('btn-st').addEventListener('click',function(){
-  document.getElementById('tuto').style.display='none';
-  setPhase(0);renderBoss();updBossHP();updVies();
-  jy=soY-52;running=true;
-  requestAnimationFrame(function(ts){lastTs=ts;requestAnimationFrame(loop);});
-  lune('Saute sur les etoiles rouges pour blesser le boss !');
+function mm(s){return String(Math.floor(s/60)).padStart(2,'0')+':'+String(Math.floor(s%60)).padStart(2,'0');}
+function _end(ok){
+  done=true;cancelAnimationFrame(raf);
+  const r=document.getElementById('results');r.style.display='flex';
+  if(ok){
+    poussieres=winTime<30&&secretFound?50:winTime<60?25:5;
+    r.innerHTML='<h2 style="color:#FFD700">\uD83C\uDF1F Boss vaincu !</h2><p>'+(secretFound?'\uD83D\uDC7B Attaque cach\xe9e d\xe9couverte !':'')+'</p><p style="color:#C8A2C8;font-size:1.2rem">+'+poussieres+' \u2728 poussi\xe8res</p>';
+  }else{
+    poussieres=5;r.innerHTML='<h2 style="color:#FF6B6B">\uD83D\uDE22 Vaincu par le Boss...</h2><p style="color:#C8A2C8">+5 \u2728 poussi\xe8res</p>';
+  }
+  setTimeout(()=>window.parent.postMessage({source:'gps0_minijeu',success:ok,niveau:9,poussieres},'*'),2200);
+}
+C.addEventListener('touchstart',e=>{
+  e.preventDefault();if(!started)return;
+  const tx=e.touches[0].clientX-50,ty=e.touches[0].clientY;
+  if(phase===0){
+    if(!gravFlipped){gravDir*=-1;gravFlipped=true;gravT=0;vy=0;}
+    else if(gravT>1){gravDir*=-1;gravFlipped=true;gravT=0;vy=0;}
+  }else if(phase===1){
+    for(const m of mirrors){
+      if(Math.sqrt((tx-m.x)**2+(ty+50-m.y)**2)<30){m.type=m.type==='/'?'\\':'/';break;}
+    }
+  }
+  touching=true;
+},{passive:false});
+C.addEventListener('touchend',e=>{e.preventDefault();touching=false;if(phase===2&&isGhost){isGhost=false;ghostCdT=GHOST_CD;ghostT=0;}},{passive:false});
+document.getElementById('btn-start').addEventListener('click',()=>{
+  document.getElementById('overlay').style.display='none';
+  py=FLOOR-22;document.getElementById('phase-label').textContent='Phase 1/3 — GRAVIT\xC9';
+  document.getElementById('mechanic-label').textContent='TAP = Inverser la gravit\xe9';
+  started=true;lastTs=performance.now();raf=requestAnimationFrame(tick);
 });
-})();</script>
-</body></html>
+document.getElementById('btn-q').addEventListener('click',()=>{
+  done=true;cancelAnimationFrame(raf);window.parent.postMessage({source:'gps0_minijeu',success:false,niveau:9,poussieres:0},'*');
+});
+draw();
+</script></body></html>

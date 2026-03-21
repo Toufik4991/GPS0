@@ -1,9 +1,9 @@
 # 🌙 GPS0 — Game Design Document v3.0
 
-**Version :** 3.7.0 - Bug 10 : Correctifs UI + Refonte Mini-jeu Mario Run + Boss Auto-Runner N9
-**Date :** 21/03/2026
+**Version :** 3.8.0 - Bug 11 : 9 Lunes uniques + SVG Boutique + Debug Toggle persistant
+**Date :** 22/03/2026
 **Auteur :** Toufik49
-**Statut :** Opérationnel - Auto-runner N1-N8 + Boss Auto-Runner N9 + Correctifs UI complets
+**Statut :** Opérationnel - 9 Mini-jeux thématiques uniques + SVG Boutique/Inventaire + Debug persistant
 
 ---
 
@@ -42,6 +42,23 @@
 - Asteriode grise + halo dim quand inactif (data-etat=off)
 - Assets fonds d'ecran mini-jeux : assets/backgrounds/fond_ecran1-9.jpeg
 - Service Worker v9 / APP_VERSION 3.1.4
+
+**Changements majeurs v3.8.0 (Bug 11) :**
+- **9 Lunes thématiques** : Chaque mini-jeu a sa propre mécanique unique (remplace auto-runner générique) :
+  - N1 🔮 Lune de Verre — Ray-casting miroirs (toggle '/' et '\' sur tap)
+  - N2 🔥 Lune de Cendre — Gravité inversée auto-runner (tap=flip gravDir)
+  - N3 🌿 Lune de Lierre — Plantes/vignes comme plateformes (10 graines)
+  - N4 ❄ Lune de Givre — Glace avec inertie FRICTION=0.985 + vent
+  - N5 👻 Lune d'Ombre — Mode fantôme HOLD (3s max, cooldown 4s) contre pièges
+  - N6 🧲 Lune de Fer — Aimant : tap sur blocs métalliques pour attirer (rouges=piégés)
+  - N7 🌬 Lune de Tempête — Auto-runner + rafales inversant le saut
+  - N8 💎 Lune de Cristal — Tap rapide pour briser cristaux HP 3-8 dans ordre
+  - N9 🌑 Lune d'Éclipse — Boss 3 phases : gravité → miroirs → fantôme (9 HP boss)
+- **SVG animés Boutique/Inventaire** : 4 SVGs inline animés remplacent les emojis (éclat, fragment, gros, cœur) avec champ `rarete` (Commun/Peu commun/Rare/Légendaire)
+- **Debug toggle persistant** : localStorage `gps0_debug_on=1` — mot de passe une seule fois, toggle ON/OFF button dans modal-debug
+- **SVG flottants** : Exclusion zone 120px → 180px, opacity `.88` → `.18` (subtils)
+- **Zone bleue Fix** : Seul `#btn-jouer-haut` lance le mini-jeu (clic astéroïde en zone = ignoré)
+- Service Worker v23 / APP_VERSION 3.8.0
 
 **Changements majeurs v3.7.0 (Bug 10) :**
 - **Écran permissions** : Suppression caméra — seulement GPS + Pseudo dans la checklist

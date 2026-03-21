@@ -1,49 +1,144 @@
-<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover"><title>GPS0 - Niveau 6</title><style>*{box-sizing:border-box;margin:0;padding:0}html,body{height:100%;overflow:hidden;background:#0A0A1A;color:#fff;font-family:"Trebuchet MS",sans-serif;touch-action:none}#hud{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;padding:8px 16px;background:rgba(0,0,0,.7);backdrop-filter:blur(6px);border-bottom:1px solid rgba(200,162,200,.2);font-weight:bold;font-size:.9rem}#mj-e{color:#FFD700}#mj-v{color:#FF6B6B;letter-spacing:2px}#btn-q{background:none;border:1px solid rgba(255,255,255,.3);color:rgba(255,255,255,.6);padding:4px 10px;border-radius:8px;cursor:pointer;font-size:.8rem}#monde{position:fixed;inset:0;overflow:hidden;background:linear-gradient(180deg,#1a2a0a 0%,#0a0a2a 100%)}.bg-e{position:absolute;inset:0;background-image:radial-gradient(circle,rgba(255,255,255,.35) 1px,transparent 1px);background-size:55px 55px;animation:dr 45s linear infinite;pointer-events:none}@keyframes dr{to{transform:translateX(55px)}}.plate{position:absolute;border-radius:8px;background:linear-gradient(180deg,#5a5a6e,#3a3a4e);border-top:2px solid rgba(200,162,200,.4);box-shadow:0 4px 12px rgba(0,0,0,.5)}.plate:not(.sol){box-shadow:0 4px 12px rgba(0,0,0,.5),0 0 14px rgba(200,162,200,.55),0 0 30px rgba(200,162,200,.25)}.plate.sol{background:linear-gradient(180deg,#4a4a5e,#2a2a3e)}.plate.mobile{background:linear-gradient(180deg,#1a4a5e,#0a2a3e);border-top-color:rgba(79,195,247,.8);box-shadow:0 4px 12px rgba(0,0,0,.5),0 0 20px rgba(79,195,247,.5)}.plate.fragile{background:linear-gradient(180deg,#6e4a2a,#4e2a0a);border-top-color:rgba(255,140,0,.6)}.plate.glissante{background:linear-gradient(180deg,#2a5a7e,#1a3a5e);border-top-color:rgba(100,220,255,.9)}#joueur{position:absolute;width:40px;height:52px;display:flex;flex-direction:column;align-items:center;pointer-events:none}#casque{width:36px;height:36px;border-radius:50%;background:rgba(79,195,247,.15);border:2px solid rgba(79,195,247,.6);overflow:hidden;flex-shrink:0}#ts{width:100%;height:100%;image-rendering:pixelated;background-color:#9a72c8;background-size:cover;background-position:center}#corps{width:28px;height:20px;border-radius:4px;background:linear-gradient(180deg,#C8A2C8,#9a72c8);display:flex;align-items:center;justify-content:center;margin-top:1px}#corps::after{content:"";width:8px;height:8px;border-radius:50%;background:#FFD700}#jambes{display:flex;gap:4px;margin-top:1px}.jambe{width:10px;height:10px;border-radius:2px;background:#9a72c8}@keyframes sc{from{opacity:.7;transform:scale(.9)}to{opacity:1;transform:scale(1.1)}}.slime{position:absolute;width:38px;height:30px;border-radius:50% 50% 40% 40%;display:flex;align-items:center;justify-content:center;font-size:.9rem}.laser-h{position:absolute;border-radius:3px;background:linear-gradient(90deg,transparent,#FF3333,transparent);box-shadow:0 0 12px #FF3333;opacity:0;transition:opacity .2s;height:6px}.laser-h.warn{background:linear-gradient(90deg,transparent,#FF8C00,#FFD700,#FF8C00,transparent);box-shadow:0 0 8px #FF8C00;opacity:.6}.laser-h.actif{opacity:1}.pic{position:absolute;clip-path:polygon(50% 0%,100% 100%,0% 100%);background:linear-gradient(180deg,#FF6B6B,#CC0000)}#ctrl-bar{position:fixed;bottom:0;left:0;right:0;height:110px;z-index:45;display:flex;align-items:center;justify-content:center;background:transparent;padding:8px}#bs{width:100%;max-width:600px;height:80px;border-radius:14px;border:2px solid rgba(79,195,247,.2);background:rgba(79,195,247,.05);color:rgba(255,255,255,.25);font-size:2.5rem;cursor:pointer;touch-action:none;user-select:none;-webkit-user-select:none}#lune{position:fixed;top:56px;left:50%;transform:translateX(-50%);background:rgba(10,10,26,.95);border:1px solid rgba(255,255,255,.4);border-radius:14px;padding:8px 14px;font-size:.9rem;color:#fff;font-weight:bold;opacity:0;transition:opacity .4s;max-width:90vw;z-index:60;pointer-events:none;white-space:nowrap}#lune.v{opacity:1}#tuto{position:fixed;inset:0;z-index:100;background:rgba(10,10,26,.93);backdrop-filter:blur(8px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:32px}#tuto h2{color:#C8A2C8;font-size:1.35rem;text-align:center;font-weight:bold}#tuto p{color:rgba(255,255,255,.85);text-align:center;font-size:.9rem;line-height:1.6;max-width:300px;font-weight:bold}.ti{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.06);border-radius:12px;padding:10px 16px;width:100%;max-width:300px;font-size:.85rem;font-weight:bold}#btn-st{padding:14px 32px;background:linear-gradient(135deg,#C8A2C8,#9a72c8);border:none;border-radius:16px;color:#0A0A1A;font-weight:bold;font-size:1rem;cursor:pointer;margin-top:8px}#ov{position:fixed;inset:0;z-index:100;display:none;background:rgba(10,10,26,.93);backdrop-filter:blur(10px);flex-direction:column;align-items:center;justify-content:center;gap:20px}#ov.v{display:flex}#ot{font-size:2rem;font-weight:900}#ot.win{color:#69FF47}#ot.lose{color:#FF6B6B}.bo{padding:14px 32px;border:none;border-radius:16px;font-weight:bold;font-size:1rem;cursor:pointer}#bb{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.3);color:#fff}#br{background:linear-gradient(135deg,#C8A2C8,#9a72c8);color:#0A0A1A}#gz-indicator{position:fixed;top:48px;left:50%;transform:translateX(-50%);font-size:.75rem;color:rgba(150,255,100,.6);pointer-events:none;z-index:30}</style></head><body>
-<div id="hud"><span>Niveau 6 - Gravité Inversée</span><span id="mj-e">0/12 ✨</span><span id="mj-v">❤️❤️❤️</span><button id="btn-q">Quitter</button></div>
-<div id="lune"></div><div id="monde"><div class="bg-e"></div></div>
-<div id="joueur"><div id="casque"><div id="ts"></div></div><div id="corps"></div><div id="jambes"><div class="jambe"></div><div class="jambe"></div></div></div>
-<div id="ctrl-bar"><button id="bs">⬆</button></div>
-<div id="tuto"><h2>Niveau 6 - Gravité Inversée</h2><p>ZONES DE GRAVITÉ INVERSÉE ! Dans ces zones, tu cours sur le plafond ! Les sauts t'envoyent vers le bas. Adapte ta logique !</p><div class="ti"><span>🔃</span><span>Zones vertes = gravité inversée, tu coures au plafond !</span></div><div class="ti"><span>🔵</span><span>Zones normales = gravité normale vers le bas</span></div><div class="ti"><span>⚡</span><span>Double saut disponible - fonctionne dans les 2 sens</span></div><button id="btn-st">GO ! 🚀</button></div>
-<div id="ov"><div id="ot"></div><div id="os"></div><div id="op"></div><div style="display:flex;flex-direction:column;gap:10px;margin-top:16px;width:min(300px,90vw);align-items:stretch"><button class="bo" id="bc" style="display:none">🎁 Prendre la récompense</button><button class="bo" id="br" style="display:none">🔄 Recommencer</button><button class="bo" id="bb" style="display:none">❌ Abandonner</button></div></div>
-<script>(function(){var W=window.innerWidth,H=window.innerHeight;window.GPS0_NIVEAU_CFG={
-  niveau:6,total_poussieres:12,vitesse:4.2,monde_w:5,
-  lune_start:'La gravité s\'inverse ! Saut = chute, chute = saut !',
-  gravity_zones:[
-    {x:Math.round(W*0.60),w:Math.round(W*0.80)},
-    {x:Math.round(W*1.80),w:Math.round(W*0.80)},
-    {x:Math.round(W*3.00),w:Math.round(W*0.80)},
-    {x:Math.round(W*4.00),w:Math.round(W*0.80)}
-  ],
-  plateformes:[
-    {x:0,y:H-60,w:Math.round(W*.55),h:60,sol:true},
-    {x:Math.round(W*.58),y:0,w:Math.round(W*.85),h:60,sol:true},
-    {x:Math.round(W*1.62),y:H-60,w:Math.round(W*.80),h:60,sol:true},
-    {x:Math.round(W*2.62),y:0,w:Math.round(W*.80),h:60,sol:true},
-    {x:Math.round(W*3.62),y:H-60,w:Math.round(W*.60),h:60,sol:true},
-    {x:Math.round(W*4.30),y:0,w:Math.round(W*.70),h:60,sol:true},
-    {x:Math.round(W*.08),y:H-165,w:110,h:18},
-    {x:Math.round(W*.30),y:H-290,w:105,h:18},
-    {x:Math.round(W*.65),y:40,w:110,h:18},
-    {x:Math.round(W*.88),y:110,w:105,h:18},
-    {x:Math.round(W*1.12),y:230,w:110,h:18},
-    {x:Math.round(W*1.40),y:H-200,w:110,h:18},
-    {x:Math.round(W*1.68),y:H-320,w:105,h:18},
-    {x:Math.round(W*2.00),y:H-185,w:110,h:18},
-    {x:Math.round(W*2.30),y:60,w:105,h:18},
-    {x:Math.round(W*2.55),y:165,w:110,h:18},
-    {x:Math.round(W*2.85),y:H-260,w:105,h:18},
-    {x:Math.round(W*3.10),y:H-180,w:110,h:18},
-    {x:Math.round(W*3.40),y:70,w:105,h:18},
-    {x:Math.round(W*3.70),y:200,w:110,h:18},
-    {x:Math.round(W*4.00),y:H-280,w:105,h:18},
-    {x:Math.round(W*4.35),y:130,w:110,h:18}
-  ],
-  slimes:[
-    {pi:9,dir:1,speed:1.3,col:'#69FF47'},
-    {pi:14,dir:-1,speed:1.5,col:'#ff9944'},
-    {pi:19,dir:1,speed:1.4,col:'#69FF47'}
-  ],
-  poussieres:[{pi:6},{pi:7},{pi:8},{pi:9},{pi:10},{pi:11},{pi:13},{pi:15},{pi:16},{pi:17},{pi:18},{pi:20}],
-  powerups:[{pi:12,type:'double_jump'}]
-};})();</script>
-<script src="../js/moteur-minijeu.js"></script></body></html>
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover"><title>GPS0 - Lune de Fer</title><style>
+*{margin:0;padding:0;box-sizing:border-box;user-select:none;-webkit-user-select:none;touch-action:none}
+body{overflow:hidden;width:100vw;height:100vh;font-family:system-ui,sans-serif}
+canvas{position:fixed;inset:0;width:100%;height:100%}
+#hud{position:fixed;top:0;left:0;right:0;height:50px;display:flex;align-items:center;justify-content:space-between;padding:0 14px;z-index:10;border-bottom:1px solid rgba(255,255,255,.12)}
+#htimer{font-weight:bold;font-size:.92rem}
+#btn-q{background:none;border:1px solid rgba(255,255,255,.2);border-radius:8px;color:rgba(255,255,255,.5);padding:4px 10px;font-size:.76rem;cursor:pointer}
+#overlay,#results{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:20;padding:24px;text-align:center}
+#results{display:none;z-index:30}
+h2{font-size:1.35rem}p{font-size:.88rem;max-width:290px;line-height:1.5;opacity:.85}
+.ti{display:flex;align-items:center;gap:8px;font-size:.82rem;opacity:.65}
+.btn-go{border:none;border-radius:14px;color:#0A0A1A;font-weight:bold;font-size:1rem;padding:13px 30px;cursor:pointer;margin-top:6px}
+body{background:#0a0a0a}#hud{background:rgba(10,10,10,.92);color:#aaa}#htimer{color:#ccc}
+h2{color:#aaa}p{color:rgba(220,220,220,.85)}.ti{color:rgba(200,200,200,.6)}.btn-go{background:linear-gradient(135deg,#888,#444)}
+#info-bar{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);color:rgba(200,200,200,.65);font-size:.8rem;z-index:15;background:rgba(0,0,0,.6);padding:4px 12px;border-radius:10px}
+</style></head><body>
+<canvas id="c"></canvas>
+<div id="hud"><span id="htimer">3:00</span><span>&#x1F9F2; Lune de Fer</span><button id="btn-q">Quitter</button></div>
+<div id="info-bar">TAP sur un bloc = l'attirer</div>
+<div id="overlay" style="background:rgba(10,10,10,.93)">
+  <h2>&#x1F9F2; Lune de Fer</h2>
+  <p>Des blocs m&#xe9;talliques flottent dans l'espace. Utilise ton aimant !</p>
+  <div class="ti">&#x1F446; <span>TAP sur un bloc = l'attirer vers toi</span></div>
+  <div class="ti">&#x1F4A5; <span>Blocs ROUGES = pi&#xe9;g&#xe9;s ! Ils explosent !</span></div>
+  <div class="ti">&#x2B50; <span>Attire TOUS les blocs bleus pour gagner</span></div>
+  <button class="btn-go" id="btn-start">Commencer !</button>
+</div>
+<div id="results" style="background:rgba(10,10,10,.95)"></div>
+<script>
+'use strict';
+const C=document.getElementById('c'),X=C.getContext('2d');
+let W=window.innerWidth,H=window.innerHeight;C.width=W;C.height=H;
+const selfieImg=new Image();const sd=localStorage.getItem('gps0_avatar_selfie_base64');if(sd)selfieImg.src=sd;
+const TOTAL=180;
+let started=false,done=false,poussieres=0,raf=null,elapsed=0,startTs=0,lastTs=0;
+let lives=3,blueCollected=0,secretFound=false;
+const PLAYER_X=W/2,PLAYER_Y=H*0.8;
+const ATTRACT_SPEED=2.5, COLLECT_DIST=40;
+function genBlocks(){
+  const bs=[];
+  const positions=[
+    {x:W*0.15,y:H*0.15},{x:W*0.45,y:H*0.12},{x:W*0.75,y:H*0.18},
+    {x:W*0.1,y:H*0.38},{x:W*0.5,y:H*0.33},{x:W*0.85,y:H*0.4},
+    {x:W*0.25,y:H*0.58},{x:W*0.6,y:H*0.55},{x:W*0.9,y:H*0.22},
+  ];
+  positions.forEach((p,i)=>{
+    bs.push({x:p.x,y:p.y,vx:(Math.random()-.5)*0.5,vy:(Math.random()-.5)*0.5,
+      trapped:i===3||i===6,collected:false,attracting:false,size:28,secret:i===8});
+  });
+  return bs;
+}
+let blocks=genBlocks();
+const BLUE_TOTAL=blocks.filter(b=>!b.trapped).length;
+let magnetBeam=null,beamT=0;
+
+function draw(){
+  X.clearRect(0,0,W,H);
+  X.fillStyle='#050508';X.fillRect(0,0,W,H);
+  for(let i=0;i<60;i++){X.fillStyle='rgba(180,180,220,.2)';X.beginPath();X.arc((i*173)%W,(i*97)%H,.8,0,Math.PI*2);X.fill();}
+  // Magnet beam
+  if(magnetBeam){
+    const t=Date.now()/200;
+    X.strokeStyle='rgba(100,200,255,'+(0.5+Math.sin(t)*0.3)+')';
+    X.lineWidth=3;X.setLineDash([8,6]);
+    X.beginPath();X.moveTo(PLAYER_X,PLAYER_Y);X.lineTo(magnetBeam.x,magnetBeam.y);X.stroke();
+    X.setLineDash([]);
+  }
+  // Blocks
+  blocks.forEach(b=>{
+    if(b.collected)return;
+    const col=b.trapped?'#cc1122':b.secret?'#FFD700':'#4488cc';
+    const glow=X.createRadialGradient(b.x,b.y,2,b.x,b.y,b.size+8);
+    glow.addColorStop(0,b.trapped?'rgba(255,50,0,.3)':b.secret?'rgba(255,220,0,.4)':'rgba(80,160,255,.3)');
+    glow.addColorStop(1,'transparent');
+    X.fillStyle=glow;X.beginPath();X.arc(b.x,b.y,b.size+8,0,Math.PI*2);X.fill();
+    X.fillStyle=col;X.beginPath();X.roundRect(b.x-b.size/2,b.y-b.size/2,b.size,b.size,5);X.fill();
+    if(b.attracting){X.strokeStyle='rgba(255,255,100,.8)';X.lineWidth=2;X.beginPath();X.arc(b.x,b.y,b.size/2+6,0,Math.PI*2);X.stroke();}
+    if(b.trapped){X.font='14px serif';X.textAlign='center';X.textBaseline='middle';X.fillText('\uD83D\uDCA5',b.x,b.y-b.size/2-10);}
+    if(b.secret){X.font='11px serif';X.fillText('\u2B50',b.x,b.y-b.size/2-10);}
+  });
+  // Player (cosmonaute with magnet)
+  X.fillStyle='#888';X.beginPath();X.ellipse(PLAYER_X,PLAYER_Y+14,13,10,0,0,Math.PI*2);X.fill();
+  if(sd&&selfieImg.complete){X.save();X.beginPath();X.arc(PLAYER_X,PLAYER_Y,13,0,Math.PI*2);X.clip();X.drawImage(selfieImg,PLAYER_X-13,PLAYER_Y-13,26,26);X.restore();}
+  else{X.font='18px serif';X.textAlign='center';X.textBaseline='middle';X.fillText('\uD83E\uDDD1\u200D\uD83D\uDE80',PLAYER_X,PLAYER_Y);}
+  // Magnet icon
+  X.font='24px serif';X.textAlign='center';X.textBaseline='middle';X.fillText('\uD83E\uDDF2',PLAYER_X+20,PLAYER_Y-20);
+  // Progress
+  X.fillStyle='rgba(255,255,255,.7)';X.font='bold 14px system-ui';X.textAlign='left';X.textBaseline='top';
+  X.fillText(blueCollected+'/'+BLUE_TOTAL+' blocs',10,60);
+  for(let i=0;i<lives;i++){X.font='14px serif';X.fillText('\uD83E\uDE9B',8+i*22,H/2);}
+}
+function tick(ts){
+  if(!started||done)return;
+  if(!startTs)startTs=ts;
+  const dt=Math.min((ts-lastTs)/1000,0.05);lastTs=ts;
+  elapsed=(ts-startTs)/1000;
+  const rem=Math.max(0,TOTAL-elapsed);
+  document.getElementById('htimer').textContent=mm(rem);
+  if(rem<=0&&!done){done=true;_end(blueCollected===BLUE_TOTAL);return;}
+  // Move blocks (float)
+  blocks.forEach(b=>{
+    if(b.collected)return;
+    if(b.attracting){
+      const dx=PLAYER_X-b.x,dy=PLAYER_Y-b.y,d=Math.sqrt(dx*dx+dy*dy);
+      if(d<COLLECT_DIST){
+        b.collected=true;b.attracting=false;magnetBeam=null;
+        if(b.trapped){lives--;if(lives<=0){done=true;_end(false);return;}}
+        else{blueCollected++;if(b.secret)secretFound=true;}
+        if(blueCollected===BLUE_TOTAL){done=true;_end(true);return;}
+      }else{b.x+=dx/d*ATTRACT_SPEED;b.y+=dy/d*ATTRACT_SPEED;}
+    }else{
+      b.x+=b.vx;b.y+=b.vy;
+      if(b.x<20||b.x>W-20)b.vx*=-1;
+      if(b.y<60||b.y>H*0.72)b.vy*=-1;
+    }
+  });
+  draw();raf=requestAnimationFrame(tick);
+}
+function mm(s){return String(Math.floor(s/60)).padStart(2,'0')+':'+String(Math.floor(s%60)).padStart(2,'0');}
+function _end(ok){
+  done=true;cancelAnimationFrame(raf);
+  const r=document.getElementById('results');r.style.display='flex';
+  const all=blueCollected===BLUE_TOTAL;
+  poussieres=all&&secretFound?50:all?25:blueCollected>0?10:5;
+  r.innerHTML=ok
+    ?'<h2 style="color:#4488cc">\uD83E\uDDF2 Tout attir\xe9 !</h2><p>'+(secretFound?'\uD83C\uDF1F Bloc secret !':'')+'</p><p style="color:#4FC3F7;font-size:1.2rem">+'+poussieres+' \u2728 poussi\xe8res</p>'
+    :'<h2 style="color:#FF6B6B">\uD83D\uDCA5 '+(lives<=0?'Blocs pi\xe9g\xe9s !':'Temps!')+'</h2><p style="color:#4FC3F7">+'+poussieres+' \u2728</p>';
+  setTimeout(()=>window.parent.postMessage({source:'gps0_minijeu',success:ok||blueCollected>0,niveau:6,poussieres},'*'),2200);
+}
+C.addEventListener('touchstart',e=>{
+  e.preventDefault();if(!started)return;
+  const tx=e.touches[0].clientX,ty=e.touches[0].clientY;
+  let best=null,bestD=80;
+  blocks.forEach(b=>{if(b.collected||b.attracting)return;const d=Math.sqrt((tx-b.x)**2+(ty-b.y)**2);if(d<bestD){bestD=d;best=b;}});
+  if(best){blocks.forEach(b=>b.attracting=false);best.attracting=true;magnetBeam=best;}
+},{passive:false});
+document.getElementById('btn-start').addEventListener('click',()=>{
+  document.getElementById('overlay').style.display='none';started=true;lastTs=performance.now();raf=requestAnimationFrame(tick);
+});
+document.getElementById('btn-q').addEventListener('click',()=>{
+  done=true;cancelAnimationFrame(raf);window.parent.postMessage({source:'gps0_minijeu',success:false,niveau:6,poussieres:0},'*');
+});
+draw();
+</script></body></html>

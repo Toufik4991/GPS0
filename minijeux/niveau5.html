@@ -1,37 +1,142 @@
-<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover"><title>GPS0 - Niveau 5</title><style>*{box-sizing:border-box;margin:0;padding:0}html,body{height:100%;overflow:hidden;background:#0A0A1A;color:#fff;font-family:"Trebuchet MS",sans-serif;touch-action:none}#hud{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;padding:8px 16px;background:rgba(0,0,0,.7);backdrop-filter:blur(6px);border-bottom:1px solid rgba(200,162,200,.2);font-weight:bold;font-size:.9rem}#mj-e{color:#FFD700}#mj-v{color:#FF6B6B;letter-spacing:2px}#btn-q{background:none;border:1px solid rgba(255,255,255,.3);color:rgba(255,255,255,.6);padding:4px 10px;border-radius:8px;cursor:pointer;font-size:.8rem}#monde{position:fixed;inset:0;overflow:hidden;background:linear-gradient(180deg,#1a0a2a 0%,#2a0a0a 100%)}.bg-e{position:absolute;inset:0;background-image:radial-gradient(circle,rgba(255,255,255,.35) 1px,transparent 1px);background-size:55px 55px;animation:dr 45s linear infinite;pointer-events:none}@keyframes dr{to{transform:translateX(55px)}}.plate{position:absolute;border-radius:8px;background:linear-gradient(180deg,#5a5a6e,#3a3a4e);border-top:2px solid rgba(200,162,200,.4);box-shadow:0 4px 12px rgba(0,0,0,.5)}.plate:not(.sol){box-shadow:0 4px 12px rgba(0,0,0,.5),0 0 14px rgba(200,162,200,.55),0 0 30px rgba(200,162,200,.25)}.plate.sol{background:linear-gradient(180deg,#4a4a5e,#2a2a3e)}.plate.mobile{background:linear-gradient(180deg,#1a4a5e,#0a2a3e);border-top-color:rgba(79,195,247,.8);box-shadow:0 4px 12px rgba(0,0,0,.5),0 0 20px rgba(79,195,247,.5)}.plate.fragile{background:linear-gradient(180deg,#6e4a2a,#4e2a0a);border-top-color:rgba(255,140,0,.6)}.plate.glissante{background:linear-gradient(180deg,#2a5a7e,#1a3a5e);border-top-color:rgba(100,220,255,.9)}#joueur{position:absolute;width:40px;height:52px;display:flex;flex-direction:column;align-items:center;pointer-events:none}#casque{width:36px;height:36px;border-radius:50%;background:rgba(79,195,247,.15);border:2px solid rgba(79,195,247,.6);overflow:hidden;flex-shrink:0}#ts{width:100%;height:100%;image-rendering:pixelated;background-color:#9a72c8;background-size:cover;background-position:center}#corps{width:28px;height:20px;border-radius:4px;background:linear-gradient(180deg,#C8A2C8,#9a72c8);display:flex;align-items:center;justify-content:center;margin-top:1px}#corps::after{content:"";width:8px;height:8px;border-radius:50%;background:#FFD700}#jambes{display:flex;gap:4px;margin-top:1px}.jambe{width:10px;height:10px;border-radius:2px;background:#9a72c8}@keyframes sc{from{opacity:.7;transform:scale(.9)}to{opacity:1;transform:scale(1.1)}}.slime{position:absolute;width:38px;height:30px;border-radius:50% 50% 40% 40%;display:flex;align-items:center;justify-content:center;font-size:.9rem}.laser-h{position:absolute;border-radius:3px;background:linear-gradient(90deg,transparent,#FF3333,transparent);box-shadow:0 0 12px #FF3333;opacity:0;transition:opacity .2s;height:6px}.laser-h.warn{background:linear-gradient(90deg,transparent,#FF8C00,#FFD700,#FF8C00,transparent);box-shadow:0 0 8px #FF8C00;opacity:.6}.laser-h.actif{opacity:1}.pic{position:absolute;clip-path:polygon(50% 0%,100% 100%,0% 100%);background:linear-gradient(180deg,#FF6B6B,#CC0000)}#ctrl-bar{position:fixed;bottom:0;left:0;right:0;height:110px;z-index:45;display:flex;align-items:center;justify-content:center;background:transparent;padding:8px}#bs{width:100%;max-width:600px;height:80px;border-radius:14px;border:2px solid rgba(79,195,247,.2);background:rgba(79,195,247,.05);color:rgba(255,255,255,.25);font-size:2.5rem;cursor:pointer;touch-action:none;user-select:none;-webkit-user-select:none}#lune{position:fixed;top:56px;left:50%;transform:translateX(-50%);background:rgba(10,10,26,.95);border:1px solid rgba(255,255,255,.4);border-radius:14px;padding:8px 14px;font-size:.9rem;color:#fff;font-weight:bold;opacity:0;transition:opacity .4s;max-width:90vw;z-index:60;pointer-events:none;white-space:nowrap}#lune.v{opacity:1}#tuto{position:fixed;inset:0;z-index:100;background:rgba(10,10,26,.93);backdrop-filter:blur(8px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:32px}#tuto h2{color:#C8A2C8;font-size:1.35rem;text-align:center;font-weight:bold}#tuto p{color:rgba(255,255,255,.85);text-align:center;font-size:.9rem;line-height:1.6;max-width:300px;font-weight:bold}.ti{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.06);border-radius:12px;padding:10px 16px;width:100%;max-width:300px;font-size:.85rem;font-weight:bold}#btn-st{padding:14px 32px;background:linear-gradient(135deg,#C8A2C8,#9a72c8);border:none;border-radius:16px;color:#0A0A1A;font-weight:bold;font-size:1rem;cursor:pointer;margin-top:8px}#ov{position:fixed;inset:0;z-index:100;display:none;background:rgba(10,10,26,.93);backdrop-filter:blur(10px);flex-direction:column;align-items:center;justify-content:center;gap:20px}#ov.v{display:flex}#ot{font-size:2rem;font-weight:900}#ot.win{color:#69FF47}#ot.lose{color:#FF6B6B}.bo{padding:14px 32px;border:none;border-radius:16px;font-weight:bold;font-size:1rem;cursor:pointer}#bb{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.3);color:#fff}#br{background:linear-gradient(135deg,#C8A2C8,#9a72c8);color:#0A0A1A}.plate.fragile{animation:tremble .15s ease-in-out infinite alternate;}.plate.fragile.falling{animation:none}@keyframes tremble{from{transform:translateX(-1px)}to{transform:translateX(1px)}}</style></head><body>
-<div id="hud"><span>Niveau 5 - Éclipse Fragile</span><span id="mj-e">0/13 ✨</span><span id="mj-v">❤️❤️❤️</span><button id="btn-q">Quitter</button></div>
-<div id="lune"></div><div id="monde"><div class="bg-e"></div></div>
-<div id="joueur"><div id="casque"><div id="ts"></div></div><div id="corps"></div><div id="jambes"><div class="jambe"></div><div class="jambe"></div></div></div>
-<div id="ctrl-bar"><button id="bs">⬆</button></div>
-<div id="tuto"><h2>Niveau 5 - Éclipse Fragile</h2><p>ATTENTION : chaque plateforme orange s'effondre dès que tu la touches ! Ne pas s'attarder, saut enchaîné obligatoire !</p><div class="ti"><span>🟠</span><span>Plateformes orange = s'effondrent au toucher !</span></div><div class="ti"><span>⚡</span><span>Enchaîne les sauts sans t'arrêter</span></div><div class="ti"><span>⚡</span><span>Double saut caché pour les endroits durs</span></div><button id="btn-st">GO ! 🚀</button></div>
-<div id="ov"><div id="ot"></div><div id="os"></div><div id="op"></div><div style="display:flex;flex-direction:column;gap:10px;margin-top:16px;width:min(300px,90vw);align-items:stretch"><button class="bo" id="bc" style="display:none">🎁 Prendre la récompense</button><button class="bo" id="br" style="display:none">🔄 Recommencer</button><button class="bo" id="bb" style="display:none">❌ Abandonner</button></div></div>
-<script>(function(){var W=window.innerWidth,H=window.innerHeight;window.GPS0_NIVEAU_CFG={
-  niveau:5,total_poussieres:13,vitesse:4.5,monde_w:4,
-  lune_start:'Les plateformes s\'effondrent au moindre contact !',
-  plateformes:[
-    {x:0,y:H-60,w:Math.round(W*.45),h:60,sol:true},
-    {x:Math.round(W*.75),y:H-60,w:Math.round(W*.42),h:60,sol:true},
-    {x:Math.round(W*1.50),y:H-60,w:Math.round(W*.40),h:60,sol:true},
-    {x:Math.round(W*2.25),y:H-60,w:Math.round(W*.44),h:60,sol:true},
-    {x:Math.round(W*3.02),y:H-60,w:Math.round(W*.98),h:60,sol:true},
-    {x:Math.round(W*.08),y:H-150,w:110,h:18,fragile:true},
-    {x:Math.round(W*.28),y:H-260,w:105,h:18,fragile:true},
-    {x:Math.round(W*.50),y:H-195,w:110,h:18,fragile:true},
-    {x:Math.round(W*.72),y:H-175,w:105,h:18},
-    {x:Math.round(W*.94),y:H-290,w:110,h:18,fragile:true},
-    {x:Math.round(W*1.18),y:H-210,w:105,h:18,fragile:true},
-    {x:Math.round(W*1.40),y:H-165,w:110,h:18,fragile:true},
-    {x:Math.round(W*1.62),y:H-340,w:100,h:18,fragile:true},
-    {x:Math.round(W*1.85),y:H-240,w:105,h:18,fragile:true},
-    {x:Math.round(W*2.08),y:H-185,w:110,h:18,fragile:true},
-    {x:Math.round(W*2.32),y:H-310,w:100,h:18,fragile:true},
-    {x:Math.round(W*2.58),y:H-230,w:105,h:18,fragile:true},
-    {x:Math.round(W*2.82),y:H-175,w:110,h:18,fragile:true},
-    {x:Math.round(W*3.12),y:H-280,w:105,h:18,fragile:true},
-    {x:Math.round(W*3.45),y:H-210,w:110,h:18,fragile:true}
-  ],
-  slimes:[],
-  poussieres:[{pi:5},{pi:6},{pi:7},{pi:9},{pi:10},{pi:11},{pi:12},{pi:13},{pi:14},{pi:15},{pi:16},{pi:18},{pi:19}],
-  powerups:[{pi:8,type:'double_jump'},{pi:17,type:'shield'}]
-};})();</script>
-<script src="../js/moteur-minijeu.js"></script></body></html>
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover"><title>GPS0 - Lune d'Ombre</title><style>
+*{margin:0;padding:0;box-sizing:border-box;user-select:none;-webkit-user-select:none;touch-action:none}
+body{overflow:hidden;width:100vw;height:100vh;font-family:system-ui,sans-serif}
+canvas{position:fixed;inset:0;width:100%;height:100%}
+#hud{position:fixed;top:0;left:0;right:0;height:50px;display:flex;align-items:center;justify-content:space-between;padding:0 14px;z-index:10;border-bottom:1px solid rgba(255,255,255,.12)}
+#htimer{font-weight:bold;font-size:.92rem}
+#btn-q{background:none;border:1px solid rgba(255,255,255,.2);border-radius:8px;color:rgba(255,255,255,.5);padding:4px 10px;font-size:.76rem;cursor:pointer}
+#overlay,#results{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:20;padding:24px;text-align:center}
+#results{display:none;z-index:30}
+h2{font-size:1.35rem}p{font-size:.88rem;max-width:290px;line-height:1.5;opacity:.85}
+.ti{display:flex;align-items:center;gap:8px;font-size:.82rem;opacity:.65}
+.btn-go{border:none;border-radius:14px;color:#0A0A1A;font-weight:bold;font-size:1rem;padding:13px 30px;cursor:pointer;margin-top:6px}
+body{background:#0a0014}#hud{background:rgba(10,0,20,.92);color:#C8A2C8}#htimer{color:#C8A2C8}
+h2{color:#C8A2C8}p{color:rgba(220,180,255,.85)}.ti{color:rgba(200,162,200,.6)}.btn-go{background:linear-gradient(135deg,#C8A2C8,#9a72c8)}
+#ghost-info{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);z-index:15;display:flex;flex-direction:column;align-items:center;gap:4px}
+#ghost-label{color:rgba(200,162,200,.65);font-size:.78rem}
+#ghost-bar-w{width:160px;height:8px;background:rgba(255,255,255,.1);border-radius:4px;overflow:hidden}
+#ghost-bar{height:100%;background:linear-gradient(90deg,#C8A2C8,#aa44ff);border-radius:4px;transition:width .1s}
+</style></head><body>
+<canvas id="c"></canvas>
+<div id="hud"><span id="htimer">3:00</span><span>&#x1F47B; Lune d'Ombre</span><button id="btn-q">Quitter</button></div>
+<div id="ghost-info"><div id="ghost-label">MAINTENIR = Fant&#xF4;me (3s)</div><div id="ghost-bar-w"><div id="ghost-bar" style="width:100%"></div></div></div>
+<div id="overlay" style="background:rgba(10,0,20,.93)">
+  <h2>&#x1F47B; Lune d'Ombre</h2>
+  <p>Des pi&#xe8;ges t'attendent ! Deviens fant&#xF4;me pour les traverser.</p>
+  <div class="ti">&#x1F446; <span>MAINTENIR appuy&#xe9; = mode fant&#xF4;me (3 secondes)</span></div>
+  <div class="ti">&#x23F1;&#xFE0F; <span>Cooldown 4s, 3 vies</span></div>
+  <div class="ti">&#x2B50; <span>Zone secr&#xe8;te derri&#xe8;re un faux mur</span></div>
+  <button class="btn-go" id="btn-start">Commencer !</button>
+</div>
+<div id="results" style="background:rgba(10,0,20,.95)"></div>
+<script>
+'use strict';
+const C=document.getElementById('c'),X=C.getContext('2d');
+let W=window.innerWidth,H=window.innerHeight;C.width=W;C.height=H;
+const selfieImg=new Image();const sd=localStorage.getItem('gps0_avatar_selfie_base64');if(sd)selfieImg.src=sd;
+const TOTAL=180,GHOST_MAX=3,GHOST_CD=4;
+let started=false,done=false,poussieres=0,raf=null,elapsed=0,startTs=0,lastTs=0;
+let lives=3,trapsHit=0,secretFound=false,touching=false;
+let isGhost=false,ghostT=0,ghostCdT=0;
+let px=80,py=0,vx=3,vy=0,camX=0;
+const G=0.4,FLOOR=H-80;
+function genTraps(){
+  const t=[],types=['spike','laser','wall','spike','laser','wall','spike','wall'];
+  let x=350;
+  types.forEach((tp)=>{
+    x+=190+Math.random()*130;
+    if(tp==='spike')t.push({x,y:FLOOR-28,w:38,h:28,type:'spike'});
+    else if(tp==='laser')t.push({x,y:H*0.15,w:12,h:FLOOR-H*0.15,type:'laser'});
+    else t.push({x,y:FLOOR-H*0.4,w:26,h:H*0.4,type:'wall'});
+  });
+  t.push({x:1400,y:FLOOR-100,w:90,h:100,type:'secret'});
+  return t;
+}
+const traps=genTraps();
+const WORLD_END=traps[traps.length-2].x+280;
+function draw(){
+  X.clearRect(0,0,W,H);
+  const bg=X.createLinearGradient(0,0,0,H);
+  bg.addColorStop(0,'#0a0014');bg.addColorStop(1,'#180030');
+  X.fillStyle=bg;X.fillRect(0,0,W,H);
+  for(let i=0;i<50;i++){X.fillStyle='rgba(200,162,200,.18)';X.beginPath();X.arc((i*137)%W,(i*89)%H,.7,0,Math.PI*2);X.fill();}
+  X.fillStyle='#1a0030';X.fillRect(0,FLOOR,W,H-FLOOR);
+  X.fillStyle='rgba(200,162,200,.3)';X.fillRect(0,FLOOR,W,2);
+  traps.forEach(t=>{
+    const sx=t.x-camX;if(sx>W+60||sx+t.w<-60)return;
+    if(t.type==='secret'){X.fillStyle='rgba(180,0,255,.05)';X.fillRect(sx,t.y,t.w,t.h);return;}
+    const col={spike:'#FF2244',laser:'rgba(200,0,255,.65)',wall:'#441a66'};
+    X.fillStyle=col[t.type]||'#666';X.fillRect(sx,t.y,t.w,t.h);
+    X.fillStyle='rgba(255,100,255,.4)';X.fillRect(sx,t.y,t.w,2);
+  });
+  const fx=WORLD_END-camX;
+  X.strokeStyle='rgba(200,162,200,.7)';X.lineWidth=3;X.setLineDash([8,8]);
+  X.beginPath();X.moveTo(fx,0);X.lineTo(fx,H);X.stroke();X.setLineDash([]);
+  X.font='22px serif';X.textAlign='center';X.textBaseline='middle';X.fillText('\uD83D\uDE80',fx,H*0.25);
+  const alp=isGhost?0.3:1;
+  X.globalAlpha=alp;
+  if(isGhost){X.shadowColor='rgba(200,162,200,.9)';X.shadowBlur=18;}
+  X.fillStyle='#aaa';X.beginPath();X.ellipse(px,py+14,12,9,0,0,Math.PI*2);X.fill();
+  X.fillStyle='rgba(200,162,200,.2)';X.beginPath();X.arc(px,py,15,0,Math.PI*2);X.fill();
+  if(sd&&selfieImg.complete){X.save();X.beginPath();X.arc(px,py,13,0,Math.PI*2);X.clip();X.drawImage(selfieImg,px-13,py-13,26,26);X.restore();}
+  else{X.font='17px serif';X.textAlign='center';X.textBaseline='middle';X.fillText('\uD83E\uDDD1\u200D\uD83D\uDE80',px,py);}
+  X.globalAlpha=1;X.shadowBlur=0;
+  const gbar=document.getElementById('ghost-bar'),glbl=document.getElementById('ghost-label');
+  if(isGhost){gbar.style.width=(100*(1-ghostT/GHOST_MAX))+'%';gbar.style.background='linear-gradient(90deg,#C8A2C8,#aa44ff)';glbl.textContent='\uD83D\uDC7B Fant\xF4me actif !';}
+  else if(ghostCdT>0){gbar.style.width=(100*(1-ghostCdT/GHOST_CD))+'%';gbar.style.background='rgba(100,100,100,.5)';glbl.textContent='\u23F3 Rechargement...';}
+  else{gbar.style.width='100%';gbar.style.background='linear-gradient(90deg,#C8A2C8,#aa44ff)';glbl.textContent='MAINTENIR = Fant\xF4me (3s)';}
+  X.font='15px serif';X.textAlign='left';X.textBaseline='middle';
+  for(let i=0;i<lives;i++)X.fillText('\uD83D\uDC9C',8+i*26,H/2);
+}
+function tick(ts){
+  if(!started||done)return;
+  if(!startTs)startTs=ts;
+  const dt=Math.min((ts-lastTs)/1000,0.05);lastTs=ts;
+  elapsed=(ts-startTs)/1000;
+  const rem=Math.max(0,TOTAL-elapsed);
+  document.getElementById('htimer').textContent=mm(rem);
+  if(rem<=0&&!done){done=true;_end(false);return;}
+  if(touching&&ghostCdT<=0){isGhost=true;ghostT=Math.min(GHOST_MAX,ghostT+dt);if(ghostT>=GHOST_MAX){isGhost=false;ghostT=0;ghostCdT=GHOST_CD;}}
+  else{isGhost=false;if(!touching)ghostT=Math.max(0,ghostT);}
+  if(ghostCdT>0)ghostCdT=Math.max(0,ghostCdT-dt);
+  vy+=G;py+=vy;
+  if(py+18>=FLOOR){py=FLOOR-18;vy=0;}
+  camX=Math.max(0,camX+vx);
+  const wpx=px+camX;
+  if(!isGhost){
+    for(const t of traps){
+      if(t.type==='secret'){if(wpx+12>t.x&&wpx-12<t.x+t.w&&py+18>t.y)secretFound=true;continue;}
+      if(wpx+12>t.x&&wpx-12<t.x+t.w&&py+18>t.y&&py-18<t.y+t.h){
+        trapsHit++;lives--;
+        if(lives<=0){done=true;_end(false);return;}
+        camX=Math.max(0,camX-200);break;
+      }
+    }
+  }
+  if(camX>=WORLD_END-px){done=true;_end(true);return;}
+  draw();raf=requestAnimationFrame(tick);
+}
+function mm(s){return String(Math.floor(s/60)).padStart(2,'0')+':'+String(Math.floor(s%60)).padStart(2,'0');}
+function _end(ok){
+  done=true;cancelAnimationFrame(raf);
+  const r=document.getElementById('results');r.style.display='flex';
+  const noHit=trapsHit===0;
+  poussieres=ok&&noHit&&secretFound?50:ok&&noHit?25:5;
+  r.innerHTML=ok
+    ?'<h2 style="color:#C8A2C8">\uD83D\uDE80 Sorti de l\'Ombre !</h2><p>'+(noHit?'\u2728 Sans toucher de pi\xe8ge ! ':'')+( secretFound?'\uD83C\uDF1F Zone secr\xe8te !':'')+'</p><p style="color:#C8A2C8;font-size:1.2rem">+'+poussieres+' \u2728 poussi\xe8res</p>'
+    :'<h2 style="color:#FF6B6B">\uD83D\uDC80 Pi\xe9g\xe9 !</h2><p style="color:#C8A2C8">+5 \u2728 poussi\xe8res</p>';
+  if(!ok)poussieres=5;
+  setTimeout(()=>window.parent.postMessage({source:'gps0_minijeu',success:ok,niveau:5,poussieres},'*'),2200);
+}
+C.addEventListener('touchstart',e=>{e.preventDefault();touching=true;},{passive:false});
+C.addEventListener('touchend',e=>{e.preventDefault();touching=false;if(isGhost){isGhost=false;ghostCdT=GHOST_CD;ghostT=0;}},{passive:false});
+document.getElementById('btn-start').addEventListener('click',()=>{
+  document.getElementById('overlay').style.display='none';
+  py=FLOOR-18;started=true;lastTs=performance.now();raf=requestAnimationFrame(tick);
+});
+document.getElementById('btn-q').addEventListener('click',()=>{
+  done=true;cancelAnimationFrame(raf);
+  window.parent.postMessage({source:'gps0_minijeu',success:false,niveau:5,poussieres:0},'*');
+});
+draw();
+</script></body></html>
