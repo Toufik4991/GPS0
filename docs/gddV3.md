@@ -1,6 +1,6 @@
 # 🌙 GPS0 — Game Design Document v3.0
 
-**Version :** 3.14.0 - Jeu 1 v2 : tirs illimités, vie perdue seulement si météorite touche le cosmonaute, récompense 5-50✨ selon précision/efficacité via GPS0_rewardOverride
+**Version :** 3.15.0 - Jeu 2 redesign : Flappy murs de roche lunaire, tap=saut, bords rebond (pas de mort), rush 30s/10s, survie → GPS0_rewardOverride 5-50, bg-n2.svg volcanique
 **Date :** 24/03/2026
 **Auteur :** Toufik49
 **Statut :** Opérationnel - Bug 14 appliqué intégralement

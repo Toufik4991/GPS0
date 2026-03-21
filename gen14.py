@@ -368,19 +368,24 @@ function _drawHUD(ctx,W,H){
 """
 
 # ═══════════════════════════════════════════════════════════════════
-# NIVEAU 2 — Lune de Cendre (Flappy Bird)
+# NIVEAU 2 — Lune de Cendre (Flappy — murs de roche lunaire + rush)
 # ═══════════════════════════════════════════════════════════════════
 N2_JS = r"""
-window.TUTO_TEXT = "Tape pour faire battre les ailes !<br>Passe entre les colonnes de lave.<br>Évite les parois et ne t'écrase pas.";
+window.TUTO_TEXT = "Tape pour sauter · Évite les murs de roche !<br>Les bords ne te tuent pas.<br><small>Ta survie détermine ta récompense · Attention aux RUSH !</small>";
 
-const GRAV_B=0.38, JUMP=-6;
-let bird, pipes, dustItems, particles, speed, frame, rafId, ashParts, _pipeCount;
+const GRAV=.45, JUMP=-9.5, WALL_W=44;
+const NORMAL_DUR=1800, RUSH_DUR=600;
+let bird,walls,ashParts,parts;
+let speed,frame,framesAlive,invincible,rafId,bgT;
+let isRush,waveT;
 
 function gameReset(){
   cancelAnimationFrame(rafId);
   bird={x:0,y:0,vy:0,r:22};
-  pipes=[]; dustItems=[]; particles=[]; ashParts=[];
-  speed=2.2; frame=0; _pipeCount=0;
+  walls=[]; ashParts=[]; parts=[];
+  speed=2.4; frame=0; framesAlive=0; invincible=0; bgT=0;
+  isRush=false; waveT=0;
+  window.GPS0_rewardOverride=5;
 }
 window.gameReset=gameReset;
 
@@ -388,89 +393,143 @@ function gameStart(){
   const cv=document.getElementById('cv');
   GPS0_resizeCanvas(cv);
   gameReset();
-  bird.x=cv.width*.22; bird.y=cv.height*.45;
-  cv.addEventListener('pointerdown',_jump);
-  // Cendres décoratives
-  for(let i=0;i<20;i++) ashParts.push({x:Math.random()*cv.width,y:Math.random()*cv.height,vx:-.3-Math.random()*.4,vy:.2+Math.random()*.3,r:1+Math.random()*2,a:.2+Math.random()*.3});
-  _spawnPipe();
+  const W=cv.width,H=cv.height;
+  bird.x=W*.22; bird.y=H*.45;
+  for(let i=0;i<25;i++) ashParts.push({
+    x:Math.random()*W, y:Math.random()*H,
+    vx:-.15-Math.random()*.28, vy:-.06+Math.random()*.18,
+    r:.7+Math.random()*1.6, a:.1+Math.random()*.3
+  });
+  window.GPS0_onTimerExpired=function(){
+    window.GPS0_rewardOverride=Math.round(5+(framesAlive/Math.max(1,frame))*45);
+    endGame(true);
+  };
+  _spawnWall(W,H);
+  cv.addEventListener('pointerdown',_tap);
   const ctx=cv.getContext('2d');
   const loop=()=>{
     rafId=requestAnimationFrame(loop);
     if(!GPS0_running())return;
     const W=cv.width,H=cv.height;
-    frame++;
-    if(frame%280===0)speed=Math.min(5.5,speed+.35);
-    bird.vy+=GRAV_B; bird.y+=bird.vy;
-    // Spawn
-    const gap=Math.max(140,210-frame*.06);
-    if(frame%Math.floor(gap)===0)_spawnPipe();
-    // Cendres
-    ashParts.forEach(a=>{a.x+=a.vx;a.y+=a.vy;if(a.x<-5)a.x=W+5;if(a.y>H+5){a.y=-5;a.x=Math.random()*W;}});
-    // Pipes
-    let alive=true;
-    pipes=pipes.filter(p=>p.x+p.w>-10);
-    pipes.forEach(p=>{
-      p.x-=speed;
-      if(!p.passed&&p.x+p.w<bird.x){p.passed=true;}
-      if(bird.x+bird.r>p.x&&bird.x-bird.r<p.x+p.w){
-        if(bird.y-bird.r<p.top||bird.y+bird.r>p.bot)alive=false;
+    frame++; bgT++;
+    // Vagues rush
+    waveT++;
+    if(!isRush&&waveT>=NORMAL_DUR){isRush=true;waveT=0;}
+    else if(isRush&&waveT>=RUSH_DUR){isRush=false;waveT=0;}
+    const tspd=isRush?Math.min(6.2,speed+2.6):speed;
+    // Physique
+    bird.vy+=GRAV; bird.y+=bird.vy;
+    if(bird.y<bird.r+2){bird.y=bird.r+2;bird.vy=Math.abs(bird.vy)*.25;}
+    if(bird.y>H-bird.r-2){bird.y=H-bird.r-2;bird.vy=-Math.abs(bird.vy)*.25;}
+    // Invincibilité
+    if(invincible>0)invincible--;
+    else framesAlive++;
+    // Spawn murs
+    const spacing=isRush?255:370;
+    if(!walls.length||walls[walls.length-1].x<W-spacing)_spawnWall(W,H);
+    walls=walls.filter(w=>w.x+WALL_W>-10);
+    walls.forEach(w=>{
+      w.x-=tspd;
+      if(invincible>0)return;
+      if(bird.x+bird.r>w.x&&bird.x-bird.r<w.x+WALL_W){
+        const inGap=bird.y-bird.r>w.gapTop&&bird.y+bird.r<w.gapTop+w.gapH;
+        if(!inGap){
+          invincible=90; bird.vy=JUMP*.5;
+          for(let j=0;j<12;j++)parts.push({x:bird.x,y:bird.y,vx:(Math.random()-.5)*5,vy:-2-Math.random()*3,life:28,col:'#ff7040'});
+          loseLife();
+        }
       }
     });
-    // Dust
-    dustItems.forEach(d=>{
-      d.x-=speed; if(d.col)return;
-      if(Math.sqrt((bird.x-d.x)**2+(bird.y-d.y)**2)<bird.r+d.r){d.col=true;addDust(5);for(let i=0;i<6;i++)particles.push({x:d.x,y:d.y,vx:(Math.random()-.5)*4,vy:-2,life:22});}
+    ashParts.forEach(a=>{
+      a.x+=a.vx; a.y+=a.vy;
+      if(a.x<-4)a.x=W+4; if(a.y<-4)a.y=H+4; if(a.y>H+4)a.y=-4;
     });
-    dustItems=dustItems.filter(d=>d.x>-30);
-    if(bird.y-bird.r<0||bird.y+bird.r>H-48)alive=false;
-    if(!alive){loseLife();if(GPS0_lives()>0){bird.vy=JUMP;bird.y=Math.min(bird.y,H*.5);}}
-    // Draw
+    parts=parts.filter(p=>p.life>0);
+    parts.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.09;p.life--;});
+    window.GPS0_rewardOverride=Math.round(5+(framesAlive/Math.max(1,frame))*45);
     ctx.clearRect(0,0,W,H);
-    // Sol lave animé
-    const lavaG=ctx.createLinearGradient(0,H-48,0,H);
-    lavaG.addColorStop(0,'rgba(255,80,0,.95)'); lavaG.addColorStop(.5,'rgba(200,40,0,.9)'); lavaG.addColorStop(1,'rgba(100,10,0,1)');
-    ctx.fillStyle=lavaG; ctx.fillRect(0,H-48,W,48);
-    // Ondulation lave
-    ctx.fillStyle='rgba(255,150,0,.4)';
-    for(let x=0;x<W;x+=30){const off=Math.sin((x+frame*2)*.04)*4;ctx.fillRect(x,H-50+off,26,4);}
-    // Brume volcanique haut
-    ctx.fillStyle='rgba(80,50,30,.25)';
-    ctx.fillRect(0,0,W,32);
-    // Cendres
-    ashParts.forEach(a=>{ctx.fillStyle=`rgba(120,100,80,${a.a})`;ctx.beginPath();ctx.arc(a.x,a.y,a.r,0,Math.PI*2);ctx.fill();});
-    // Tuyaux volcaniques
-    pipes.forEach(p=>{
-      _drawLavaPipe(ctx,p.x,0,p.w,p.top,false);
-      _drawLavaPipe(ctx,p.x,p.bot,p.w,H-p.bot,true);
-    });
-    dustItems.forEach(d=>{if(!d.col){ctx.fillStyle='#FFD700';ctx.font='bold 17px system-ui';ctx.textAlign='center';ctx.fillText('✨',d.x,d.y+6);}});
-    particles=particles.filter(p=>p.life>0);
-    particles.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.1;p.life--;ctx.fillStyle=`rgba(255,215,0,${p.life/22})`;ctx.beginPath();ctx.arc(p.x,p.y,3,0,Math.PI*2);ctx.fill();});
-    // Halo orange cosmonaute
-    ctx.fillStyle='rgba(255,100,0,.18)'; ctx.beginPath();ctx.arc(bird.x,bird.y,bird.r+10,0,Math.PI*2);ctx.fill();
-    drawCosmonaut(ctx,bird.x,bird.y,bird.r,bird.vy*.05,'fly');
+    _drawBg(ctx,W,H);
+    _drawWalls(ctx,H);
+    parts.forEach(p=>{ctx.globalAlpha=p.life/28;ctx.fillStyle=p.col;ctx.beginPath();ctx.arc(p.x,p.y,3,0,Math.PI*2);ctx.fill();});
+    ctx.globalAlpha=1;
+    if(invincible>0&&Math.floor(invincible/6)%2===0){ctx.fillStyle='rgba(255,100,0,.2)';ctx.beginPath();ctx.arc(bird.x,bird.y,bird.r+14,0,Math.PI*2);ctx.fill();}
+    drawCosmonaut(ctx,bird.x,bird.y,bird.r,Math.max(-1.1,Math.min(1.1,bird.vy*.08)),'fly');
+    _drawHUD(ctx,W,H);
   };
   loop();
 }
-function _jump(){if(!GPS0_running())return;bird.vy=JUMP;}
-function _spawnPipe(){
-  const H=document.getElementById('cv').clientHeight, W=document.getElementById('cv').clientWidth;
-  const gap=H*.32; const topH=H*.08+Math.random()*(H*.55);
-  _pipeCount++;
-  pipes.push({x:W+60,top:topH,bot:topH+gap,w:50,passed:false});
-  if(_pipeCount%3===0) dustItems.push({x:W+85,y:topH+gap/2+(Math.random()-.5)*50,r:14,col:false});
+function _tap(){if(!GPS0_running())return;bird.vy=JUMP;/* sfx jump à brancher */}
+function _spawnWall(W,H){
+  const gapH=isRush?160:225;
+  const gapTop=H*.08+Math.random()*(H*.78-gapH);
+  const teeth=Array.from({length:6},()=>(Math.random()-.5)*20);
+  const mkCrk=()=>Array.from({length:3},()=>({x1:4+Math.random()*WALL_W*.7,x2:4+Math.random()*WALL_W*.7,y1:.1+Math.random()*.2,y2:.45+Math.random()*.25}));
+  walls.push({x:W+50,gapTop,gapH,teeth,crksTop:mkCrk(),crksBot:mkCrk()});
 }
-function _drawLavaPipe(ctx,x,y,w,h,flip){
-  if(h<=0)return;
-  const g=ctx.createLinearGradient(x,0,x+w,0);
-  g.addColorStop(0,'rgba(80,50,40,.95)'); g.addColorStop(.4,'rgba(140,80,50,.95)'); g.addColorStop(1,'rgba(60,35,25,.95)');
-  ctx.fillStyle=g; ctx.fillRect(x,y,w,h);
-  // Bords irréguliers (dents)
-  ctx.fillStyle='rgba(255,80,0,.25)';
-  const edgeY=flip?y:y+h-12;
-  for(let i=0;i<w;i+=14){const jag=flip?-Math.random()*8:Math.random()*8;ctx.fillRect(x+i,edgeY+jag,10,12);}
-  ctx.strokeStyle='rgba(255,100,0,.5)';ctx.lineWidth=2;
-  ctx.strokeRect(x,y,w,h);
+function _drawBg(ctx,W,H){
+  // Overlay semi-transparent (SVG background visible en dessous)
+  ctx.fillStyle='rgba(10,6,18,.72)'; ctx.fillRect(0,0,W,H);
+  // Lueur lave bas
+  const lv=ctx.createLinearGradient(0,H-80,0,H);
+  lv.addColorStop(0,'rgba(255,80,0,0)'); lv.addColorStop(1,'rgba(200,50,0,.45)');
+  ctx.fillStyle=lv; ctx.fillRect(0,H-80,W,80);
+  // Cendres flottantes
+  ashParts.forEach(a=>{
+    ctx.fillStyle=`rgba(100,82,65,${a.a.toFixed(2)})`;
+    ctx.beginPath();ctx.arc(a.x,a.y,a.r,0,Math.PI*2);ctx.fill();
+  });
+  if(isRush){
+    ctx.fillStyle=`rgba(255,55,0,${(.3+.22*Math.sin(bgT*.2)).toFixed(2)})`;
+    ctx.fillRect(0,0,W,5); ctx.fillRect(0,H-5,W,5);
+    ctx.fillStyle='rgba(255,120,0,.75)'; ctx.font='bold 11px system-ui'; ctx.textAlign='center';
+    ctx.fillText('⚡ RUSH ⚡',W/2,19);
+  }
+}
+function _drawWalls(ctx,H){
+  walls.forEach(w=>{
+    const {x,gapTop,gapH,teeth,crksTop,crksBot}=w;
+    _drawBlock(ctx,x,0,gapTop,teeth,false,crksTop);
+    _drawBlock(ctx,x,gapTop+gapH,H-(gapTop+gapH),teeth,true,crksBot);
+    // Lueur gap
+    const gl=ctx.createRadialGradient(x+WALL_W/2,gapTop+gapH/2,2,x+WALL_W/2,gapTop+gapH/2,gapH*.55);
+    gl.addColorStop(0,'rgba(255,130,40,.16)'); gl.addColorStop(1,'rgba(255,80,0,0)');
+    ctx.fillStyle=gl;
+    ctx.beginPath();ctx.ellipse(x+WALL_W/2,gapTop+gapH/2,WALL_W+22,gapH*.5,0,0,Math.PI*2);ctx.fill();
+  });
+}
+function _drawBlock(ctx,x,y,h,teeth,isBot,cracks){
+  if(h<2)return;
+  const g=ctx.createLinearGradient(x,0,x+WALL_W,0);
+  g.addColorStop(0,'#18172a'); g.addColorStop(.38,'#363448'); g.addColorStop(.68,'#454360'); g.addColorStop(1,'#201f2e');
+  ctx.fillStyle=g; ctx.fillRect(x,y,WALL_W,h);
+  // Dents côté ouverture
+  ctx.fillStyle='rgba(255,80,15,.32)';
+  for(let i=0;i<Math.ceil(WALL_W/9);i++){
+    const jag=Math.abs(teeth[i%teeth.length]||8);
+    ctx.fillRect(x+i*9,isBot?y:y+h-jag,8,jag+2);
+  }
+  // Fissures pré-calculées
+  ctx.strokeStyle='rgba(255,140,50,.2)'; ctx.lineWidth=1;
+  cracks.forEach(c=>{
+    ctx.beginPath();ctx.moveTo(x+c.x1,y+h*c.y1);ctx.lineTo(x+c.x2,y+h*c.y2);ctx.stroke();
+  });
+  // Reflet gauche
+  ctx.fillStyle='rgba(255,255,255,.04)'; ctx.fillRect(x,y,3,h);
+  // Lueur orange bord ouverture
+  const eg=ctx.createLinearGradient(x,isBot?y:y+h-18,x,isBot?y+18:y+h);
+  eg.addColorStop(0,'rgba(255,90,20,.38)'); eg.addColorStop(1,'rgba(255,90,20,0)');
+  ctx.fillStyle=eg; ctx.fillRect(x,isBot?y:y+h-18,WALL_W,18);
+}
+function _drawHUD(ctx,W,H){
+  const pct=Math.round((framesAlive/Math.max(1,frame))*100);
+  const rew=Math.round(5+(pct/100)*45);
+  ctx.fillStyle='rgba(0,0,0,.52)';
+  ctx.beginPath();ctx.roundRect(6,H-46,136,40,7);ctx.fill();
+  const col=pct>=75?'#7CFC00':pct>=45?'#FFD700':'#ff8080';
+  ctx.fillStyle=col; ctx.font='bold 13px system-ui'; ctx.textAlign='left';
+  ctx.fillText('🛡 '+pct+'% survie',12,H-27);
+  ctx.fillStyle='rgba(255,215,0,.55)'; ctx.font='11px system-ui';
+  ctx.fillText('Récompense estimée : '+rew+' ✨',12,H-10);
 }
 """
 
@@ -1254,7 +1313,7 @@ function _phaseFlash(ctx,txt,col){
 BG = [
     '',
     'background:url("../assets/backgrounds/bg-n1.svg") no-repeat center/cover;',
-    'background:radial-gradient(ellipse at 50% 90%,rgba(255,80,0,.28) 0%,transparent 60%),linear-gradient(180deg,#1a0800 0%,#0d0008 100%);',
+    'background:url("../assets/backgrounds/bg-n2.svg") no-repeat center/cover;',
     'background:radial-gradient(ellipse at 30% 40%,rgba(30,120,20,.18) 0%,transparent 60%),linear-gradient(160deg,#040c04 0%,#0a1408 100%);',
     'background:radial-gradient(ellipse at 50% 20%,rgba(100,200,255,.14) 0%,transparent 60%),linear-gradient(180deg,#060e18 0%,#020810 100%);',
     'background:radial-gradient(ellipse at 50% 50%,rgba(60,0,100,.1) 0%,transparent 70%),linear-gradient(180deg,#020004 0%,#000 100%);',
