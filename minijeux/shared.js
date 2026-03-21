@@ -174,20 +174,26 @@
     if (gameover) return;
     gameover = true; running = false;
     clearInterval(timerInterval);
-    let base;
-    if (success) {
-      // Récompense basée sur le temps restant (rapidité = performance)
-      if (timerSec >= 120) base = 40 + Math.floor(Math.random() * 11); // 40–50 : excellent
-      else if (timerSec >= 60) base = 25 + Math.floor(Math.random() * 16); // 25–40 : bon
-      else base = 15 + Math.floor(Math.random() * 11); // 15–25 : correct
+    let finalDust;
+    // Jeux avec récompense personnalisée (ex: efficacité tir N1)
+    if (window.GPS0_rewardOverride !== undefined) {
+      finalDust = Math.min(50, Math.max(5, Math.round(window.GPS0_rewardOverride)));
     } else {
-      // Échec : proportionnel au temps de jeu (engagement)
-      const played = 150 - timerSec;
-      if (played < 30) base = 1 + Math.floor(Math.random() * 5); // 1–5
-      else if (played < 90) base = 5 + Math.floor(Math.random() * 8); // 5–12
-      else base = 10 + Math.floor(Math.random() * 6); // 10–15
+      let base;
+      if (success) {
+        // Récompense basée sur le temps restant (rapidité = performance)
+        if (timerSec >= 120) base = 40 + Math.floor(Math.random() * 11); // 40–50 : excellent
+        else if (timerSec >= 60) base = 25 + Math.floor(Math.random() * 16); // 25–40 : bon
+        else base = 15 + Math.floor(Math.random() * 11); // 15–25 : correct
+      } else {
+        // Échec : proportionnel au temps de jeu (engagement)
+        const played = 150 - timerSec;
+        if (played < 30) base = 1 + Math.floor(Math.random() * 5); // 1–5
+        else if (played < 90) base = 5 + Math.floor(Math.random() * 8); // 5–12
+        else base = 10 + Math.floor(Math.random() * 6); // 10–15
+      }
+      finalDust = Math.min(50, base + dust); // max 50 absolu
     }
-    const finalDust = Math.min(50, base + dust); // max 50 absolu
     setTimeout(() => {
       window.parent.postMessage({
         source: 'gps0_minijeu',

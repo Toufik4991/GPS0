@@ -47,23 +47,23 @@ window.NIVEAU = {niveau};
 # NIVEAU 1 — Lune de Verre (Lance-pierre / Angry Birds)
 # ═══════════════════════════════════════════════════════════════════
 N1_JS = r"""
-window.TUTO_TEXT = "Glisse depuis la fronde pour viser.<br>Relâche pour tirer un orbe lumineux !<br>Détruis 25 ✨ de météorites pour gagner.<br><small>8 tirs max · recharge automatique</small>";
+window.TUTO_TEXT = "Glisse depuis la fronde pour viser.<br>Relâche pour tirer — tirs illimités !<br>Détruis un maximum de météorites.<br><small>Ta récompense dépend de ta précision · Évite qu'elles te touchent !</small>";
 
 // ── CONSTANTES ────────────────────────────────────────────────────────────────
-const MAX_AMMO=8, AMMO_REGEN_SEC=10, DUST_WIN=25;
-// Poussières par taille de météorite
-const DUST_S=2, DUST_M=3, DUST_L=6;
+// Score interne par taille (non affiché — calcul d'efficacité final)
+const KILL_TARGET = 20; // kills pour récompense maximale
 
 // ── ÉTAT ──────────────────────────────────────────────────────────────────────
-let slingX,slingY,cosX,cosY,ammo,ammoT,bgT,rafId,won;
+let slingX,slingY,cosX,cosY,bgT,rafId;
 let orbs,meteors,particles;
-let dragging,dragSX,dragSY,dragCX,dragCY;
+let dragging,dragCX,dragCY;
+let shotsFired,meteorsKilled;
 
 function gameReset(){
   cancelAnimationFrame(rafId);
-  ammo=MAX_AMMO; ammoT=0; bgT=0; won=false;
+  bgT=0; shotsFired=0; meteorsKilled=0;
   orbs=[]; meteors=[]; particles=[];
-  dragging=false; dragSX=dragSY=dragCX=dragCY=0;
+  dragging=false; dragCX=dragCY=0;
 }
 window.gameReset=gameReset;
 
@@ -75,13 +75,23 @@ function gameStart(){
   const W=cv.width,H=cv.height;
   slingX=W*.18; slingY=H*.63;
   cosX=slingX+26; cosY=slingY-26;
+
+  // Récompense à la fin du timer : calcul d'efficacité → 5 à 50 ✨
+  window.GPS0_onTimerExpired = function(){
+    const killScore = Math.min(meteorsKilled / KILL_TARGET, 1);
+    const precScore = shotsFired === 0 ? 0 : Math.min(meteorsKilled / shotsFired, 1);
+    const eff = killScore * .6 + precScore * .4;
+    window.GPS0_rewardOverride = Math.round(5 + eff * 45); // [5 → 50]
+    endGame(true);
+  };
+
   // Météorites initiales
   for(let i=0;i<4;i++) _spawn(W+i*220,H);
 
   cv.addEventListener('pointerdown',e=>{
-    if(!GPS0_running()||ammo<=0||won)return;
+    if(!GPS0_running())return;
     dragging=true;
-    dragSX=dragCX=e.offsetX; dragSY=dragCY=e.offsetY;
+    dragCX=e.offsetX; dragCY=e.offsetY;
   });
   cv.addEventListener('pointermove',e=>{if(!dragging)return;dragCX=e.offsetX;dragCY=e.offsetY;});
   cv.addEventListener('pointerup',()=>{
@@ -91,7 +101,7 @@ function gameStart(){
     if(dist<14)return;
     const spd=Math.min(15,dist*.1);
     orbs.push({x:slingX,y:slingY,vx:dx/dist*spd,vy:dy/dist*spd,r:9,life:220,trail:[]});
-    ammo--; if(ammoT>60*AMMO_REGEN_SEC-1)ammoT=60*AMMO_REGEN_SEC-1;
+    shotsFired++;
     navigator.vibrate&&navigator.vibrate(25);
   });
 
@@ -103,8 +113,6 @@ function gameStart(){
     bgT++;
     // Spawn nouveaux météores
     if(bgT%80===0) _spawn(W+40+Math.random()*100,H);
-    // Recharge munitions
-    if(ammo<MAX_AMMO){ammoT++;if(ammoT>=60*AMMO_REGEN_SEC){ammo++;ammoT=0;}}
     // Mise à jour orbes
     orbs=orbs.filter(o=>{
       o.trail.push({x:o.x,y:o.y}); if(o.trail.length>12)o.trail.shift();
@@ -132,8 +140,16 @@ function gameStart(){
         if(m.y<m.r+6){m.y=m.r+6;m.vy=Math.abs(m.vy)*.45;}
         if(m.y>H-m.r-6){m.y=H-m.r-6;m.vy=-Math.abs(m.vy)*.45;}
       }
-      // Passage bord gauche → perte de vie
-      if(m.x+m.r<-5){m.hp=-1;loseLife();}
+      // Collision cosmonaute → perte de vie
+      const dc=Math.sqrt((m.x-cosX)*(m.x-cosX)+(m.y-cosY)*(m.y-cosY));
+      if(m.hp>0&&dc<m.r+24){
+        m.hp=-1; m.explT=18;
+        for(let j=0;j<10;j++) particles.push({x:cosX,y:cosY,vx:(Math.random()-.5)*6,vy:-2.5-Math.random()*3,life:24,col:'#ff6060'});
+        loseLife();
+        return;
+      }
+      // Bord gauche → disparaît sans vie perdue
+      if(m.x+m.r<-5) m.hp=-1;
     });
     meteors=meteors.filter(m=>m.hp>0||m.explT>0);
     // Particules
@@ -146,7 +162,7 @@ function gameStart(){
     _drawOrbs(ctx,W,H);
     _drawSling(ctx,W,H);
     _drawParticles(ctx);
-    _drawAmmo(ctx,W,H);
+    _drawHUD(ctx,W,H);
   };
   loop();
 }
@@ -175,19 +191,11 @@ function _hit(m,ovx,ovy){
     // Explosion finale
     for(let j=0;j<16;j++) particles.push({x:m.x,y:m.y,vx:(Math.random()-.5)*8,vy:(Math.random()-.5)*8,life:30,col:j%2===0?'#4FC3F7':'#C8A2C8'});
     m.explT=22;
-    const dust=m.maxHp===3?DUST_L:m.maxHp===2?DUST_M:DUST_S;
-    addDust(dust);
+    meteorsKilled++;
     // Screen shake
     document.body.style.transform='translateX(4px)';
     setTimeout(()=>document.body.style.transform='translateX(-3px)',55);
     setTimeout(()=>document.body.style.transform='',110);
-    // Vérif victoire
-    if(!won){
-      // Check via scoreEl text (total dust affiché)
-      const scoreEl=document.getElementById('score-hud');
-      const total=scoreEl?parseInt(scoreEl.textContent)||0:0;
-      if(total>=DUST_WIN){won=true;setTimeout(()=>endGame(true),700);}
-    }
   } else {
     // Ricochet : direction basée sur l'orbe + aléatoire
     m.bouncing=true;
@@ -282,7 +290,7 @@ function _drawMeteors(ctx,W,H){
 
 function _drawOrbs(ctx,W,H){
   // Ligne de visée + élastique
-  if(dragging&&ammo>0){
+  if(dragging){
     const dx=slingX-dragCX,dy=slingY-dragCY;
     const dist=Math.sqrt(dx*dx+dy*dy);
     if(dist>14){
@@ -333,11 +341,6 @@ function _drawSling(ctx,W,H){
   }
   // Cosmonaute à côté
   drawCosmonaut(ctx,cosX,cosY,22,0,dragging?'jump':'idle');
-  // Hint munitions vides
-  if(ammo===0){
-    ctx.fillStyle='rgba(255,210,80,.7)'; ctx.font='bold 11px system-ui'; ctx.textAlign='center';
-    ctx.fillText('⏳ recharge...',slingX,slingY+68);
-  }
 }
 
 function _drawParticles(ctx){
@@ -348,27 +351,19 @@ function _drawParticles(ctx){
   ctx.globalAlpha=1;
 }
 
-function _drawAmmo(ctx,W,H){
-  // 8 slots de munitions en bas à gauche
-  for(let i=0;i<MAX_AMMO;i++){
-    const ox=14+i*20,oy=H-14;
-    ctx.fillStyle=i<ammo?'rgba(79,195,247,.88)':'rgba(32,38,62,.82)';
-    ctx.beginPath(); ctx.arc(ox,oy,7,0,Math.PI*2); ctx.fill();
-    if(i<ammo){
-      const rg=ctx.createRadialGradient(ox-2,oy-2,1,ox,oy,7);
-      rg.addColorStop(0,'rgba(255,255,255,.72)'); rg.addColorStop(1,'rgba(79,195,247,0)');
-      ctx.fillStyle=rg; ctx.beginPath(); ctx.arc(ox,oy,7,0,Math.PI*2); ctx.fill();
-    }
-  }
-  // Barre de recharge
-  if(ammo<MAX_AMMO){
-    const bw=MAX_AMMO*20-4;
-    ctx.fillStyle='rgba(79,195,247,.2)'; ctx.fillRect(8,H-5,bw,3);
-    ctx.fillStyle='rgba(79,195,247,.72)'; ctx.fillRect(8,H-5,bw*(ammoT/(60*AMMO_REGEN_SEC)),3);
-  }
-  // Hint objectif
-  ctx.fillStyle='rgba(255,215,0,.55)'; ctx.font='11px system-ui'; ctx.textAlign='right';
-  ctx.fillText('Objectif: '+DUST_WIN+' ✨',W-8,H-8);
+function _drawHUD(ctx,W,H){
+  const prec = shotsFired===0 ? 0 : Math.round(meteorsKilled/shotsFired*100);
+  // Panel bas gauche : kills + précision
+  ctx.fillStyle='rgba(0,0,0,.52)';
+  ctx.beginPath(); ctx.roundRect(6,H-50,130,44,8); ctx.fill();
+  ctx.fillStyle='#4FC3F7'; ctx.font='bold 13px system-ui'; ctx.textAlign='left';
+  ctx.fillText('\u{1F4A5} '+meteorsKilled+' d\u00e9truits',12,H-31);
+  const col=prec>=60?'#7CFC00':prec>=35?'#FFD700':'#ff8080';
+  ctx.fillStyle=col; ctx.font='12px system-ui';
+  ctx.fillText('\u{1F3AF} '+prec+'% pr\u00e9cision',12,H-13);
+  // Hint droite : tirs illimités
+  ctx.fillStyle='rgba(255,255,255,.32)'; ctx.font='11px system-ui'; ctx.textAlign='right';
+  ctx.fillText('Tirs illimit\u00e9s \u221e',W-8,H-8);
 }
 """
 

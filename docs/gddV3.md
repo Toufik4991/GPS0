@@ -1,6 +1,6 @@
 # 🌙 GPS0 — Game Design Document v3.0
 
-**Version :** 3.13.0 - Jeu 1 redesign QCM : fronde fixe → tire des ORBES, météorites scroll continu, 8 tirs/recharge, victoire 25✨, ricochet-drift-explosion, SVG background bg-n1
+**Version :** 3.14.0 - Jeu 1 v2 : tirs illimités, vie perdue seulement si météorite touche le cosmonaute, récompense 5-50✨ selon précision/efficacité via GPS0_rewardOverride
 **Date :** 24/03/2026
 **Auteur :** Toufik49
 **Statut :** Opérationnel - Bug 14 appliqué intégralement
