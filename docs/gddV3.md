@@ -1,9 +1,9 @@
 # 🌙 GPS0 — Game Design Document v3.0
 
-**Version :** 3.8.0 - Bug 11 : 9 Lunes uniques + SVG Boutique + Debug Toggle persistant
+**Version :** 3.9.0 - Bug 12 : Refonte mini-jeux + UI Lunaire + Navigation GPS améliorée
 **Date :** 22/03/2026
 **Auteur :** Toufik49
-**Statut :** Opérationnel - 9 Mini-jeux thématiques uniques + SVG Boutique/Inventaire + Debug persistant
+**Statut :** Opérationnel - Bug 12 appliqué intégralement
 
 ---
 
@@ -42,6 +42,27 @@
 - Asteriode grise + halo dim quand inactif (data-etat=off)
 - Assets fonds d'ecran mini-jeux : assets/backgrounds/fond_ecran1-9.jpeg
 - Service Worker v9 / APP_VERSION 3.1.4
+
+**Changements majeurs v3.9.0 (Bug 12) :**
+- **9 Mini-jeux remplacés** : Mécaniques inspirées de jeux populaires :
+  - N1 🌑 Lune de Verre — Slingshot / Angry Birds (fronde, physique parabolique)
+  - N2 🌒 Lune de Cendre — Flappy Bird (tap=saut, éviter colonnes de lave)
+  - N3 🌓 Lune de Lierre — Doodle Jump (rebonds infinis, plateformes procédurales)
+  - N4 🌔 Lune de Givre — Swing / Corde (pendule, attraper stalactites)
+  - N5 🌕 Lune d'Ombre — Dark Maze (labyrinthe obscur, lampe torche)
+  - N6 🌖 Lune de Fer — Agar.io (absorber particules, grandir)
+  - N7 🌗 Lune de Tempête — Jetpack Joyride (maintien=montée, obstacles électriques)
+  - N8 🌘 Lune de Cristal — Crossy Road (swipe directionnel, éviter voitures + eau)
+  - N9 🌑 Lune d'Éclipse — Duel Réflexe / Ready Steady Bang (appuyer au signal vert)
+- **Fermeture modale** : Bouton "croix lunaire" SVG (crescent + ×, 44×44px) sur toutes les modales
+- **Guide du Cosmonaute** : 5 étapes avec contenu utile (Comment jouer, 9 Lunes, Poussières, Objets, Astuces)
+- **Pop-up Lune** : Durée 20s (était 5s) + bouton fermer (×)
+- **Halo astéroïde** : Glow coloré sur le SVG selon distance (rouge >100m, orange 50-100m, vert 10-50m, bleu <10m) via data-zone
+- **Navigation GPS** : Bouton "Point suivant" toujours visible en zone (passer sans jouer)
+- **Résultats post-jeu** : Overlay avec 3 boutons : Rejouer / Prendre récompense / Point suivant
+- **Reset total** : Modale de confirmation avant localStorage.clear() + sessionStorage.clear() + reload
+- **Boutique/Inventaire** : Suppression halos SVG (filtres/blur) + suppression champ rarete
+- Service Worker v24 / APP_VERSION 3.9.0
 
 **Changements majeurs v3.8.0 (Bug 11) :**
 - **9 Lunes thématiques** : Chaque mini-jeu a sa propre mécanique unique (remplace auto-runner générique) :

@@ -1,154 +1,342 @@
-<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover"><title>GPS0 - Lune de Cristal</title><style>
-*{margin:0;padding:0;box-sizing:border-box;user-select:none;-webkit-user-select:none;touch-action:none}
-body{overflow:hidden;width:100vw;height:100vh;font-family:system-ui,sans-serif}
-canvas{position:fixed;inset:0;width:100%;height:100%}
-#hud{position:fixed;top:0;left:0;right:0;height:50px;display:flex;align-items:center;justify-content:space-between;padding:0 14px;z-index:10;border-bottom:1px solid rgba(255,255,255,.12)}
-#htimer{font-weight:bold;font-size:.92rem}
-#btn-q{background:none;border:1px solid rgba(255,255,255,.2);border-radius:8px;color:rgba(255,255,255,.5);padding:4px 10px;font-size:.76rem;cursor:pointer}
-#overlay,#results{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:20;padding:24px;text-align:center}
-#results{display:none;z-index:30}
-h2{font-size:1.35rem}p{font-size:.88rem;max-width:290px;line-height:1.5;opacity:.85}
-.ti{display:flex;align-items:center;gap:8px;font-size:.82rem;opacity:.65}
-.btn-go{border:none;border-radius:14px;color:#0A0A1A;font-weight:bold;font-size:1rem;padding:13px 30px;cursor:pointer;margin-top:6px}
-body{background:#02040e}#hud{background:rgba(2,4,14,.92);color:#69CCFF}#htimer{color:#69CCFF}
-h2{color:#69CCFF}p{color:rgba(180,240,255,.85)}.ti{color:rgba(100,200,255,.65)}.btn-go{background:linear-gradient(135deg,#69CCFF,#2266aa);color:#02040e}
-#crystal-info{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);font-size:.82rem;color:rgba(100,200,255,.7);z-index:15;background:rgba(2,4,14,.75);padding:4px 12px;border-radius:10px}
-</style></head><body>
-<canvas id="c"></canvas>
-<div id="hud"><span id="htimer">3:00</span><span>&#x1F48E; Lune de Cristal</span><button id="btn-q">Quitter</button></div>
-<div id="crystal-info">TAP rapide pour casser les cristaux !</div>
-<div id="overlay" style="background:rgba(2,4,14,.93)">
-  <h2>&#x1F48E; Lune de Cristal</h2>
-  <p>Casse les cristaux pour activer les plateformes — dans le bon ordre !</p>
-  <div class="ti">&#x1F446; <span>TAP rapide sur un cristal = l'endommager</span></div>
-  <div class="ti">&#x1F525; <span>Cristaux ROUGES = pi&#xe9;g&#xe9;s, explosent !</span></div>
-  <div class="ti">&#x2B50; <span>Cristal dor&#xe9; secret quelque part</span></div>
-  <button class="btn-go" id="btn-start">Commencer !</button>
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
+<title>GPS0 — Lune de Cristal</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0A0A1A;color:#fff;font-family:system-ui,sans-serif;overflow:hidden;height:100dvh;display:flex;flex-direction:column;touch-action:none;user-select:none}
+#hud{display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(0,0,0,.5);flex-shrink:0;z-index:10}
+#lives{font-size:1.3rem;letter-spacing:2px}
+#timer{flex:1;text-align:center;font-size:1rem;font-weight:bold;color:#4FC3F7}
+#score-hud{font-size:.9rem;color:#FFD700}
+#game-container{flex:1;position:relative;overflow:hidden}
+canvas{display:block;width:100%;height:100%}
+#overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(10,10,26,.88);z-index:20;gap:14px;text-align:center;padding:24px}
+#overlay h2{font-size:1.8rem;color:var(--accent,#C8A2C8)}
+#overlay p{font-size:.9rem;color:rgba(255,255,255,.8);max-width:280px}
+#overlay .btn{padding:12px 32px;border:none;border-radius:14px;font-size:1rem;font-weight:bold;cursor:pointer;background:linear-gradient(135deg,#C8A2C8,#8860a8);color:#fff}
+#selfie-anchor{position:absolute;z-index:5;pointer-events:none}
+
+:root{--accent:#C8A2C8;--gold:#FFD700;--blue:#4FC3F7}
+</style>
+</head>
+<body>
+<div id="hud">
+  <span id="lives">&#10084;&#10084;&#10084;</span>
+  <span id="timer">3:00</span>
+  <span id="score-hud">0 &#10024;</span>
 </div>
-<div id="results" style="background:rgba(2,4,14,.95)"></div>
+<div id="game-container">
+  <canvas id="cv"></canvas>
+  
+  <div id="overlay">
+    <div style="font-size:3rem">🌘</div>
+    <h2>Lune de Cristal</h2>
+    <p>Swipe ou utilise les flèches pour traverser.<br>Évite les voitures et l'eau !</p>
+    <button class="btn" id="btn-start">C&#8217;est parti !</button>
+  </div>
+  <canvas id="selfie-cv" width="48" height="48" style="display:none" aria-hidden="true"></canvas>
+</div>
 <script>
-'use strict';
-const C=document.getElementById('c'),X=C.getContext('2d');
-let W=window.innerWidth,H=window.innerHeight;C.width=W;C.height=H;
-const selfieImg=new Image();const sd=localStorage.getItem('gps0_avatar_selfie_base64');if(sd)selfieImg.src=sd;
-const TOTAL=180;
-let started=false,done=false,poussieres=0,raf=null,elapsed=0,startTs=0,lastTs=0;
-let lives=3,broken=0,secretFound=false;
-let lastTap=0,combo=0;
-// Crystals grid
-function genCrystals(){
-  const cs=[];
-  const COLS=3,ROWS=3;
-  for(let r=0;r<ROWS;r++){
-    for(let c=0;c<COLS;c++){
-      const i=r*COLS+c;
-      const cx=W*(0.2+c*0.28),cy=H*(0.2+r*0.22);
-      cs.push({x:cx,y:cy,hp:i===4?8:5,maxHp:i===4?8:5,broken:false,
-        trapped:i===1||i===7,gold:i===8,order:i+1,
-        flash:0,shake:0});
+// === COMMON ENGINE ===
+const NIVEAU = 8;
+const DUST_REWARD = (8 === 9) ? 50 : (5 + 8 * 5);
+let lives = 3, dust = 0, running = false, gameover = false;
+let timerSec = 180, timerInterval = null;
+const livesEl = document.getElementById('lives');
+const timerEl = document.getElementById('timer');
+const scoreEl = document.getElementById('score-hud');
+const overlay = document.getElementById('overlay');
+const btnStart = document.getElementById('btn-start');
+
+function updateLivesHUD() {
+  livesEl.textContent = '\u2764'.repeat(lives) + '\u2661'.repeat(Math.max(0, 3 - lives));
+}
+
+function updateTimer() {
+  const m = Math.floor(timerSec / 60), s = timerSec % 60;
+  timerEl.textContent = m + ':' + String(s).padStart(2,'0');
+}
+
+function addDust(n) {
+  dust += n;
+  scoreEl.textContent = dust + ' \u2728';
+}
+
+function loseLife() {
+  if (!running) return;
+  lives--;
+  updateLivesHUD();
+  if (lives <= 0) endGame(false);
+}
+
+function endGame(success) {
+  if (gameover) return;
+  gameover = true;
+  running = false;
+  clearInterval(timerInterval);
+  const finalDust = success ? dust + DUST_REWARD : Math.floor(dust * 0.5);
+  setTimeout(() => {
+    window.parent.postMessage({
+      source: 'gps0_minijeu',
+      success: success,
+      niveau: NIVEAU,
+      poussieres: finalDust
+    }, '*');
+  }, 800);
+}
+
+function startTimer() {
+  updateTimer();
+  timerInterval = setInterval(() => {
+    if (!running) return;
+    timerSec--;
+    updateTimer();
+    if (timerSec <= 0) endGame(false);
+  }, 1000);
+}
+
+// Load selfie
+const selfieCanvas = document.getElementById('selfie-cv');
+const selfieCtx = selfieCanvas.getContext('2d');
+(function loadSelfie() {
+  const data = localStorage.getItem('gps0_avatar_selfie_base64');
+  if (!data) return;
+  const img = new Image();
+  img.onload = () => {
+    selfieCtx.save();
+    selfieCtx.beginPath();
+    selfieCtx.arc(24, 24, 24, 0, Math.PI * 2);
+    selfieCtx.clip();
+    selfieCtx.drawImage(img, 0, 0, 48, 48);
+    selfieCtx.restore();
+  };
+  img.src = data;
+})();
+
+// Tuto overlay auto-dismiss after 5s
+let tutoDismissed = false;
+btnStart.addEventListener('click', startGame);
+setTimeout(() => { if (!tutoDismissed) startGame(); }, 5000);
+
+function startGame() {
+  if (tutoDismissed) return;
+  tutoDismissed = true;
+  overlay.style.display = 'none';
+  running = true;
+  startTimer();
+  initGame();
+}
+
+// === GAME LOGIC ===
+
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+let W, H;
+function resize() { W = cv.width = cv.offsetWidth; H = cv.height = cv.offsetHeight; }
+window.addEventListener('resize', () => { resize(); if(running) drawAll(); });
+
+const CELL_SIZE = 60, ROWS_VISIBLE = 10;
+let px, py, targetPx, targetPy, moving, lanes, dustItems, camOffsetY, stepCount;
+let swipeStart = null;
+
+function initGame() {
+  resize();
+  px = Math.floor(W / CELL_SIZE / 2);
+  py = ROWS_VISIBLE - 2;
+  targetPx = px; targetPy = py;
+  moving = false;
+  camOffsetY = 0;
+  stepCount = 0;
+  lanes = [];
+  dustItems = [];
+  for (let r = 0; r < ROWS_VISIBLE + 5; r++) generateLane(r);
+  loop();
+}
+
+function generateLane(row) {
+  const types = ['safe', 'safe', 'road', 'road', 'road', 'water'];
+  const type = row < 2 ? 'safe' : types[Math.floor(Math.random() * types.length)];
+  const cars = [];
+  const logs = [];
+  if (type === 'road') {
+    const dir = Math.random() < 0.5 ? 1 : -1;
+    const count = 1 + Math.floor(Math.random() * 3);
+    const speed = 1 + Math.random() * 2;
+    for (let i = 0; i < count; i++) cars.push({ x: Math.random() * (W / CELL_SIZE), dir, speed });
+  }
+  if (type === 'water') {
+    const dir = Math.random() < 0.5 ? 1 : -1;
+    const count = 2 + Math.floor(Math.random() * 3);
+    const speed = 0.8 + Math.random();
+    for (let i = 0; i < count; i++) logs.push({ x: i * 5 * Math.random() * (W / CELL_SIZE), dir, speed, w: 2 + Math.floor(Math.random() * 2) });
+  }
+  const hasDust = type === 'safe' && Math.random() < 0.3;
+  if (hasDust) dustItems.push({ col: Math.floor(Math.random() * Math.floor(W / CELL_SIZE)), row, alive: true });
+  lanes.push({ type, cars, logs, row });
+}
+
+function loop() {
+  if (!running) return;
+  updateLane();
+  drawAll();
+  requestAnimationFrame(loop);
+}
+
+let interp = 0;
+let fromPx, fromPy;
+
+function move(dc, dr) {
+  if (moving) return;
+  const nx = px + dc, ny = py + dr;
+  const cols = Math.floor(W / CELL_SIZE);
+  if (nx < 0 || nx >= cols) return;
+  fromPx = px; fromPy = py;
+  targetPx = nx; targetPy = ny;
+  moving = true; interp = 0;
+  stepCount++;
+}
+
+function updateLane() {
+  // Interpolate movement
+  if (moving) {
+    interp += 0.15;
+    if (interp >= 1) { px = targetPx; py = targetPy; moving = false; interp = 1; }
+  }
+
+  // Camera: follow player forward
+  const realRow = py + camOffsetY;
+  if (targetPy < 2) {
+    camOffsetY++;
+    // Generate new lane at top
+    const topRow = lanes[0].row - 1;
+    generateLane(topRow);
+    lanes.sort((a, b) => a.row - b.row);
+    // Add dust check
+    if (camOffsetY > 100) { endGame(true); return; }
+  }
+
+  // Move cars and logs
+  const cols = Math.floor(W / CELL_SIZE);
+  for (const lane of lanes) {
+    for (const c of lane.cars) {
+      c.x += c.dir * c.speed * 0.03;
+      if (c.x > cols + 2) c.x = -2;
+      if (c.x < -2) c.x = cols + 2;
+    }
+    for (const l of lane.logs) {
+      l.x += l.dir * l.speed * 0.025;
+      if (l.x > cols + 4) l.x = -4;
+      if (l.x < -4) l.x = cols + 4;
     }
   }
-  return cs;
+
+  // Collision
+  const effPx = moving ? fromPx + (targetPx - fromPx) * interp : px;
+  const effPy = moving ? fromPy + (targetPy - fromPy) * interp : py;
+  const lane = lanes.find(l => l.row === Math.round(effPy));
+  if (lane) {
+    if (lane.type === 'road') {
+      for (const c of lane.cars) {
+        if (Math.abs(c.x - effPx) < 1.2) { loseLife(); if(lives>0){px=Math.floor(W/CELL_SIZE/2);py=ROWS_VISIBLE-2;targetPx=px;targetPy=py;camOffsetY=0;} return; }
+      }
+    }
+    if (lane.type === 'water') {
+      let onLog = false;
+      for (const l of lane.logs) { if (effPx >= l.x - 0.5 && effPx <= l.x + l.w + 0.5) { onLog = true; break; } }
+      if (!onLog) { loseLife(); if(lives>0){px=Math.floor(W/CELL_SIZE/2);py=ROWS_VISIBLE-2;targetPx=px;targetPy=py;camOffsetY=0;} return; }
+    }
+  }
+
+  // Collect dust
+  for (const d of dustItems) {
+    if (!d.alive) continue;
+    if (d.col === Math.round(effPx) && d.row === Math.round(effPy)) { d.alive = false; addDust(12); }
+  }
 }
-const crystals=genCrystals();
-const TOTAL_BREAKABLE=crystals.filter(c=>!c.trapped).length-1; // not counting secret gold
-const PLATFORM_Y=H*0.85;
-let platforms=[];
-function draw(){
-  X.clearRect(0,0,W,H);
-  const bg=X.createLinearGradient(0,0,0,H);
-  bg.addColorStop(0,'#02040e');bg.addColorStop(1,'#040820');
-  X.fillStyle=bg;X.fillRect(0,0,W,H);
-  for(let i=0;i<60;i++){X.fillStyle='rgba(100,200,255,.15)';X.beginPath();X.arc((i*173)%W,(i*89)%H,.8,0,Math.PI*2);X.fill();}
-  // Platforms activated by crystals
-  for(let i=0;i<broken;i++){
-    const px2=W*(0.1+i*0.08),py2=PLATFORM_Y;
-    X.fillStyle='rgba(100,200,255,.5)';X.fillRect(px2,py2,60,8);
+
+function drawAll() {
+  ctx.fillStyle = '#0a1a0a'; ctx.fillRect(0, 0, W, H);
+  const cols = Math.floor(W / CELL_SIZE);
+  const effPx = moving ? fromPx + (targetPx - fromPx) * interp : px;
+  const effPy = moving ? fromPy + (targetPy - fromPy) * interp : py;
+
+  for (const lane of lanes) {
+    const screenRow = lane.row - effPy + ROWS_VISIBLE * 0.7;
+    const sy = screenRow * CELL_SIZE;
+    if (sy < -CELL_SIZE || sy > H + CELL_SIZE) continue;
+
+    // Lane BG
+    if (lane.type === 'road') ctx.fillStyle = '#1a1a1a';
+    else if (lane.type === 'water') ctx.fillStyle = '#0a2a4a';
+    else ctx.fillStyle = '#0a2a0a';
+    ctx.fillRect(0, sy, W, CELL_SIZE);
+
+    // Lane details
+    if (lane.type === 'road') {
+      ctx.strokeStyle = 'rgba(255,255,100,.15)'; ctx.lineWidth = 2; ctx.setLineDash([20,20]);
+      ctx.beginPath(); ctx.moveTo(0, sy + CELL_SIZE/2); ctx.lineTo(W, sy + CELL_SIZE/2); ctx.stroke(); ctx.setLineDash([]);
+      for (const c of lane.cars) {
+        const cx = c.x * CELL_SIZE;
+        ctx.fillStyle = c.dir > 0 ? '#ff4444' : '#4444ff';
+        ctx.fillRect(cx, sy + 8, CELL_SIZE * 1.5, CELL_SIZE - 16);
+        ctx.font = '22px serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.fillText(c.dir > 0 ? '🚗' : '🚕', cx + CELL_SIZE * 0.75, sy + CELL_SIZE/2);
+      }
+    } else if (lane.type === 'water') {
+      for (const l of lane.logs) {
+        ctx.fillStyle = '#8B5E3C';
+        ctx.fillRect(l.x * CELL_SIZE, sy + 10, l.w * CELL_SIZE, CELL_SIZE - 20);
+      }
+    } else {
+      // Trees on sides
+    }
+
+    // Dust
+    for (const d of dustItems) {
+      if (!d.alive || d.row !== lane.row) continue;
+      ctx.font = '22px serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText('✨', d.col * CELL_SIZE + CELL_SIZE/2, sy + CELL_SIZE/2);
+    }
   }
-  // Exit platform
-  if(broken>=TOTAL_BREAKABLE){
-    X.fillStyle='rgba(100,255,100,.7)';X.fillRect(W*0.75,PLATFORM_Y-80,80,10);
-    X.font='18px serif';X.textAlign='center';X.textBaseline='bottom';X.fillText('\uD83D\uDE80',W*0.75+40,PLATFORM_Y-82);
-  }
-  // Crystals
-  crystals.forEach(cr=>{
-    if(cr.broken)return;
-    const ox=cr.shake?(Math.random()*6-3):0,oy=cr.shake?(Math.random()*6-3):0;
-    // Glow
-    const col=cr.trapped?'#FF2244':cr.gold?'#FFD700':'#4488FF';
-    const gc=X.createRadialGradient(cr.x+ox,cr.y+oy,4,cr.x+ox,cr.y+oy,32);
-    gc.addColorStop(0,cr.trapped?'rgba(255,50,50,.35)':cr.gold?'rgba(255,200,0,.4)':'rgba(80,160,255,.35)');
-    gc.addColorStop(1,'transparent');
-    X.fillStyle=gc;X.beginPath();X.arc(cr.x+ox,cr.y+oy,32,0,Math.PI*2);X.fill();
-    // Crystal body (hexagon)
-    X.fillStyle=cr.flash>0?(cr.trapped?'#ff8888':cr.gold?'#fff':'#aaddff'):col;
-    const sz=24*(cr.hp/cr.maxHp);
-    X.save();X.translate(cr.x+ox,cr.y+oy);
-    X.beginPath();
-    for(let a=0;a<6;a++){X.lineTo(Math.cos(a*Math.PI/3)*sz,Math.sin(a*Math.PI/3)*sz);}
-    X.closePath();X.fill();
-    // HP bar
-    X.fillStyle='rgba(0,0,0,.4)';X.fillRect(-sz,-sz-12,sz*2,6);
-    X.fillStyle=cr.trapped?'#FF2244':cr.gold?'#FFD700':'#69CCFF';
-    X.fillRect(-sz,-sz-12,sz*2*(cr.hp/cr.maxHp),6);
-    X.restore();
-    // Label
-    X.fillStyle='rgba(255,255,255,.5)';X.font='11px system-ui';X.textAlign='center';X.textBaseline='top';
-    X.fillText(cr.trapped?'PIEGE':cr.gold?'\u2B50 SECRET':'#'+cr.order,cr.x,cr.y+sz+6);
-    // Tap hint
-    X.fillStyle='rgba(150,220,255,.4)';X.font='10px system-ui';X.fillText('TAP',cr.x,cr.y+sz+20);
-    if(cr.flash>0)cr.flash--;if(cr.shake>0)cr.shake--;
-  });
+
   // Player
-  const ppx=W*0.5,ppy=PLATFORM_Y-30;
-  if(sd&&selfieImg.complete){X.save();X.beginPath();X.arc(ppx,ppy,13,0,Math.PI*2);X.clip();X.drawImage(selfieImg,ppx-13,ppy-13,26,26);X.restore();}
-  else{X.font='18px serif';X.textAlign='center';X.textBaseline='middle';X.fillText('\uD83E\uDDD1\u200D\uD83D\uDE80',ppx,ppy);}
-  // Score
-  X.fillStyle='rgba(100,200,255,.8)';X.font='bold 13px system-ui';X.textAlign='left';X.textBaseline='top';
-  X.fillText(broken+'/'+TOTAL_BREAKABLE+' cristaux bris\xe9s',10,60);
-  for(let i=0;i<lives;i++){X.font='14px serif';X.fillText('\uD83D\uDC99',8+i*24,H/2);}
-}
-function tick(ts){
-  if(!started||done)return;
-  if(!startTs)startTs=ts;
-  const dt=Math.min((ts-lastTs)/1000,0.05);lastTs=ts;
-  elapsed=(ts-startTs)/1000;
-  const rem=Math.max(0,TOTAL-elapsed);
-  document.getElementById('htimer').textContent=mm(rem);
-  if(rem<=0&&!done){done=true;_end(broken>=TOTAL_BREAKABLE);return;}
-  draw();raf=requestAnimationFrame(tick);
-}
-function mm(s){return String(Math.floor(s/60)).padStart(2,'0')+':'+String(Math.floor(s%60)).padStart(2,'0');}
-function _end(ok){
-  done=true;cancelAnimationFrame(raf);
-  const r=document.getElementById('results');r.style.display='flex';
-  const all=broken>=TOTAL_BREAKABLE;
-  poussieres=all&&secretFound?50:all?25:broken>=3?10:5;
-  r.innerHTML=(ok||all)
-    ?'<h2 style="color:#69CCFF">\uD83D\uDC8E Tous bris\xe9s !</h2><p>'+(secretFound?'\uD83C\uDF1F Cristal dor\xe9 !':'')+'</p><p style="color:#69CCFF;font-size:1.2rem">+'+poussieres+' \u2728</p>'
-    :'<h2 style="color:#FF6B6B">&#x1F4A5; '+broken+' cristaux bris\xe9s</h2><p style="color:#69CCFF">+'+poussieres+' \u2728</p>';
-  setTimeout(()=>window.parent.postMessage({source:'gps0_minijeu',success:ok||broken>=3,niveau:8,poussieres},'*'),2200);
-}
-C.addEventListener('touchstart',e=>{
-  e.preventDefault();if(!started)return;
-  const tx=e.touches[0].clientX,ty=e.touches[0].clientY;
-  let best=null,bestD=60;
-  crystals.forEach(cr=>{if(cr.broken)return;const d=Math.sqrt((tx-cr.x)**2+(ty-cr.y)**2);if(d<bestD){bestD=d;best=cr;}});
-  if(!best)return;
-  best.hp--;best.flash=4;best.shake=2;
-  if(best.hp<=0){
-    best.broken=true;
-    if(best.trapped){lives--;if(lives<=0){done=true;_end(false);return;}}
-    else{broken++;if(best.gold)secretFound=true;}
-    if(broken>=TOTAL_BREAKABLE)setTimeout(()=>{if(!done){done=true;_end(true);}},600);
+  const spx = effPx * CELL_SIZE + CELL_SIZE/2;
+  const spy = ROWS_VISIBLE * 0.7 * CELL_SIZE + CELL_SIZE/2;
+  if (selfieCanvas.width > 0 && selfieCtx.getImageData(0,0,1,1).data[3] > 0) {
+    ctx.save(); ctx.beginPath(); ctx.arc(spx, spy, 24, 0, Math.PI*2); ctx.clip();
+    ctx.drawImage(selfieCanvas, spx-24, spy-24, 48, 48); ctx.restore();
+  } else {
+    ctx.font = '40px serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('🐸', spx, spy);
   }
-  document.getElementById('crystal-info').textContent=best.trapped?'&#x1F4A5; PI\xC8GE !':best.hp<=0?'&#x1F48E; Bris\xe9 !':'HP: '+best.hp+'/'+best.maxHp;
-},{passive:false});
-document.getElementById('btn-start').addEventListener('click',()=>{
-  document.getElementById('overlay').style.display='none';started=true;lastTs=performance.now();raf=requestAnimationFrame(tick);
+
+  // Step counter
+  ctx.fillStyle = 'rgba(255,255,255,.5)'; ctx.font = '13px sans-serif'; ctx.textAlign='right'; ctx.textBaseline='top';
+  ctx.fillText(`${stepCount} pas`, W-10, 10);
+}
+
+// Swipe controls
+cv.addEventListener('touchstart', e => { e.preventDefault(); const t = e.touches[0]; swipeStart = { x: t.clientX, y: t.clientY }; }, { passive: false });
+cv.addEventListener('touchend', e => {
+  e.preventDefault();
+  if (!swipeStart || !running) return;
+  const t = e.changedTouches[0];
+  const dx = t.clientX - swipeStart.x, dy = t.clientY - swipeStart.y;
+  if (Math.abs(dx) > Math.abs(dy)) { if (dx > 20) move(1, 0); else if (dx < -20) move(-1, 0); }
+  else { if (dy < -20) move(0, -1); else if (dy > 20) move(0, 1); }
+  swipeStart = null;
+}, { passive: false });
+window.addEventListener('keydown', e => {
+  if (!running) return;
+  if (e.key === 'ArrowLeft') move(-1, 0);
+  if (e.key === 'ArrowRight') move(1, 0);
+  if (e.key === 'ArrowUp') move(0, -1);
+  if (e.key === 'ArrowDown') move(0, 1);
 });
-document.getElementById('btn-q').addEventListener('click',()=>{
-  done=true;cancelAnimationFrame(raf);window.parent.postMessage({source:'gps0_minijeu',success:false,niveau:8,poussieres:0},'*');
-});
-draw();
-</script></body></html>
+
+</script>
+</body>
+</html>

@@ -1,144 +1,296 @@
-<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover"><title>GPS0 - Lune de Fer</title><style>
-*{margin:0;padding:0;box-sizing:border-box;user-select:none;-webkit-user-select:none;touch-action:none}
-body{overflow:hidden;width:100vw;height:100vh;font-family:system-ui,sans-serif}
-canvas{position:fixed;inset:0;width:100%;height:100%}
-#hud{position:fixed;top:0;left:0;right:0;height:50px;display:flex;align-items:center;justify-content:space-between;padding:0 14px;z-index:10;border-bottom:1px solid rgba(255,255,255,.12)}
-#htimer{font-weight:bold;font-size:.92rem}
-#btn-q{background:none;border:1px solid rgba(255,255,255,.2);border-radius:8px;color:rgba(255,255,255,.5);padding:4px 10px;font-size:.76rem;cursor:pointer}
-#overlay,#results{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:20;padding:24px;text-align:center}
-#results{display:none;z-index:30}
-h2{font-size:1.35rem}p{font-size:.88rem;max-width:290px;line-height:1.5;opacity:.85}
-.ti{display:flex;align-items:center;gap:8px;font-size:.82rem;opacity:.65}
-.btn-go{border:none;border-radius:14px;color:#0A0A1A;font-weight:bold;font-size:1rem;padding:13px 30px;cursor:pointer;margin-top:6px}
-body{background:#0a0a0a}#hud{background:rgba(10,10,10,.92);color:#aaa}#htimer{color:#ccc}
-h2{color:#aaa}p{color:rgba(220,220,220,.85)}.ti{color:rgba(200,200,200,.6)}.btn-go{background:linear-gradient(135deg,#888,#444)}
-#info-bar{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);color:rgba(200,200,200,.65);font-size:.8rem;z-index:15;background:rgba(0,0,0,.6);padding:4px 12px;border-radius:10px}
-</style></head><body>
-<canvas id="c"></canvas>
-<div id="hud"><span id="htimer">3:00</span><span>&#x1F9F2; Lune de Fer</span><button id="btn-q">Quitter</button></div>
-<div id="info-bar">TAP sur un bloc = l'attirer</div>
-<div id="overlay" style="background:rgba(10,10,10,.93)">
-  <h2>&#x1F9F2; Lune de Fer</h2>
-  <p>Des blocs m&#xe9;talliques flottent dans l'espace. Utilise ton aimant !</p>
-  <div class="ti">&#x1F446; <span>TAP sur un bloc = l'attirer vers toi</span></div>
-  <div class="ti">&#x1F4A5; <span>Blocs ROUGES = pi&#xe9;g&#xe9;s ! Ils explosent !</span></div>
-  <div class="ti">&#x2B50; <span>Attire TOUS les blocs bleus pour gagner</span></div>
-  <button class="btn-go" id="btn-start">Commencer !</button>
-</div>
-<div id="results" style="background:rgba(10,10,10,.95)"></div>
-<script>
-'use strict';
-const C=document.getElementById('c'),X=C.getContext('2d');
-let W=window.innerWidth,H=window.innerHeight;C.width=W;C.height=H;
-const selfieImg=new Image();const sd=localStorage.getItem('gps0_avatar_selfie_base64');if(sd)selfieImg.src=sd;
-const TOTAL=180;
-let started=false,done=false,poussieres=0,raf=null,elapsed=0,startTs=0,lastTs=0;
-let lives=3,blueCollected=0,secretFound=false;
-const PLAYER_X=W/2,PLAYER_Y=H*0.8;
-const ATTRACT_SPEED=2.5, COLLECT_DIST=40;
-function genBlocks(){
-  const bs=[];
-  const positions=[
-    {x:W*0.15,y:H*0.15},{x:W*0.45,y:H*0.12},{x:W*0.75,y:H*0.18},
-    {x:W*0.1,y:H*0.38},{x:W*0.5,y:H*0.33},{x:W*0.85,y:H*0.4},
-    {x:W*0.25,y:H*0.58},{x:W*0.6,y:H*0.55},{x:W*0.9,y:H*0.22},
-  ];
-  positions.forEach((p,i)=>{
-    bs.push({x:p.x,y:p.y,vx:(Math.random()-.5)*0.5,vy:(Math.random()-.5)*0.5,
-      trapped:i===3||i===6,collected:false,attracting:false,size:28,secret:i===8});
-  });
-  return bs;
-}
-let blocks=genBlocks();
-const BLUE_TOTAL=blocks.filter(b=>!b.trapped).length;
-let magnetBeam=null,beamT=0;
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
+<title>GPS0 — Lune de Fer</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0A0A1A;color:#fff;font-family:system-ui,sans-serif;overflow:hidden;height:100dvh;display:flex;flex-direction:column;touch-action:none;user-select:none}
+#hud{display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(0,0,0,.5);flex-shrink:0;z-index:10}
+#lives{font-size:1.3rem;letter-spacing:2px}
+#timer{flex:1;text-align:center;font-size:1rem;font-weight:bold;color:#4FC3F7}
+#score-hud{font-size:.9rem;color:#FFD700}
+#game-container{flex:1;position:relative;overflow:hidden}
+canvas{display:block;width:100%;height:100%}
+#overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(10,10,26,.88);z-index:20;gap:14px;text-align:center;padding:24px}
+#overlay h2{font-size:1.8rem;color:var(--accent,#C8A2C8)}
+#overlay p{font-size:.9rem;color:rgba(255,255,255,.8);max-width:280px}
+#overlay .btn{padding:12px 32px;border:none;border-radius:14px;font-size:1rem;font-weight:bold;cursor:pointer;background:linear-gradient(135deg,#C8A2C8,#8860a8);color:#fff}
+#selfie-anchor{position:absolute;z-index:5;pointer-events:none}
 
-function draw(){
-  X.clearRect(0,0,W,H);
-  X.fillStyle='#050508';X.fillRect(0,0,W,H);
-  for(let i=0;i<60;i++){X.fillStyle='rgba(180,180,220,.2)';X.beginPath();X.arc((i*173)%W,(i*97)%H,.8,0,Math.PI*2);X.fill();}
-  // Magnet beam
-  if(magnetBeam){
-    const t=Date.now()/200;
-    X.strokeStyle='rgba(100,200,255,'+(0.5+Math.sin(t)*0.3)+')';
-    X.lineWidth=3;X.setLineDash([8,6]);
-    X.beginPath();X.moveTo(PLAYER_X,PLAYER_Y);X.lineTo(magnetBeam.x,magnetBeam.y);X.stroke();
-    X.setLineDash([]);
-  }
-  // Blocks
-  blocks.forEach(b=>{
-    if(b.collected)return;
-    const col=b.trapped?'#cc1122':b.secret?'#FFD700':'#4488cc';
-    const glow=X.createRadialGradient(b.x,b.y,2,b.x,b.y,b.size+8);
-    glow.addColorStop(0,b.trapped?'rgba(255,50,0,.3)':b.secret?'rgba(255,220,0,.4)':'rgba(80,160,255,.3)');
-    glow.addColorStop(1,'transparent');
-    X.fillStyle=glow;X.beginPath();X.arc(b.x,b.y,b.size+8,0,Math.PI*2);X.fill();
-    X.fillStyle=col;X.beginPath();X.roundRect(b.x-b.size/2,b.y-b.size/2,b.size,b.size,5);X.fill();
-    if(b.attracting){X.strokeStyle='rgba(255,255,100,.8)';X.lineWidth=2;X.beginPath();X.arc(b.x,b.y,b.size/2+6,0,Math.PI*2);X.stroke();}
-    if(b.trapped){X.font='14px serif';X.textAlign='center';X.textBaseline='middle';X.fillText('\uD83D\uDCA5',b.x,b.y-b.size/2-10);}
-    if(b.secret){X.font='11px serif';X.fillText('\u2B50',b.x,b.y-b.size/2-10);}
-  });
-  // Player (cosmonaute with magnet)
-  X.fillStyle='#888';X.beginPath();X.ellipse(PLAYER_X,PLAYER_Y+14,13,10,0,0,Math.PI*2);X.fill();
-  if(sd&&selfieImg.complete){X.save();X.beginPath();X.arc(PLAYER_X,PLAYER_Y,13,0,Math.PI*2);X.clip();X.drawImage(selfieImg,PLAYER_X-13,PLAYER_Y-13,26,26);X.restore();}
-  else{X.font='18px serif';X.textAlign='center';X.textBaseline='middle';X.fillText('\uD83E\uDDD1\u200D\uD83D\uDE80',PLAYER_X,PLAYER_Y);}
-  // Magnet icon
-  X.font='24px serif';X.textAlign='center';X.textBaseline='middle';X.fillText('\uD83E\uDDF2',PLAYER_X+20,PLAYER_Y-20);
-  // Progress
-  X.fillStyle='rgba(255,255,255,.7)';X.font='bold 14px system-ui';X.textAlign='left';X.textBaseline='top';
-  X.fillText(blueCollected+'/'+BLUE_TOTAL+' blocs',10,60);
-  for(let i=0;i<lives;i++){X.font='14px serif';X.fillText('\uD83E\uDE9B',8+i*22,H/2);}
+:root{--accent:#C8A2C8;--gold:#FFD700;--blue:#4FC3F7}
+</style>
+</head>
+<body>
+<div id="hud">
+  <span id="lives">&#10084;&#10084;&#10084;</span>
+  <span id="timer">3:00</span>
+  <span id="score-hud">0 &#10024;</span>
+</div>
+<div id="game-container">
+  <canvas id="cv"></canvas>
+  
+  <div id="overlay">
+    <div style="font-size:3rem">🌖</div>
+    <h2>Lune de Fer</h2>
+    <p>Absorbe les particules plus petites que toi.<br>Grossis pour dominer l'espace !</p>
+    <button class="btn" id="btn-start">C&#8217;est parti !</button>
+  </div>
+  <canvas id="selfie-cv" width="48" height="48" style="display:none" aria-hidden="true"></canvas>
+</div>
+<script>
+// === COMMON ENGINE ===
+const NIVEAU = 6;
+const DUST_REWARD = (6 === 9) ? 50 : (5 + 6 * 5);
+let lives = 3, dust = 0, running = false, gameover = false;
+let timerSec = 180, timerInterval = null;
+const livesEl = document.getElementById('lives');
+const timerEl = document.getElementById('timer');
+const scoreEl = document.getElementById('score-hud');
+const overlay = document.getElementById('overlay');
+const btnStart = document.getElementById('btn-start');
+
+function updateLivesHUD() {
+  livesEl.textContent = '\u2764'.repeat(lives) + '\u2661'.repeat(Math.max(0, 3 - lives));
 }
-function tick(ts){
-  if(!started||done)return;
-  if(!startTs)startTs=ts;
-  const dt=Math.min((ts-lastTs)/1000,0.05);lastTs=ts;
-  elapsed=(ts-startTs)/1000;
-  const rem=Math.max(0,TOTAL-elapsed);
-  document.getElementById('htimer').textContent=mm(rem);
-  if(rem<=0&&!done){done=true;_end(blueCollected===BLUE_TOTAL);return;}
-  // Move blocks (float)
-  blocks.forEach(b=>{
-    if(b.collected)return;
-    if(b.attracting){
-      const dx=PLAYER_X-b.x,dy=PLAYER_Y-b.y,d=Math.sqrt(dx*dx+dy*dy);
-      if(d<COLLECT_DIST){
-        b.collected=true;b.attracting=false;magnetBeam=null;
-        if(b.trapped){lives--;if(lives<=0){done=true;_end(false);return;}}
-        else{blueCollected++;if(b.secret)secretFound=true;}
-        if(blueCollected===BLUE_TOTAL){done=true;_end(true);return;}
-      }else{b.x+=dx/d*ATTRACT_SPEED;b.y+=dy/d*ATTRACT_SPEED;}
-    }else{
-      b.x+=b.vx;b.y+=b.vy;
-      if(b.x<20||b.x>W-20)b.vx*=-1;
-      if(b.y<60||b.y>H*0.72)b.vy*=-1;
+
+function updateTimer() {
+  const m = Math.floor(timerSec / 60), s = timerSec % 60;
+  timerEl.textContent = m + ':' + String(s).padStart(2,'0');
+}
+
+function addDust(n) {
+  dust += n;
+  scoreEl.textContent = dust + ' \u2728';
+}
+
+function loseLife() {
+  if (!running) return;
+  lives--;
+  updateLivesHUD();
+  if (lives <= 0) endGame(false);
+}
+
+function endGame(success) {
+  if (gameover) return;
+  gameover = true;
+  running = false;
+  clearInterval(timerInterval);
+  const finalDust = success ? dust + DUST_REWARD : Math.floor(dust * 0.5);
+  setTimeout(() => {
+    window.parent.postMessage({
+      source: 'gps0_minijeu',
+      success: success,
+      niveau: NIVEAU,
+      poussieres: finalDust
+    }, '*');
+  }, 800);
+}
+
+function startTimer() {
+  updateTimer();
+  timerInterval = setInterval(() => {
+    if (!running) return;
+    timerSec--;
+    updateTimer();
+    if (timerSec <= 0) endGame(false);
+  }, 1000);
+}
+
+// Load selfie
+const selfieCanvas = document.getElementById('selfie-cv');
+const selfieCtx = selfieCanvas.getContext('2d');
+(function loadSelfie() {
+  const data = localStorage.getItem('gps0_avatar_selfie_base64');
+  if (!data) return;
+  const img = new Image();
+  img.onload = () => {
+    selfieCtx.save();
+    selfieCtx.beginPath();
+    selfieCtx.arc(24, 24, 24, 0, Math.PI * 2);
+    selfieCtx.clip();
+    selfieCtx.drawImage(img, 0, 0, 48, 48);
+    selfieCtx.restore();
+  };
+  img.src = data;
+})();
+
+// Tuto overlay auto-dismiss after 5s
+let tutoDismissed = false;
+btnStart.addEventListener('click', startGame);
+setTimeout(() => { if (!tutoDismissed) startGame(); }, 5000);
+
+function startGame() {
+  if (tutoDismissed) return;
+  tutoDismissed = true;
+  overlay.style.display = 'none';
+  running = true;
+  startTimer();
+  initGame();
+}
+
+// === GAME LOGIC ===
+
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+let W, H;
+function resize() { W = cv.width = cv.offsetWidth; H = cv.height = cv.offsetHeight; }
+window.addEventListener('resize', () => { resize(); });
+
+const WORLD = 1200;
+let player, particles, enemies, camX, camY, frameCount;
+
+function initGame() {
+  resize();
+  player = { x: WORLD/2, y: WORLD/2, r: 22, score: 0 };
+  particles = [];
+  enemies = [];
+  camX = 0; camY = 0; frameCount = 0;
+  for (let i = 0; i < 80; i++) spawnParticle();
+  for (let i = 0; i < 6; i++) spawnEnemy();
+  loop();
+}
+
+function spawnParticle() {
+  particles.push({ x: Math.random() * WORLD, y: Math.random() * WORLD, r: 6 + Math.random() * 8, dust: Math.random() < 0.3, color: randomColor() });
+}
+
+function spawnEnemy() {
+  const minR = 10, maxR = 35;
+  let x, y;
+  do { x = Math.random() * WORLD; y = Math.random() * WORLD; }
+  while (Math.sqrt((x - player.x)**2 + (y - player.y)**2) < 200);
+  enemies.push({ x, y, r: minR + Math.random() * (maxR - minR), vx: (Math.random()-0.5)*2, vy: (Math.random()-0.5)*2, color: randomColor() });
+}
+
+function randomColor() {
+  const hues = [200, 280, 320, 40, 160, 0];
+  const h = hues[Math.floor(Math.random() * hues.length)];
+  return `hsl(${h},70%,55%)`;
+}
+
+let touchX = null, touchY = null;
+
+function loop() {
+  if (!running) return;
+  frameCount++;
+  update();
+  drawAll();
+  requestAnimationFrame(loop);
+}
+
+function update() {
+  // Move player toward touch/mouse
+  if (touchX !== null) {
+    const scrX = player.x - camX, scrY = player.y - camY;
+    const dx = touchX - scrX, dy = touchY - scrY;
+    const dist = Math.sqrt(dx*dx + dy*dy);
+    if (dist > 5) {
+      const speed = Math.max(1.5, 6 - player.r * 0.12);
+      player.x += dx / dist * speed;
+      player.y += dy / dist * speed;
     }
-  });
-  draw();raf=requestAnimationFrame(tick);
+  }
+  player.x = Math.max(player.r, Math.min(WORLD - player.r, player.x));
+  player.y = Math.max(player.r, Math.min(WORLD - player.r, player.y));
+
+  // Camera
+  camX = player.x - W / 2; camY = player.y - H / 2;
+
+  // Absorb particles
+  for (const p of particles) {
+    const dx = player.x - p.x, dy = player.y - p.y;
+    if (Math.sqrt(dx*dx+dy*dy) < player.r) {
+      p.dead = true;
+      player.r += 0.5;
+      if (p.dust) addDust(8);
+      else addDust(2);
+    }
+  }
+  particles = particles.filter(p => !p.dead);
+  while (particles.length < 50) spawnParticle();
+
+  // Move enemies
+  for (const e of enemies) {
+    e.x += e.vx; e.y += e.vy;
+    if (e.x < e.r || e.x > WORLD - e.r) e.vx *= -1;
+    if (e.y < e.r || e.y > WORLD - e.r) e.vy *= -1;
+    // Enemy absorbs particles
+    for (const p of particles) {
+      const dx = e.x - p.x, dy = e.y - p.y;
+      if (Math.sqrt(dx*dx+dy*dy) < e.r) { p.dead = true; e.r = Math.min(e.r + 0.3, 50); }
+    }
+    // Interact with player
+    const dx = player.x - e.x, dy = player.y - e.y;
+    const dist = Math.sqrt(dx*dx+dy*dy);
+    if (dist < player.r + e.r) {
+      if (player.r > e.r * 1.1) {
+        e.dead = true; player.r += e.r * 0.3; addDust(15);
+      } else if (e.r > player.r * 1.1) {
+        loseLife();
+        if (lives > 0) { player.r = Math.max(22, player.r * 0.7); }
+      }
+    }
+  }
+  enemies = enemies.filter(e => !e.dead);
+  while (enemies.length < 4) spawnEnemy();
+  particles = particles.filter(p => !p.dead);
+
+  // Win: player is very large
+  if (player.r > 90) endGame(true);
 }
-function mm(s){return String(Math.floor(s/60)).padStart(2,'0')+':'+String(Math.floor(s%60)).padStart(2,'0');}
-function _end(ok){
-  done=true;cancelAnimationFrame(raf);
-  const r=document.getElementById('results');r.style.display='flex';
-  const all=blueCollected===BLUE_TOTAL;
-  poussieres=all&&secretFound?50:all?25:blueCollected>0?10:5;
-  r.innerHTML=ok
-    ?'<h2 style="color:#4488cc">\uD83E\uDDF2 Tout attir\xe9 !</h2><p>'+(secretFound?'\uD83C\uDF1F Bloc secret !':'')+'</p><p style="color:#4FC3F7;font-size:1.2rem">+'+poussieres+' \u2728 poussi\xe8res</p>'
-    :'<h2 style="color:#FF6B6B">\uD83D\uDCA5 '+(lives<=0?'Blocs pi\xe9g\xe9s !':'Temps!')+'</h2><p style="color:#4FC3F7">+'+poussieres+' \u2728</p>';
-  setTimeout(()=>window.parent.postMessage({source:'gps0_minijeu',success:ok||blueCollected>0,niveau:6,poussieres},'*'),2200);
+
+function drawAll() {
+  ctx.fillStyle = '#0a0820'; ctx.fillRect(0, 0, W, H);
+
+  // Grid
+  ctx.strokeStyle = 'rgba(255,255,255,.05)'; ctx.lineWidth = 1;
+  const gs = 80;
+  for (let x = -camX % gs; x < W; x += gs) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
+  for (let y = -camY % gs; y < H; y += gs) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+
+  // World border
+  ctx.strokeStyle = 'rgba(200,162,200,.3)'; ctx.lineWidth = 4;
+  ctx.strokeRect(-camX, -camY, WORLD, WORLD);
+
+  // Particles
+  for (const p of particles) {
+    const sx = p.x - camX, sy = p.y - camY;
+    if (sx < -50 || sx > W + 50 || sy < -50 || sy > H + 50) continue;
+    ctx.fillStyle = p.dust ? '#FFD700' : p.color;
+    ctx.beginPath(); ctx.arc(sx, sy, p.r, 0, Math.PI*2); ctx.fill();
+    if (p.dust) { ctx.font = `${p.r}px serif`; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('✨', sx, sy); }
+  }
+
+  // Enemies
+  for (const e of enemies) {
+    const sx = e.x - camX, sy = e.y - camY;
+    if (sx < -100 || sx > W + 100) continue;
+    ctx.fillStyle = e.color; ctx.globalAlpha = 0.85;
+    ctx.beginPath(); ctx.arc(sx, sy, e.r, 0, Math.PI*2); ctx.fill(); ctx.globalAlpha = 1;
+    ctx.strokeStyle = 'rgba(255,255,255,.3)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(sx, sy, e.r, 0, Math.PI*2); ctx.stroke();
+  }
+
+  // Player
+  const spx = player.x - camX, spy = player.y - camY;
+  if (selfieCanvas.width > 0 && selfieCtx.getImageData(0,0,1,1).data[3] > 0) {
+    ctx.save(); ctx.beginPath(); ctx.arc(spx, spy, player.r, 0, Math.PI*2); ctx.clip();
+    ctx.drawImage(selfieCanvas, spx - player.r, spy - player.r, player.r*2, player.r*2); ctx.restore();
+  } else {
+    ctx.font = `${player.r * 1.8}px serif`; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('🌕', spx, spy);
+  }
+  ctx.strokeStyle = '#C8A2C8'; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.arc(spx, spy, player.r, 0, Math.PI*2); ctx.stroke();
 }
-C.addEventListener('touchstart',e=>{
-  e.preventDefault();if(!started)return;
-  const tx=e.touches[0].clientX,ty=e.touches[0].clientY;
-  let best=null,bestD=80;
-  blocks.forEach(b=>{if(b.collected||b.attracting)return;const d=Math.sqrt((tx-b.x)**2+(ty-b.y)**2);if(d<bestD){bestD=d;best=b;}});
-  if(best){blocks.forEach(b=>b.attracting=false);best.attracting=true;magnetBeam=best;}
-},{passive:false});
-document.getElementById('btn-start').addEventListener('click',()=>{
-  document.getElementById('overlay').style.display='none';started=true;lastTs=performance.now();raf=requestAnimationFrame(tick);
-});
-document.getElementById('btn-q').addEventListener('click',()=>{
-  done=true;cancelAnimationFrame(raf);window.parent.postMessage({source:'gps0_minijeu',success:false,niveau:6,poussieres:0},'*');
-});
-draw();
-</script></body></html>
+
+cv.addEventListener('touchmove', e => { e.preventDefault(); const r = cv.getBoundingClientRect(); touchX = e.touches[0].clientX - r.left; touchY = e.touches[0].clientY - r.top; }, { passive: false });
+cv.addEventListener('touchstart', e => { e.preventDefault(); const r = cv.getBoundingClientRect(); touchX = e.touches[0].clientX - r.left; touchY = e.touches[0].clientY - r.top; }, { passive: false });
+cv.addEventListener('touchend', e => { e.preventDefault(); touchX = null; }, { passive: false });
+cv.addEventListener('mousemove', e => { const r = cv.getBoundingClientRect(); touchX = e.clientX - r.left; touchY = e.clientY - r.top; });
+cv.addEventListener('mouseleave', () => { touchX = null; });
+
+</script>
+</body>
+</html>

@@ -25,10 +25,13 @@ window.GPS0_Boussole = (() => {
 
   function _halo(dist) {
     const h = document.getElementById('halo'); if (!h) return;
-    if (dist > 151) h.dataset.etat = 'rouge';
-    else if (dist > 80) h.dataset.etat = 'orange';
-    else if (dist > 30) h.dataset.etat = 'vert';
-    else h.dataset.etat = 'bleu';
+    const w = document.getElementById('asteroide-wrapper');
+    let zone;
+    if (dist > 100)      { zone = 'rouge';  h.dataset.etat = 'rouge'; }
+    else if (dist > 50)  { zone = 'orange'; h.dataset.etat = 'orange'; }
+    else if (dist > 10)  { zone = 'vert';   h.dataset.etat = 'vert'; }
+    else                 { zone = 'bleu';   h.dataset.etat = 'bleu'; }
+    if (w) w.dataset.zone = zone;
   }
   function _fusee(bear) {
     const f = document.getElementById('fusee-wrapper');

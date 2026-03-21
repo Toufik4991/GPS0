@@ -90,7 +90,15 @@ window.GPS0_Lune = (() => {
     bulle.classList.add('visible');
     GPS0_Audio && GPS0_Audio.playSFX('lune_apparait');
     clearTimeout(tId);
-    tId = setTimeout(() => { bulle.classList.remove('visible'); cooling = false; }, 5000);
+    tId = setTimeout(() => { bulle.classList.remove('visible'); cooling = false; }, 20000);
+    // Bouton fermer manuel
+    const closeBtn = document.getElementById('lune-close');
+    if (closeBtn) {
+      const handler = () => { clearTimeout(tId); bulle.classList.remove('visible'); cooling = false; };
+      closeBtn.removeEventListener('click', closeBtn._luneCb);
+      closeBtn._luneCb = handler;
+      closeBtn.addEventListener('click', handler, { once: true });
+    }
   }
 
   let _survId = null;

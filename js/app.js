@@ -293,9 +293,11 @@ window.GPS0_App = (() => {
       GPS0_Audio.playSFX('halo_bip');
       GPS0_Boussole.forceEtat('zone');
       _pauseGlobalClock(); // Zone bleue : horloge en pause
-      // Afficher bouton JOUER en haut — le joueur clique quand il veut
+      // Afficher bouton JOUER + bouton POINT SUIVANT
       const bjh = document.getElementById('btn-jouer-haut');
       if (bjh) bjh.hidden = false;
+      const bpp = document.getElementById('btn-prochain-point');
+      if (bpp) bpp.hidden = false;
     });
     GPS0_GPS.on('jeu_termine', () => {
       GPS0_Finale && GPS0_Finale.lancer && GPS0_Finale.lancer();
@@ -354,8 +356,19 @@ window.GPS0_App = (() => {
       if (_zoneAutoTimer) { clearTimeout(_zoneAutoTimer); _zoneAutoTimer = null; }
       const bjh = document.getElementById('btn-jouer-haut');
       if (bjh) bjh.hidden = true;
+      const bpp = document.getElementById('btn-prochain-point');
+      if (bpp) bpp.hidden = true;
       const z = GPS0_GPS.zoneActuelle();
       if (z) _lancerMiniJeu(z.mini_jeu);
+    });
+
+    // Bouton POINT SUIVANT (zone atteinte, sans jouer)
+    document.getElementById('btn-prochain-point')?.addEventListener('click', () => {
+      document.getElementById('btn-jouer-haut').hidden = true;
+      document.getElementById('btn-prochain-point').hidden = true;
+      GPS0_GPS.zoneSuivante(); _majObjectif();
+      GPS0_Boussole.forceEtat('off');
+      _resumeGlobalClock();
     });
 
     const mb = document.getElementById('menu-btn'), mp = document.getElementById('menu-panel');
@@ -388,9 +401,16 @@ window.GPS0_App = (() => {
     });
 
     document.getElementById('menu-reset')?.addEventListener('click', () => {
-      if (!confirm('Reinitialiser la progression ?')) return;
-      ['gps0_zones_actives','gps0_economie','gps0_pseudo','gps0_difficulte','gps0_avatar_selfie_base64','gps0_minijeux_progression'].forEach(k => localStorage.removeItem(k));
-      location.reload();
+      document.getElementById('modal-confirm-reset')?.showModal();
+    });
+    document.getElementById('reset-oui')?.addEventListener('click', () => {
+      localStorage.clear();
+      sessionStorage.clear();
+      try { document.cookie.split(';').forEach(c => { document.cookie = c.replace(/^ +/, '').replace(/=.*/, '=;expires=' + new Date().toUTCString() + ';path=/'); }); } catch {}
+      location.reload(true);
+    });
+    document.getElementById('reset-non')?.addEventListener('click', () => {
+      document.getElementById('modal-confirm-reset')?.close();
     });
 
     document.getElementById('menu-debug')?.addEventListener('click', () => {
@@ -410,7 +430,7 @@ window.GPS0_App = (() => {
       }
     });
     document.getElementById('menu-guide')?.addEventListener('click', () => {
-      _ouvrirTuto();
+      _ouvrirGuide();
     });
     document.querySelectorAll('.demo-niveau-btn').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -436,19 +456,13 @@ window.GPS0_App = (() => {
 
     document.addEventListener('minijeu:complete', e => {
       _resumeGlobalClock();
-      const bjh = document.getElementById('btn-jouer-haut');
-      if (bjh) bjh.hidden = true;
-      GPS0_Economie.ajouterPoussieres(e.detail?.poussieres || 10);
-      if (typeof GPS0_Economie.setCooldown === 'function') GPS0_Economie.setCooldown(e.detail?.niveau || 0);
-      GPS0_GPS.zoneSuivante(); _majObjectif();
-      GPS0_Boussole.forceEtat('off');
       document.getElementById('app').classList.add('visible');
+      _afficherResultats(true, e.detail?.poussieres || 5, e.detail?.niveau);
     });
-    document.addEventListener('minijeu:failed', () => {
+    document.addEventListener('minijeu:failed', e => {
       _resumeGlobalClock();
-      const bjh = document.getElementById('btn-jouer-haut');
-      if (bjh) bjh.hidden = true;
       document.getElementById('app').classList.add('visible');
+      _afficherResultats(false, e.detail?.poussieres || 0, e.detail?.niveau);
     });
     GPS0_GPS.on('zone_changee', () => _majObjectif());
 
@@ -567,6 +581,61 @@ window.GPS0_App = (() => {
     btn.style.cursor = isOn ? 'pointer' : 'default';
   }
 
+  let _resultNiveau = null;
+  function _afficherResultats(succes, poussieres, niveau) {
+    _resultNiveau = niveau;
+    const overlay = document.getElementById('overlay-resultats');
+    if (!overlay) return;
+    document.getElementById('res-icon').textContent = succes ? '🌟' : '💫';
+    document.getElementById('res-titre').textContent = succes ? 'Lune complétée !' : 'Presque...';
+    document.getElementById('res-poussieres').textContent = poussieres > 0 ? '+' + poussieres + ' ✨' : '';
+    overlay.style.display = 'flex';
+    // Bind result buttons
+    document.getElementById('res-rejouer').onclick = () => {
+      overlay.style.display = 'none';
+      if (_resultNiveau) _lancerMiniJeu(_resultNiveau);
+    };
+    document.getElementById('res-recompense').onclick = () => {
+      overlay.style.display = 'none';
+      if (poussieres > 0) { GPS0_Economie.ajouterPoussieres(poussieres); GPS0_Economie.updateHUD(); }
+      if (_resultNiveau) GPS0_Economie.setCooldown(_resultNiveau);
+      document.getElementById('btn-jouer-haut').hidden = true;
+      document.getElementById('btn-prochain-point').hidden = true;
+      GPS0_GPS.zoneSuivante(); _majObjectif();
+      GPS0_Boussole.forceEtat('off');
+    };
+    document.getElementById('res-suivant').onclick = () => {
+      overlay.style.display = 'none';
+      document.getElementById('btn-jouer-haut').hidden = true;
+      document.getElementById('btn-prochain-point').hidden = true;
+      GPS0_GPS.zoneSuivante(); _majObjectif();
+      GPS0_Boussole.forceEtat('off');
+    };
+  }
+
+  function _ouvrirGuide() {
+    const m = document.getElementById('modal-tuto');
+    if (!m) return;
+    const steps = m.querySelectorAll('.intro-step');
+    const dots = m.querySelectorAll('.intro-dot');
+    const prevBtn = document.getElementById('intro-prev');
+    const nextBtn = document.getElementById('intro-next');
+    const totalSteps = steps.length;
+    let cur = 0;
+    function go(n) {
+      cur = Math.max(0, Math.min(totalSteps - 1, n));
+      steps.forEach((s, i) => s.classList.toggle('active', i === cur));
+      dots.forEach((d, i) => d.classList.toggle('active', i === cur));
+      if (prevBtn) prevBtn.disabled = cur === 0;
+      if (nextBtn) nextBtn.textContent = cur === totalSteps - 1 ? 'Fermer ✕' : 'Suivant →';
+    }
+    go(0);
+    if (prevBtn) prevBtn.onclick = () => go(cur - 1);
+    if (nextBtn) nextBtn.onclick = () => { if (cur < totalSteps - 1) go(cur + 1); else m.close(); };
+    document.getElementById('intro-skip').onclick = () => m.close();
+    m.showModal();
+  }
+
   function _ouvrirBoutique() {
     const modal = document.getElementById('modal-boutique');
     if (!modal) return;
@@ -583,8 +652,7 @@ window.GPS0_App = (() => {
       btn.className = 'fragment-carte';
       btn.disabled = poussieres < fr.prix;
       const icone = fr.svg ? '<span class="fragment-icone fragment-svg">' + fr.svg + '</span>' : '<span class="fragment-icone">' + (fr.emoji || '🌟') + '</span>';
-      const rarete = fr.rarete ? '<span class="fragment-rarete" style="color:' + fr.couleur + '">' + fr.rarete + '</span>' : '';
-      btn.innerHTML = icone + '<span class="fragment-infos">' + rarete + '<span class="fragment-nom">' + fr.nom + '</span><span class="fragment-desc">' + fr.desc + '</span></span><span class="fragment-prix">' + fr.prix + ' ✨</span><span class="fragment-acheter">ACHETER</span>';
+      btn.innerHTML = icone + '<span class="fragment-infos"><span class="fragment-nom">' + fr.nom + '</span><span class="fragment-desc">' + fr.desc + '</span></span><span class="fragment-prix">' + fr.prix + ' ✨</span><span class="fragment-acheter">ACHETER</span>';
       btn.onclick = () => {
         if (typeof GPS0_Economie !== 'undefined' && typeof GPS0_Economie.acheterFragment === 'function') {
           const ok = GPS0_Economie.acheterFragment(fr.id, fr.prix);
@@ -603,8 +671,8 @@ window.GPS0_App = (() => {
     m.showModal();
 
     let currentStep = 0;
-    const totalSteps = 4;
     const steps = m.querySelectorAll('.intro-step');
+    const totalSteps = steps.length;
     const dots = m.querySelectorAll('.intro-dot');
     const prevBtn = document.getElementById('intro-prev');
     const nextBtn = document.getElementById('intro-next');

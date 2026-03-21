@@ -1,57 +1,327 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
-  <title>GPS0 - Facile</title>
-  <style>*{box-sizing:border-box;margin:0;padding:0}html,body{height:100%;overflow:hidden;background:#0A0A1A;color:#fff;font-family:"Trebuchet MS",sans-serif;touch-action:none}#hud{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;padding:8px 16px;background:rgba(0,0,0,.7);backdrop-filter:blur(6px);border-bottom:1px solid rgba(200,162,200,.2);font-weight:bold;font-size:.9rem}#mj-e{color:#FFD700}#mj-v{color:#FF6B6B;letter-spacing:2px}#btn-q{background:none;border:1px solid rgba(255,255,255,.3);color:rgba(255,255,255,.6);padding:4px 10px;border-radius:8px;cursor:pointer;font-size:.8rem}#monde{position:fixed;inset:0;overflow:hidden;background:url('../assets/backgrounds/fond_ecran1.jpeg') center/cover no-repeat}.bg-e{position:absolute;inset:0;background-image:radial-gradient(circle,rgba(255,255,255,.35) 1px,transparent 1px);background-size:55px 55px;animation:dr 45s linear infinite;pointer-events:none}@keyframes dr{to{transform:translateX(55px)}}.plate{position:absolute;border-radius:8px;background:linear-gradient(180deg,#5a5a6e,#3a3a4e);border-top:2px solid rgba(200,162,200,.4);box-shadow:0 4px 12px rgba(0,0,0,.5)}.plate:not(.sol){box-shadow:0 4px 12px rgba(0,0,0,.5),0 0 14px rgba(200,162,200,.55),0 0 30px rgba(200,162,200,.25)}.plate.sol{background:linear-gradient(180deg,#4a4a5e,#2a2a3e)}#joueur{position:absolute;width:40px;height:52px;display:flex;flex-direction:column;align-items:center;pointer-events:none}#casque{width:36px;height:36px;border-radius:50%;background:rgba(79,195,247,.15);border:2px solid rgba(79,195,247,.6);overflow:hidden;flex-shrink:0}#ts{width:100%;height:100%;image-rendering:pixelated;background-color:#9a72c8;background-size:cover;background-position:center}#corps{width:28px;height:20px;border-radius:4px;background:linear-gradient(180deg,#C8A2C8,#9a72c8);display:flex;align-items:center;justify-content:center;margin-top:1px}#corps::after{content:"";width:8px;height:8px;border-radius:50%;background:#FFD700}#jambes{display:flex;gap:4px;margin-top:1px}.jambe{width:10px;height:10px;border-radius:2px;background:#9a72c8}@keyframes sc{from{opacity:.7;transform:scale(.9)}to{opacity:1;transform:scale(1.1)}}.pic{position:absolute;clip-path:polygon(50% 0%,100% 100%,0% 100%);background:linear-gradient(180deg,#FF6B6B,#CC0000)}#ctrl-bar{position:fixed;bottom:0;left:0;right:0;height:110px;z-index:45;display:flex;align-items:center;justify-content:center;background:transparent;padding:8px}#bs{width:100%;max-width:600px;height:80px;border-radius:14px;border:2px solid rgba(79,195,247,.2);background:rgba(79,195,247,.05);color:rgba(255,255,255,.25);font-size:2.5rem;cursor:pointer;touch-action:none;user-select:none;-webkit-user-select:none}#lune{position:fixed;top:56px;left:50%;transform:translateX(-50%);background:rgba(10,10,26,.95);border:1px solid rgba(255,255,255,.4);border-radius:14px;padding:8px 14px;font-size:.9rem;color:#fff;font-weight:bold;opacity:0;transition:opacity .4s;max-width:90vw;z-index:60;pointer-events:none;white-space:nowrap}#lune.v{opacity:1}#tuto{position:fixed;inset:0;z-index:100;background:rgba(10,10,26,.93);backdrop-filter:blur(8px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:32px}#tuto h2{color:#C8A2C8;font-size:1.35rem;text-align:center;font-weight:bold}#tuto p{color:rgba(255,255,255,.85);text-align:center;font-size:.9rem;line-height:1.6;max-width:300px;font-weight:bold}.ti{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.06);border-radius:12px;padding:10px 16px;width:100%;max-width:300px;font-size:.85rem;font-weight:bold}#btn-st{padding:14px 32px;background:linear-gradient(135deg,#C8A2C8,#9a72c8);border:none;border-radius:16px;color:#0A0A1A;font-weight:bold;font-size:1rem;cursor:pointer;margin-top:8px}#ov{position:fixed;inset:0;z-index:100;display:none;background:rgba(10,10,26,.93);backdrop-filter:blur(10px);flex-direction:column;align-items:center;justify-content:center;gap:20px}#ov.v{display:flex}#ot{font-size:2rem;font-weight:900}#ot.win{color:#69FF47}#ot.lose{color:#FF6B6B}.bo{padding:14px 32px;border:none;border-radius:16px;font-weight:bold;font-size:1rem;cursor:pointer}#bb{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.3);color:#fff}#br{background:linear-gradient(135deg,#C8A2C8,#9a72c8);color:#0A0A1A}</style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
+<title>GPS0 — Lune de Verre</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0A0A1A;color:#fff;font-family:system-ui,sans-serif;overflow:hidden;height:100dvh;display:flex;flex-direction:column;touch-action:none;user-select:none}
+#hud{display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(0,0,0,.5);flex-shrink:0;z-index:10}
+#lives{font-size:1.3rem;letter-spacing:2px}
+#timer{flex:1;text-align:center;font-size:1rem;font-weight:bold;color:#4FC3F7}
+#score-hud{font-size:.9rem;color:#FFD700}
+#game-container{flex:1;position:relative;overflow:hidden}
+canvas{display:block;width:100%;height:100%}
+#overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(10,10,26,.88);z-index:20;gap:14px;text-align:center;padding:24px}
+#overlay h2{font-size:1.8rem;color:var(--accent,#C8A2C8)}
+#overlay p{font-size:.9rem;color:rgba(255,255,255,.8);max-width:280px}
+#overlay .btn{padding:12px 32px;border:none;border-radius:14px;font-size:1rem;font-weight:bold;cursor:pointer;background:linear-gradient(135deg,#C8A2C8,#8860a8);color:#fff}
+#selfie-anchor{position:absolute;z-index:5;pointer-events:none}
+
+:root{--accent:#C8A2C8;--gold:#FFD700;--blue:#4FC3F7}
+</style>
 </head>
 <body>
+<div id="hud">
+  <span id="lives">&#10084;&#10084;&#10084;</span>
+  <span id="timer">3:00</span>
+  <span id="score-hud">0 &#10024;</span>
+</div>
+<div id="game-container">
+  <canvas id="cv"></canvas>
+  
+  <div id="overlay">
+    <div style="font-size:3rem">🌑</div>
+    <h2>Lune de Verre</h2>
+    <p>Lance des cosmonautes avec ta fronde !<br>Vise les cristaux pour les faire exploser.</p>
+    <button class="btn" id="btn-start">C&#8217;est parti !</button>
+  </div>
+  <canvas id="selfie-cv" width="48" height="48" style="display:none" aria-hidden="true"></canvas>
+</div>
+<script>
+// === COMMON ENGINE ===
+const NIVEAU = 1;
+const DUST_REWARD = (1 === 9) ? 50 : (5 + 1 * 5);
+let lives = 3, dust = 0, running = false, gameover = false;
+let timerSec = 180, timerInterval = null;
+const livesEl = document.getElementById('lives');
+const timerEl = document.getElementById('timer');
+const scoreEl = document.getElementById('score-hud');
+const overlay = document.getElementById('overlay');
+const btnStart = document.getElementById('btn-start');
 
-<div id="hud"><span>Facile ⭐</span><span id="mj-e">0/10 ✨</span><span id="mj-v">❤️❤️❤️</span><button id="btn-q">Quitter</button></div>
-<div id="lune"></div><div id="monde"><div class="bg-e"></div></div>
-<div id="joueur"><div id="casque"><div id="ts"></div></div><div id="corps"></div><div id="jambes"><div class="jambe"></div><div class="jambe"></div></div></div>
-<div id="ctrl-bar"><button id="bs">⬆</button></div>
-<div id="tuto"><h2>🌟 Facile — Premier Pas</h2><p>AUTO-RUNNER : le personnage avance tout seul ! Saute pour franchir les trous et les obstacles. 3 minutes pour collecter un max de ✨ !</p><div class="ti"><span>👆</span><span>Appui court = petit saut | long = grand saut</span></div><div class="ti"><span>✨</span><span>Collecte les étoiles dorées !</span></div><div class="ti"><span>⚠️</span><span>Les trous font chuter — 3 vies</span></div><button id="btn-st">C'est parti ! 🚀</button></div>
-<div id="ov"><div id="ot"></div><div id="os"></div><div id="op"></div><div style="display:flex;flex-direction:column;gap:10px;margin-top:16px;width:min(300px,90vw);align-items:stretch"><button class="bo" id="bc" style="display:none">🎁 Prendre la récompense</button><button class="bo" id="br" style="display:none">🔄 Recommencer</button><button class="bo" id="bb" style="display:none">❌ Abandonner</button></div></div>
+function updateLivesHUD() {
+  livesEl.textContent = '\u2764'.repeat(lives) + '\u2661'.repeat(Math.max(0, 3 - lives));
+}
 
-<script>(function(){var W=window.innerWidth,H=window.innerHeight;window.GPS0_NIVEAU_CFG={
-  niveau:1,total_poussieres:10,vitesse:3.2,monde_w:4,
-  nom_niveau:'Facile',
-  lune_start:'Saute les trous et collecte les étoiles dorées !',
-  plateformes:[
-    // Sol avec petits trous faciles (spacing: ~65-90px)
-    {x:0,           y:H-60,w:Math.round(W*.55),h:60,sol:true},
-    {x:Math.round(W*.55+65), y:H-60,w:Math.round(W*.50),h:60,sol:true},
-    {x:Math.round(W*1.10+70),y:H-60,w:Math.round(W*.52),h:60,sol:true},
-    {x:Math.round(W*1.67+75),y:H-60,w:Math.round(W*.50),h:60,sol:true},
-    {x:Math.round(W*2.22+80),y:H-60,w:Math.round(W*.52),h:60,sol:true},
-    {x:Math.round(W*2.79+85),y:H-60,w:Math.round(W*.55),h:60,sol:true},
-    {x:Math.round(W*3.39+90),y:H-60,w:Math.round(W*.61),h:60,sol:true},
-    // Plateformes hautes accessibles (index 7-19)
-    {x:Math.round(W*.12), y:H-155,w:110,h:18},
-    {x:Math.round(W*.40), y:H-185,w:110,h:18},
-    {x:Math.round(W*.70), y:H-170,w:115,h:18},
-    {x:Math.round(W*.98), y:H-195,w:110,h:18},
-    {x:Math.round(W*1.25),y:H-175,w:115,h:18},
-    {x:Math.round(W*1.50),y:H-200,w:110,h:18},
-    {x:Math.round(W*1.78),y:H-180,w:115,h:18},
-    {x:Math.round(W*2.08),y:H-190,w:110,h:18},
-    {x:Math.round(W*2.35),y:H-175,w:115,h:18},
-    {x:Math.round(W*2.65),y:H-205,w:110,h:18},
-    {x:Math.round(W*2.92),y:H-185,w:115,h:18},
-    {x:Math.round(W*3.22),y:H-170,w:110,h:18},
-    {x:Math.round(W*3.52),y:H-195,w:115,h:18}
-  ],
-  slimes:[],
-  poussieres:[
-    {pi:7},{pi:8},{pi:9},{pi:10},{pi:11},{pi:13},{pi:15},{pi:16},{pi:18},{pi:19}
-  ],
-  pics:[
-    {x:Math.round(W*.78),y:H-78,h:18},
-    {x:Math.round(W*1.45),y:H-78,h:18},
-    {x:Math.round(W*2.08),y:H-78,h:18},
-    {x:Math.round(W*2.65),y:H-78,h:18}
-  ]
-};})();</script>
-<script src="../js/moteur-minijeu.js"></script></body></html
+function updateTimer() {
+  const m = Math.floor(timerSec / 60), s = timerSec % 60;
+  timerEl.textContent = m + ':' + String(s).padStart(2,'0');
+}
+
+function addDust(n) {
+  dust += n;
+  scoreEl.textContent = dust + ' \u2728';
+}
+
+function loseLife() {
+  if (!running) return;
+  lives--;
+  updateLivesHUD();
+  if (lives <= 0) endGame(false);
+}
+
+function endGame(success) {
+  if (gameover) return;
+  gameover = true;
+  running = false;
+  clearInterval(timerInterval);
+  const finalDust = success ? dust + DUST_REWARD : Math.floor(dust * 0.5);
+  setTimeout(() => {
+    window.parent.postMessage({
+      source: 'gps0_minijeu',
+      success: success,
+      niveau: NIVEAU,
+      poussieres: finalDust
+    }, '*');
+  }, 800);
+}
+
+function startTimer() {
+  updateTimer();
+  timerInterval = setInterval(() => {
+    if (!running) return;
+    timerSec--;
+    updateTimer();
+    if (timerSec <= 0) endGame(false);
+  }, 1000);
+}
+
+// Load selfie
+const selfieCanvas = document.getElementById('selfie-cv');
+const selfieCtx = selfieCanvas.getContext('2d');
+(function loadSelfie() {
+  const data = localStorage.getItem('gps0_avatar_selfie_base64');
+  if (!data) return;
+  const img = new Image();
+  img.onload = () => {
+    selfieCtx.save();
+    selfieCtx.beginPath();
+    selfieCtx.arc(24, 24, 24, 0, Math.PI * 2);
+    selfieCtx.clip();
+    selfieCtx.drawImage(img, 0, 0, 48, 48);
+    selfieCtx.restore();
+  };
+  img.src = data;
+})();
+
+// Tuto overlay auto-dismiss after 5s
+let tutoDismissed = false;
+btnStart.addEventListener('click', startGame);
+setTimeout(() => { if (!tutoDismissed) startGame(); }, 5000);
+
+function startGame() {
+  if (tutoDismissed) return;
+  tutoDismissed = true;
+  overlay.style.display = 'none';
+  running = true;
+  startTimer();
+  initGame();
+}
+
+// === GAME LOGIC ===
+
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+let W, H;
+function resize() {
+  W = cv.width = cv.offsetWidth;
+  H = cv.height = cv.offsetHeight;
+}
+window.addEventListener('resize', () => { resize(); if(running) drawAll(); });
+
+// Slingshot physics
+const GRAV = 0.45;
+const SLING_X_RATIO = 0.2;
+const SLING_Y_RATIO = 0.65;
+
+let sling, ball, targets, particles, shots, maxShots;
+let dragging = false, dragX = 0, dragY = 0;
+let launched = false, ballVx = 0, ballVy = 0;
+const BALL_R = 18;
+const SLING_MAX = 80;
+
+function initGame() {
+  resize();
+  shots = 0;
+  maxShots = 7;
+  ball = null;
+  targets = [];
+  particles = [];
+  spawnTargets();
+  resetBall();
+  loop();
+}
+
+function spawnTargets() {
+  targets = [];
+  const cols = 4;
+  for (let i = 0; i < cols; i++) {
+    const x = W * 0.55 + i * (W * 0.1);
+    const ht = 2 + Math.floor(Math.random() * 3);
+    for (let j = 0; j < ht; j++) {
+      targets.push({ x, y: H * 0.75 - j * 36, r: 16, alive: true, dust: 5 + Math.floor(Math.random() * 10) });
+    }
+  }
+}
+
+function resetBall() {
+  sling = { x: W * SLING_X_RATIO, y: H * SLING_Y_RATIO };
+  ball = { x: sling.x, y: sling.y - BALL_R, vx: 0, vy: 0 };
+  launched = false;
+  dragging = false;
+}
+
+function loop() {
+  if (!running) return;
+  update();
+  drawAll();
+  requestAnimationFrame(loop);
+}
+
+function update() {
+  if (!launched) return;
+  ball.x += ball.vx;
+  ball.y += ball.vy;
+  ball.vy += GRAV;
+
+  // Collide with targets
+  for (const t of targets) {
+    if (!t.alive) continue;
+    const dx = ball.x - t.x, dy = ball.y - t.y;
+    if (Math.sqrt(dx*dx + dy*dy) < BALL_R + t.r) {
+      t.alive = false;
+      addDust(t.dust);
+      for (let i = 0; i < 8; i++) particles.push({ x: t.x, y: t.y, vx: (Math.random()-0.5)*5, vy: (Math.random()-0.5)*5, life: 40, color: '#FFD700' });
+    }
+  }
+
+  // Update particles
+  particles = particles.filter(p => { p.x += p.vx; p.y += p.vy; p.vy += 0.1; p.life--; return p.life > 0; });
+
+  // Out of bounds
+  if (ball.y > H + 50 || ball.x > W + 50 || ball.x < -50) {
+    shots++;
+    if (shots >= maxShots) {
+      const alive = targets.filter(t => t.alive).length;
+      endGame(alive === 0);
+    } else {
+      resetBall();
+    }
+  }
+
+  // All targets destroyed
+  if (targets.every(t => !t.alive)) endGame(true);
+}
+
+function drawAll() {
+  ctx.clearRect(0, 0, W, H);
+  // Ground
+  ctx.fillStyle = '#1a1a3a';
+  ctx.fillRect(0, H * 0.8, W, H * 0.2);
+  ctx.fillStyle = '#2a2a5a';
+  ctx.fillRect(0, H * 0.78, W, 8);
+
+  // Slingshot
+  ctx.strokeStyle = '#8B6914';
+  ctx.lineWidth = 6;
+  ctx.beginPath(); ctx.moveTo(sling.x - 15, H * 0.8); ctx.lineTo(sling.x - 8, sling.y - 5); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(sling.x + 15, H * 0.8); ctx.lineTo(sling.x + 8, sling.y - 5); ctx.stroke();
+
+  // Rubber band
+  if (!launched) {
+    const bx = ball.x, by = ball.y;
+    ctx.strokeStyle = 'rgba(180,120,60,.8)'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(sling.x - 8, sling.y - 5); ctx.lineTo(bx, by); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(sling.x + 8, sling.y - 5); ctx.lineTo(bx, by); ctx.stroke();
+  }
+
+  // Ball (selfie or emoji)
+  if (selfieCanvas.width > 0 && selfieCtx.getImageData(0,0,1,1).data[3] > 0) {
+    ctx.save();
+    ctx.beginPath(); ctx.arc(ball.x, ball.y, BALL_R, 0, Math.PI*2); ctx.clip();
+    ctx.drawImage(selfieCanvas, ball.x - BALL_R, ball.y - BALL_R, BALL_R*2, BALL_R*2);
+    ctx.restore();
+  } else {
+    ctx.font = `${BALL_R*2}px serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('👨‍🚀', ball.x, ball.y);
+  }
+
+  // Targets
+  for (const t of targets) {
+    if (!t.alive) continue;
+    ctx.fillStyle = '#4FC3F7';
+    ctx.beginPath(); ctx.arc(t.x, t.y, t.r, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = '#0097d6'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = '#fff'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('✨', t.x, t.y);
+  }
+
+  // Particles
+  for (const p of particles) {
+    ctx.globalAlpha = p.life / 40;
+    ctx.fillStyle = p.color;
+    ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI*2); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+
+  // Shots left
+  ctx.fillStyle = 'rgba(255,255,255,.6)'; ctx.font = '14px sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+  ctx.fillText(`Tirs: ${maxShots - shots}`, 10, 10);
+}
+
+// Touch/mouse
+function getPos(e) {
+  const r = cv.getBoundingClientRect();
+  const src = e.touches ? e.touches[0] : e;
+  return { x: src.clientX - r.left, y: src.clientY - r.top };
+}
+function onDown(e) {
+  if (!running || launched) return;
+  e.preventDefault();
+  const p = getPos(e);
+  const dx = p.x - ball.x, dy = p.y - ball.y;
+  if (Math.sqrt(dx*dx+dy*dy) < BALL_R + 20) dragging = true;
+}
+function onMove(e) {
+  if (!dragging || !running) return;
+  e.preventDefault();
+  const p = getPos(e);
+  const dx = p.x - sling.x, dy = p.y - sling.y;
+  const dist = Math.sqrt(dx*dx+dy*dy);
+  const clamped = Math.min(dist, SLING_MAX);
+  const ang = Math.atan2(dy, dx);
+  ball.x = sling.x + Math.cos(ang) * clamped;
+  ball.y = sling.y + Math.sin(ang) * clamped;
+}
+function onUp(e) {
+  if (!dragging || !running) return;
+  e.preventDefault();
+  dragging = false;
+  const power = 0.22;
+  ball.vx = -(ball.x - sling.x) * power;
+  ball.vy = -(ball.y - sling.y) * power;
+  launched = true;
+  shots++;
+}
+cv.addEventListener('touchstart', onDown, { passive: false });
+cv.addEventListener('touchmove', onMove, { passive: false });
+cv.addEventListener('touchend', onUp, { passive: false });
+cv.addEventListener('mousedown', onDown);
+window.addEventListener('mousemove', onMove);
+window.addEventListener('mouseup', onUp);
+
+</script>
+</body>
+</html>

@@ -1,197 +1,280 @@
-﻿<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover"><title>GPS0 - Lune de Cendre</title><style>
-*{margin:0;padding:0;box-sizing:border-box;user-select:none;-webkit-user-select:none;touch-action:none}
-body{background:#1a0800;overflow:hidden;width:100vw;height:100vh;font-family:system-ui,sans-serif}
-canvas{position:fixed;inset:0;width:100%;height:100%}
-#hud{position:fixed;top:0;left:0;right:0;height:50px;background:rgba(26,8,0,.92);display:flex;align-items:center;justify-content:space-between;padding:0 14px;z-index:10;border-bottom:1px solid rgba(255,120,0,.25)}
-#hud>*{color:#FF8C00;font-weight:bold;font-size:.92rem}
-#btn-q{background:none;border:1px solid rgba(255,120,0,.3);border-radius:8px;color:rgba(255,140,0,.6);padding:4px 10px;font-size:.76rem;cursor:pointer;font-weight:normal}
-#grav-bar-wrap{position:fixed;bottom:0;left:0;right:0;height:6px;background:rgba(0,0,0,.4)}
-#grav-bar{height:100%;background:linear-gradient(90deg,#FF3300,#FF8C00);transition:width .1s}
-#overlay,#results{position:fixed;inset:0;background:rgba(26,8,0,.93);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:20;padding:24px;text-align:center}
-#results{display:none;z-index:30}
-h2{color:#FF8C00;font-size:1.35rem}p{color:rgba(255,220,180,.85);font-size:.88rem;max-width:280px;line-height:1.5}
-.ti{display:flex;align-items:center;gap:8px;font-size:.82rem;color:rgba(255,180,100,.65)}
-.btn-go{background:linear-gradient(135deg,#FF8C00,#cc4400);border:none;border-radius:14px;color:#fff;font-weight:bold;font-size:1rem;padding:13px 30px;cursor:pointer;margin-top:6px}
-</style></head><body>
-<canvas id="c"></canvas>
-<div id="hud"><span id="htimer">3:00</span><span>🔥 Lune de Cendre</span><button id="btn-q">Quitter</button></div>
-<div id="grav-bar-wrap"><div id="grav-bar" style="width:100%"></div></div>
-<div id="overlay">
-  <h2>🔥 Lune de Cendre</h2>
-  <p>La lave brûle tout en bas ! Inverse la gravité pour survivre !</p>
-  <div class="ti">👆 <span>TAP = inverser la gravité (max 5 secondes)</span></div>
-  <div class="ti">🪨 <span>Évite la lave et le plafond</span></div>
-  <div class="ti">⭐ <span>Plateforme secrète quelque part...</span></div>
-  <button class="btn-go" id="btn-start">Commencer !</button>
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
+<title>GPS0 — Lune de Cendre</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0A0A1A;color:#fff;font-family:system-ui,sans-serif;overflow:hidden;height:100dvh;display:flex;flex-direction:column;touch-action:none;user-select:none}
+#hud{display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(0,0,0,.5);flex-shrink:0;z-index:10}
+#lives{font-size:1.3rem;letter-spacing:2px}
+#timer{flex:1;text-align:center;font-size:1rem;font-weight:bold;color:#4FC3F7}
+#score-hud{font-size:.9rem;color:#FFD700}
+#game-container{flex:1;position:relative;overflow:hidden}
+canvas{display:block;width:100%;height:100%}
+#overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(10,10,26,.88);z-index:20;gap:14px;text-align:center;padding:24px}
+#overlay h2{font-size:1.8rem;color:var(--accent,#C8A2C8)}
+#overlay p{font-size:.9rem;color:rgba(255,255,255,.8);max-width:280px}
+#overlay .btn{padding:12px 32px;border:none;border-radius:14px;font-size:1rem;font-weight:bold;cursor:pointer;background:linear-gradient(135deg,#C8A2C8,#8860a8);color:#fff}
+#selfie-anchor{position:absolute;z-index:5;pointer-events:none}
+
+:root{--accent:#C8A2C8;--gold:#FFD700;--blue:#4FC3F7}
+</style>
+</head>
+<body>
+<div id="hud">
+  <span id="lives">&#10084;&#10084;&#10084;</span>
+  <span id="timer">3:00</span>
+  <span id="score-hud">0 &#10024;</span>
 </div>
-<div id="results"></div>
+<div id="game-container">
+  <canvas id="cv"></canvas>
+  
+  <div id="overlay">
+    <div style="font-size:3rem">🌒</div>
+    <h2>Lune de Cendre</h2>
+    <p>Tap pour voler ! Évite les colonnes de lave.</p>
+    <button class="btn" id="btn-start">C&#8217;est parti !</button>
+  </div>
+  <canvas id="selfie-cv" width="48" height="48" style="display:none" aria-hidden="true"></canvas>
+</div>
 <script>
-'use strict';
-const C=document.getElementById('c'),X=C.getContext('2d');
-let W=window.innerWidth,H=window.innerHeight;C.width=W;C.height=H;
-const sd=localStorage.getItem('gps0_avatar_selfie_base64');
-const selfieImg=new Image();if(sd)selfieImg.src=sd;
-const TOTAL=180,GRAV_MAX=5;
-let started=false,done=false,poussieres=0,raf=null;
-let elapsed=0,startTs=0;
-let lives=3,touchedLava=false,secretPlatFound=false;
-// Physics
-const G=0.45,VX=3.2;
-let px=80,py=0,vy=0,gravDir=1,gravT=0,gravFlipped=false;
-let camX=0;
-// Platforms (world coords, progressing to right)
-function genPlatforms(){
-  const plats=[];
-  let x=300;
-  while(x<8000){
-    const thick=18+Math.random()*12,len=80+Math.random()*120;
-    const ypos=H*0.28+Math.random()*H*0.44;
-    plats.push({x,y:ypos,w:len,h:thick});
-    x+=len+90+Math.random()*80;
-  }
-  // Secret platform near x=1200
-  plats.push({x:1200,y:H*0.15,w:60,h:14,secret:true});
-  return plats;
-}
-let platforms=genPlatforms();
-let onGround=false;
-const GROUND_Y=H-50,CEIL_Y=50;
+// === COMMON ENGINE ===
+const NIVEAU = 2;
+const DUST_REWARD = (2 === 9) ? 50 : (5 + 2 * 5);
+let lives = 3, dust = 0, running = false, gameover = false;
+let timerSec = 180, timerInterval = null;
+const livesEl = document.getElementById('lives');
+const timerEl = document.getElementById('timer');
+const scoreEl = document.getElementById('score-hud');
+const overlay = document.getElementById('overlay');
+const btnStart = document.getElementById('btn-start');
 
-function resetPlayer(){
-  px=80;py=GROUND_Y-40;vy=0;gravDir=1;gravFlipped=false;gravT=0;camX=0;onGround=false;
+function updateLivesHUD() {
+  livesEl.textContent = '\u2764'.repeat(lives) + '\u2661'.repeat(Math.max(0, 3 - lives));
 }
 
-function draw(){
-  X.clearRect(0,0,W,H);
-  const ox=camX;
-  // Sky
-  const sg=X.createLinearGradient(0,0,0,H);
-  sg.addColorStop(0,'#1a0800');sg.addColorStop(0.7,'#2a0a00');sg.addColorStop(1,'#cc2200');
-  X.fillStyle=sg;X.fillRect(0,0,W,H);
-  // Lava floor
-  const now=Date.now()/600;
-  const lg=X.createLinearGradient(0,GROUND_Y,0,H);
-  lg.addColorStop(0,'#FF3300');lg.addColorStop(1,'#FF6600');
-  X.fillStyle=lg;X.fillRect(0,GROUND_Y,W,H-GROUND_Y);
-  for(let i=0;i<12;i++){
-    const bx=(i*90-ox*0.3+now*30)%(W+90)-45;
-    X.fillStyle='rgba(255,200,0,0.4)';
-    X.beginPath();X.ellipse(bx,GROUND_Y-4,18+Math.sin(now+i)*6,5,0,0,Math.PI*2);X.fill();
+function updateTimer() {
+  const m = Math.floor(timerSec / 60), s = timerSec % 60;
+  timerEl.textContent = m + ':' + String(s).padStart(2,'0');
+}
+
+function addDust(n) {
+  dust += n;
+  scoreEl.textContent = dust + ' \u2728';
+}
+
+function loseLife() {
+  if (!running) return;
+  lives--;
+  updateLivesHUD();
+  if (lives <= 0) endGame(false);
+}
+
+function endGame(success) {
+  if (gameover) return;
+  gameover = true;
+  running = false;
+  clearInterval(timerInterval);
+  const finalDust = success ? dust + DUST_REWARD : Math.floor(dust * 0.5);
+  setTimeout(() => {
+    window.parent.postMessage({
+      source: 'gps0_minijeu',
+      success: success,
+      niveau: NIVEAU,
+      poussieres: finalDust
+    }, '*');
+  }, 800);
+}
+
+function startTimer() {
+  updateTimer();
+  timerInterval = setInterval(() => {
+    if (!running) return;
+    timerSec--;
+    updateTimer();
+    if (timerSec <= 0) endGame(false);
+  }, 1000);
+}
+
+// Load selfie
+const selfieCanvas = document.getElementById('selfie-cv');
+const selfieCtx = selfieCanvas.getContext('2d');
+(function loadSelfie() {
+  const data = localStorage.getItem('gps0_avatar_selfie_base64');
+  if (!data) return;
+  const img = new Image();
+  img.onload = () => {
+    selfieCtx.save();
+    selfieCtx.beginPath();
+    selfieCtx.arc(24, 24, 24, 0, Math.PI * 2);
+    selfieCtx.clip();
+    selfieCtx.drawImage(img, 0, 0, 48, 48);
+    selfieCtx.restore();
+  };
+  img.src = data;
+})();
+
+// Tuto overlay auto-dismiss after 5s
+let tutoDismissed = false;
+btnStart.addEventListener('click', startGame);
+setTimeout(() => { if (!tutoDismissed) startGame(); }, 5000);
+
+function startGame() {
+  if (tutoDismissed) return;
+  tutoDismissed = true;
+  overlay.style.display = 'none';
+  running = true;
+  startTimer();
+  initGame();
+}
+
+// === GAME LOGIC ===
+
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+let W, H;
+function resize() { W = cv.width = cv.offsetWidth; H = cv.height = cv.offsetHeight; }
+window.addEventListener('resize', () => { resize(); });
+
+const GRAV = 0.5, JUMP = -9, PIPE_W = 60, GAP = H * 0.38 || 160, PIPE_SPEED_INIT = 3;
+let playerY, playerVy, pipes, dustItems, frameCount, score, pipeSpeed, lastPipe;
+
+function initGame() {
+  resize();
+  playerY = H * 0.4;
+  playerVy = 0;
+  pipes = [];
+  dustItems = [];
+  frameCount = 0;
+  score = 0;
+  pipeSpeed = PIPE_SPEED_INIT;
+  lastPipe = 0;
+  loop();
+}
+
+function spawnPipe() {
+  const gapY = H * 0.2 + Math.random() * (H * 0.4);
+  const gap = H * 0.36;
+  pipes.push({ x: W + PIPE_W, topH: gapY, botY: gapY + gap, passed: false });
+  if (Math.random() < 0.6) {
+    dustItems.push({ x: W + PIPE_W + PIPE_W / 2, y: gapY + gap / 2, alive: true });
   }
-  // Platforms
-  platforms.forEach(pl=>{
-    if(pl.x-ox>W+60||pl.x-ox<-pl.w-60)return;
-    if(pl.secret){
-      X.fillStyle=secretPlatFound?'rgba(255,220,100,.6)':'rgba(200,162,200,.06)';
-    }else{
-      X.fillStyle='#4a2010';
+}
+
+const PLAYER_R = 20;
+function loop() {
+  if (!running) return;
+  frameCount++;
+  update();
+  drawAll();
+  requestAnimationFrame(loop);
+}
+
+function update() {
+  playerVy += GRAV;
+  playerY += playerVy;
+  // Increase speed over time
+  pipeSpeed = PIPE_SPEED_INIT + Math.floor(frameCount / 400) * 0.5;
+
+  // Spawn pipes
+  if (frameCount - lastPipe > 90) {
+    spawnPipe();
+    lastPipe = frameCount;
+  }
+
+  // Move pipes
+  for (const p of pipes) {
+    p.x -= pipeSpeed;
+    if (!p.passed && p.x + PIPE_W < W * 0.2) { p.passed = true; score++; }
+  }
+  pipes = pipes.filter(p => p.x > -PIPE_W - 10);
+
+  // Move dust
+  for (const d of dustItems) { d.x -= pipeSpeed; }
+  dustItems = dustItems.filter(d => d.x > -30);
+
+  // Collect dust
+  for (const d of dustItems) {
+    if (d.alive && Math.abs(d.x - W * 0.2) < PLAYER_R + 12 && Math.abs(d.y - playerY) < PLAYER_R + 12) {
+      d.alive = false;
+      addDust(8);
     }
-    X.fillRect(pl.x-ox,pl.y,pl.w,pl.h);
-    if(!pl.secret){X.fillStyle='rgba(255,80,0,.3)';X.fillRect(pl.x-ox,pl.y,pl.w,4);}
-  });
-  // Meteors
-  const mt=Math.floor(elapsed*0.5);
-  for(let i=0;i<3;i++){
-    const mx=((i*333+mt*80)%(W+200))-100;
-    const myt=((i*173+mt*60)%(H*0.6))+H*0.1;
-    X.fillStyle='rgba(255,140,0,.35)';X.beginPath();X.arc(mx,myt,10+i*4,0,Math.PI*2);X.fill();
   }
-  // Cosmonaute
-  const cpx=120,cpy=py;
-  X.fillStyle='#888';X.beginPath();X.ellipse(cpx,cpy+16,13,10,0,0,Math.PI*2);X.fill();
-  X.fillStyle='rgba(200,162,200,.3)';X.beginPath();X.arc(cpx,cpy,16,0,Math.PI*2);X.fill();
-  if(sd&&selfieImg.complete){X.save();X.beginPath();X.arc(cpx,cpy,14,0,Math.PI*2);X.clip();X.drawImage(selfieImg,cpx-14,cpy-14,28,28);X.restore();}
-  else{X.font='18px serif';X.textAlign='center';X.textBaseline='middle';X.fillText('🧑‍🚀',cpx,cpy);}
-  // Gravity indicator
-  X.fillStyle='rgba(255,200,100,.7)';X.font='20px serif';X.textAlign='center';X.textBaseline='middle';
-  X.fillText(gravDir<0?'⬆':'⬇',W-40,H/2);
-  // Gravity timer bar
-  if(gravFlipped){
-    const pct=1-gravT/GRAV_MAX;
-    document.getElementById('grav-bar').style.width=(pct*100)+'%';
-  }else{
-    document.getElementById('grav-bar').style.width='100%';
-  }
-  // Lives
-  X.font='18px serif';X.textAlign='left';
-  for(let i=0;i<lives;i++)X.fillText('❤️',10+i*28,H*0.5);
-}
 
-let lastTs=0;
-function tick(ts){
-  if(!started||done)return;
-  if(!startTs)startTs=ts;
-  const dt=Math.min((ts-lastTs)/1000,0.05);lastTs=ts;
-  elapsed=(ts-startTs)/1000;
-  const rem=Math.max(0,TOTAL-elapsed);
-  document.getElementById('htimer').textContent=mm(rem);
-  if(rem<=0){done=true;_end(true);return;}
-  // Physics
-  if(gravFlipped){
-    gravT+=dt;
-    if(gravT>=GRAV_MAX){gravDir=1;gravFlipped=false;gravT=0;}
-  }
-  vy+=G*gravDir;
-  py+=vy;
-  px+=VX;
-  camX=Math.max(0,px-80);
-  // Platform collisions
-  onGround=false;
-  platforms.forEach(pl=>{
-    const cpx=120,cpRadius=14;
-    const worldCpx=cpx+camX;
-    if(worldCpx+cpRadius>pl.x&&worldCpx-cpRadius<pl.x+pl.w){
-      if(gravDir===1&&py+22>pl.y&&py+22<pl.y+pl.h+vy+1&&vy>=0){
-        py=pl.y-22;vy=0;onGround=true;if(pl.secret){secretPlatFound=true;}
-      }else if(gravDir===-1&&py-16<pl.y+pl.h&&py-16>pl.y-pl.h*.5&&vy<=0){
-        py=pl.y+pl.h+16;vy=0;
+  // Collide ceiling/floor
+  if (playerY - PLAYER_R < 0 || playerY + PLAYER_R > H) { loseLife(); if (lives > 0) { playerY = H * 0.4; playerVy = 0; } return; }
+
+  // Collide pipes
+  const px = W * 0.2;
+  for (const p of pipes) {
+    if (px + PLAYER_R > p.x && px - PLAYER_R < p.x + PIPE_W) {
+      if (playerY - PLAYER_R < p.topH || playerY + PLAYER_R > p.botY) {
+        loseLife();
+        if (lives > 0) { playerY = H * 0.4; playerVy = 0; }
+        return;
       }
     }
-  });
-  if(gravDir===1&&py+22>=GROUND_Y){
-    py=GROUND_Y-22;vy=0;onGround=true;
-    if(!touchedLava){touchedLava=true;}
-    lives=Math.max(0,lives-0.02);
-    if(lives<=0){done=true;_end(true);}
   }
-  if(gravDir===-1&&py-16<=CEIL_Y){
-    py=CEIL_Y+16;vy=0;lives=Math.max(0,lives-0.02);
-    if(lives<=0){done=true;_end(true);}
-  }
-  if(py-16<=CEIL_Y&&gravDir===1){py=CEIL_Y+16;vy=0;}
-  draw();
-  raf=requestAnimationFrame(tick);
 }
 
-function mm(s){return String(Math.floor(s/60)).padStart(2,'0')+':'+String(Math.floor(s%60)).padStart(2,'0');}
+function drawAll() {
+  // BG
+  ctx.fillStyle = '#0d1b2a';
+  ctx.fillRect(0, 0, W, H);
 
-function _end(ok){
-  done=true;cancelAnimationFrame(raf);
-  const noLava=!touchedLava,r=document.getElementById('results');
-  r.style.display='flex';
-  if(ok||elapsed>0){
-    if(noLava&&secretPlatFound)poussieres=50;
-    else if(noLava)poussieres=25;
-    else poussieres=5;
-    r.innerHTML=`<h2 style="color:#FF8C00">🔥 Survécu !</h2><p>${noLava?'✨ Sans toucher la lave !':''} ${secretPlatFound?'🌟 Plateforme secrète !':''}</p><p style="color:#FF8C00;font-size:1.2rem">+${poussieres} ✨ poussières</p>`;
+  // Stars
+  ctx.fillStyle = 'rgba(255,255,255,.4)';
+  for (let i = 0; i < 30; i++) {
+    const sx = (i * 67 + frameCount * 0.3) % W;
+    const sy = (i * 43) % H;
+    ctx.fillRect(sx, sy, 2, 2);
   }
-  setTimeout(()=>window.parent.postMessage({source:'gps0_minijeu',success:true,niveau:2,poussieres},'*'),2200);
+
+  // Pipes (as lava columns)
+  for (const p of pipes) {
+    const grad1 = ctx.createLinearGradient(p.x, 0, p.x + PIPE_W, 0);
+    grad1.addColorStop(0, '#ff4444'); grad1.addColorStop(1, '#882222');
+    ctx.fillStyle = grad1;
+    ctx.fillRect(p.x, 0, PIPE_W, p.topH);
+    ctx.fillRect(p.x, p.botY, PIPE_W, H - p.botY);
+    // caps
+    ctx.fillStyle = '#ff6666';
+    ctx.fillRect(p.x - 5, p.topH - 18, PIPE_W + 10, 18);
+    ctx.fillRect(p.x - 5, p.botY, PIPE_W + 10, 18);
+  }
+
+  // Dust items
+  for (const d of dustItems) {
+    if (!d.alive) continue;
+    ctx.font = '20px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('✨', d.x, d.y);
+  }
+
+  // Player
+  if (selfieCanvas.width > 0 && selfieCtx.getImageData(0,0,1,1).data[3] > 0) {
+    ctx.save();
+    ctx.translate(W * 0.2, playerY);
+    ctx.rotate(Math.min(Math.max(playerVy * 0.05, -0.5), 0.8));
+    ctx.beginPath(); ctx.arc(0, 0, PLAYER_R, 0, Math.PI*2); ctx.clip();
+    ctx.drawImage(selfieCanvas, -PLAYER_R, -PLAYER_R, PLAYER_R*2, PLAYER_R*2);
+    ctx.restore();
+  } else {
+    ctx.save();
+    ctx.translate(W * 0.2, playerY);
+    ctx.rotate(Math.min(Math.max(playerVy * 0.05, -0.5), 0.8));
+    ctx.font = `${PLAYER_R * 2.2}px serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('🚀', 0, 0);
+    ctx.restore();
+  }
 }
 
-C.addEventListener('touchstart',e=>{
-  e.preventDefault();
-  if(!started)return;
-  if(!gravFlipped){gravDir*=-1;gravFlipped=true;gravT=0;vy=0;}
-  else if(gravT>1){gravDir*=-1;gravFlipped=true;gravT=0;vy=0;}
-},{passive:false});
+// Tap to jump
+function doJump(e) { if (!running) return; e.preventDefault(); playerVy = JUMP; }
+cv.addEventListener('touchstart', doJump, { passive: false });
+cv.addEventListener('mousedown', doJump);
 
-document.getElementById('btn-start').addEventListener('click',()=>{
-  document.getElementById('overlay').style.display='none';
-  resetPlayer();started=true;lastTs=performance.now();raf=requestAnimationFrame(tick);
-});
-document.getElementById('btn-q').addEventListener('click',()=>{
-  done=true;cancelAnimationFrame(raf);
-  window.parent.postMessage({source:'gps0_minijeu',success:false,niveau:2,poussieres:0},'*');
-});
-draw();
-</script></body></html>
+</script>
+</body>
+</html>

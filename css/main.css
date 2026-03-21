@@ -214,6 +214,40 @@ button, input { touch-action: manipulation; }
 @keyframes cf-walk{0%{transform:translateX(0);opacity:0}5%{opacity:.5}90%{opacity:.5}100%{transform:translateX(-140vw);opacity:0}}
 @keyframes cf-comet{0%{transform:translate(-8vw,0) rotate(-18deg);opacity:0}6%{opacity:.7}88%{opacity:.7}100%{transform:translate(120vw,38vh) rotate(-18deg);opacity:0}}
 
+/* ── LUNAR CLOSE BUTTON ── */
+dialog{position:relative}
+.btn-lunar-close{position:absolute;top:8px;right:8px;width:44px;height:44px;display:flex;align-items:center;justify-content:center;background:none;border:none;cursor:pointer;z-index:20;padding:0;border-radius:50%;transition:background .2s;flex-shrink:0}
+.btn-lunar-close:hover{background:rgba(192,192,192,.12)}
+.btn-lunar-close svg{width:28px;height:28px;transition:filter .2s}
+.btn-lunar-close:hover svg{filter:drop-shadow(0 0 6px rgba(192,192,192,.8))}
+/* ── LUNE BULLE CLOSE ── */
+.lune-bulle{position:relative}
+.lune-close{position:absolute;top:-4px;right:-4px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.4);border:1px solid rgba(200,162,200,.3);border-radius:50%;cursor:pointer;padding:0;z-index:5;flex-shrink:0}
+.lune-close svg{width:14px;height:14px}
+/* ── ASTEROID GLOW BY DISTANCE ── */
+.asteroide-wrapper[data-zone] .asteroide-svg{transition:animation-name .5s}
+.asteroide-wrapper[data-zone="rouge"] .asteroide-svg{animation-name:ast-glow-rouge;animation-duration:1.5s}
+.asteroide-wrapper[data-zone="orange"] .asteroide-svg{animation-name:ast-glow-orange;animation-duration:1.2s}
+.asteroide-wrapper[data-zone="vert"] .asteroide-svg{animation-name:ast-glow-vert;animation-duration:.9s}
+.asteroide-wrapper[data-zone="bleu"] .asteroide-svg{animation-name:ast-glow-bleu;animation-duration:.5s}
+@keyframes ast-glow-rouge{0%,100%{filter:drop-shadow(0 0 12px rgba(255,68,68,.6))}50%{filter:drop-shadow(0 0 28px rgba(255,68,68,1)) drop-shadow(0 0 50px rgba(255,68,68,.4))}}
+@keyframes ast-glow-orange{0%,100%{filter:drop-shadow(0 0 12px rgba(255,165,0,.6))}50%{filter:drop-shadow(0 0 28px rgba(255,165,0,1)) drop-shadow(0 0 50px rgba(255,165,0,.4))}}
+@keyframes ast-glow-vert{0%,100%{filter:drop-shadow(0 0 12px rgba(68,255,68,.6))}50%{filter:drop-shadow(0 0 28px rgba(68,255,68,1)) drop-shadow(0 0 50px rgba(68,255,68,.4))}}
+@keyframes ast-glow-bleu{0%,100%{filter:drop-shadow(0 0 14px rgba(68,136,255,.7))}50%{filter:drop-shadow(0 0 32px rgba(68,136,255,1)) drop-shadow(0 0 60px rgba(68,136,255,.5))}}
+/* ── BOUTON PROCHAIN POINT ── */
+#btn-prochain-point{position:fixed;top:120px;left:50%;transform:translateX(-50%);background:rgba(10,10,26,.9);border:1px solid rgba(200,162,200,.4);color:rgba(200,162,200,.9);font-weight:bold;font-size:.92rem;padding:10px 22px;border-radius:20px;cursor:pointer;z-index:150;white-space:nowrap;transition:background .2s}
+#btn-prochain-point:hover{background:rgba(200,162,200,.15)}
+/* ── OVERLAY RÉSULTATS ── */
+#overlay-resultats{position:fixed;inset:0;z-index:200;background:rgba(10,10,26,.95);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:28px;text-align:center}
+.res-icon{font-size:3rem;filter:drop-shadow(0 0 16px rgba(200,162,200,.7))}
+.res-titre{font-size:1.3rem;color:var(--accent);font-weight:bold}
+.res-poussieres{font-size:1.8rem;color:#FFD700;font-weight:bold}
+.res-actions{display:flex;flex-direction:column;gap:10px;width:100%;max-width:280px;margin-top:8px}
+.res-btn{padding:13px 20px;border:none;border-radius:14px;font-weight:bold;font-size:.95rem;cursor:pointer;transition:opacity .2s}
+.res-btn:active{opacity:.75}
+.res-btn-rejouer{background:rgba(200,162,200,.2);border:1px solid var(--accent);color:var(--accent)}
+.res-btn-recompense{background:linear-gradient(135deg,var(--gold),#cc9900);color:#0A0A1A}
+.res-btn-suivant{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.8)}
 /* ── BOUTIQUE ── */
 .fragment-carte{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:14px;padding:12px 16px;cursor:pointer;transition:background .2s}
 .fragment-carte:hover{background:rgba(200,162,200,.15)}
@@ -221,7 +255,6 @@ button, input { touch-action: manipulation; }
 .fragment-icone{font-size:1.6rem;flex-shrink:0;display:flex;align-items:center;justify-content:center}
 .fragment-svg{font-size:1rem;line-height:0}
 .fragment-infos{flex:1;text-align:left}
-.fragment-rarete{font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;opacity:.85;display:block;margin-bottom:1px}
 .fragment-nom{font-weight:bold;font-size:.92rem}
 .fragment-desc{font-size:.76rem;color:rgba(255,255,255,.6);margin-top:2px}
 .fragment-prix{font-size:.88rem;color:#FFD700;font-weight:bold;white-space:nowrap}
