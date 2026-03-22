@@ -1,9 +1,18 @@
 # 🌙 GPS0 — Game Design Document v3.0
 
-**Version :** 3.40.0 - Bug 22 : Refonte N5 + N7 + Fix N9
+**Version :** 3.41.0 - Bug 23 : Fix Fusée Boussole + Debug N5 & N7
 **Date :** 22/03/2026
 **Auteur :** Toufik49
 **Statut :** Opérationnel — Jeux 1-9 en cours de reconstruction
+
+---
+
+## Changements v3.41.0 (Bug 23 — Fix Fusée Boussole + Debug N5 & N7)
+
+- **Fusée boussole +75%** : SVG width/height 88→154px, wrapper CSS 70→122px, centrage parfait sur l'astéroïde (top:39px, left:39px dans le conteneur 200×200)
+- **N5 "1, 2, 3 Soleil !" fix écran noir** : `gameReset()` n'était jamais appelé au boot — ajout de `gameReset()` dans `gameStart()` (identique au pattern N9 fonctionnel)
+- **N7 "Mots Croisés Cosmiques" fix écran noir** : `gameStart()` était vide — ajout de `gameReset()` pour initialiser la grille, le DOM et le clavier
+- Service Worker gps0-v56 → gps0-v57 / APP_VERSION 3.41.0
 
 ---
 

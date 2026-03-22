@@ -68,6 +68,7 @@ function gameStart() {
   cv = document.getElementById('cv');
   ctx = cv.getContext('2d');
   GPS0_resizeCanvas(cv); _fixSize();
+  gameReset();
   cv.addEventListener('pointerdown', _onTap);
   cv.addEventListener('touchstart', function(e){ e.preventDefault(); }, { passive: false });
   lastT = performance.now();
