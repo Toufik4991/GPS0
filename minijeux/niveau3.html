@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="fr">
 <head>
 <meta charset="utf-8">
@@ -6,11 +6,10 @@
 <title>GPS0 N3</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;overflow:hidden;background:#0A0A1A;font-family:system-ui,sans-serif;color:#fff;touch-action:none;user-select:none}
-#bg{position:fixed;inset:0;z-index:0;background:radial-gradient(ellipse at 30% 40%,rgba(30,120,20,.18) 0%,transparent 60%),linear-gradient(160deg,#040c04 0%,#0a1408 100%);}
+html,body{height:100%;overflow:hidden;background:#050a08;font-family:system-ui,sans-serif;color:#fff;touch-action:none;user-select:none}
 #hud{position:relative;z-index:20;display:flex;align-items:center;gap:10px;padding:6px 52px 6px 10px;background:rgba(0,0,0,.65);backdrop-filter:blur(6px);flex-shrink:0}
 #lives{font-size:1.1rem;letter-spacing:2px;min-width:54px}
-#timer{flex:1;text-align:center;font-size:.95rem;font-weight:bold;color:#4FC3F7}
+#timer{flex:1;text-align:center;font-size:.95rem;font-weight:bold;color:#7CFC00}
 #score-hud{font-size:.9rem;color:#FFD700;font-weight:bold;min-width:52px;text-align:right}
 #game-container{position:relative;z-index:1;flex:1;overflow:hidden;display:flex;flex-direction:column}
 canvas{display:block;width:100%;height:100%}
@@ -18,10 +17,9 @@ body{display:flex;flex-direction:column;height:100dvh}
 </style>
 </head>
 <body>
-<div id="bg"></div>
 <div id="hud">
   <span id="lives">❤❤❤</span>
-  <span id="timer">2:30</span>
+  <span id="timer">3:00</span>
   <span id="score-hud">0 ✨</span>
 </div>
 <div id="game-container">
@@ -30,97 +28,336 @@ body{display:flex;flex-direction:column;height:100dvh}
 <script src="shared.js"></script>
 <script>
 window.NIVEAU = 3;
+window.GPS0_TIMER_SEC = 180;
+window.TUTO_TEXT = "Lune de Lierre — Penche ou glisse pour bouger · Rebonds sur les plateformes · 3 vies<br><small>Champignons 🍄 = super rebond · Graines ✦ = +1 poussiÃ¨re (max 5)</small>";
 
-window.TUTO_TEXT = "Penche ton téléphone ou glisse gauche/droite pour te déplacer.<br>Le cosmonaute rebondit sur les plateformes.<br>Monte le plus haut possible !";
+const JUMP_V = -13.5, MUSH_V = -27, GRAV = 0.43;
+const DUST_MAX = 5;
 
-const JUMP_V=-13.5;
-let cosmo,platforms,dustItems,particles,worldY,rafId;
-let tiltX=0,touchDx=0,lastTx=null;
+let cosmo, platforms, seeds, particles, spores;
+let worldY, tiltX, touchDx, lastTx, dustCount, seedSpawned, bgT, rafId;
 
-window.addEventListener('deviceorientation',e=>{if(!GPS0_running())return;tiltX=Math.max(-1,Math.min(1,(e.gamma||0)/30));},{passive:true});
-
-function gameReset(){
+function gameReset() {
   cancelAnimationFrame(rafId);
-  cosmo={x:0,y:0,vx:0,vy:0,r:22};
-  platforms=[]; dustItems=[]; particles=[]; worldY=0; tiltX=0; touchDx=0;
+  cosmo = { x: 0, y: 0, vx: 0, vy: 0, r: 22 };
+  platforms = []; seeds = []; particles = []; spores = [];
+  worldY = 0; tiltX = 0; touchDx = 0; lastTx = null;
+  dustCount = 0; seedSpawned = 0; bgT = 0;
 }
-window.gameReset=gameReset;
+window.gameReset = gameReset;
 
-function gameStart(){
-  const cv=document.getElementById('cv');
+function gameStart() {
+  const cv = document.getElementById('cv');
   GPS0_resizeCanvas(cv);
   gameReset();
-  const W=cv.width,H=cv.height;
-  cosmo.x=W/2; cosmo.y=H*.68;
-  // Plateformes initiales
-  platforms.push({x:W/2-50,y:H*.74,w:100,h:14,type:'normal',broken:false,bounce:false});
-  for(let i=1;i<28;i++) _mkPlat(-(i*78));
-  worldY=0;
-  // Swipe
-  cv.addEventListener('touchstart',e=>{lastTx=e.touches[0].clientX;},{passive:true});
-  cv.addEventListener('touchmove',e=>{if(!GPS0_running()||!lastTx)return;touchDx=(e.touches[0].clientX-lastTx)/40;lastTx=e.touches[0].clientX;},{passive:true});
-  cv.addEventListener('touchend',()=>{touchDx=0;lastTx=null;});
-  const ctx=cv.getContext('2d');
-  const loop=()=>{
-    rafId=requestAnimationFrame(loop);
-    if(!GPS0_running())return;
-    const W=cv.width,H=cv.height;
-    cosmo.vx+=(tiltX+touchDx)*.7; cosmo.vx*=.82;
-    cosmo.vy+=.43; cosmo.x+=cosmo.vx; cosmo.y+=cosmo.vy;
-    if(cosmo.x<-cosmo.r)cosmo.x=W+cosmo.r;
-    if(cosmo.x>W+cosmo.r)cosmo.x=-cosmo.r;
+  const W = cv.width, H = cv.height;
+  cosmo.x = W / 2; cosmo.y = H * .68;
+
+  platforms.push({ x: W / 2 - 50, y: H * .74, w: 100, h: 16, type: 'normal', broken: false, breakT: 0 });
+  for (let i = 1; i < 30; i++) _mkPlat(-(i * 78));
+
+  // Spores écran (espace écran, pas monde)
+  for (let i = 0; i < 24; i++) spores.push({
+    x: Math.random() * W, y: Math.random() * H,
+    vx: (Math.random() - .5) * .28, vy: -.12 - Math.random() * .25,
+    r: .8 + Math.random() * 2.2, a: .07 + Math.random() * .20, phase: Math.random() * Math.PI * 2
+  });
+
+  window.addEventListener('deviceorientation', e => {
+    if (!GPS0_running()) return;
+    tiltX = Math.max(-1, Math.min(1, (e.gamma || 0) / 30));
+  }, { passive: true });
+  cv.addEventListener('touchstart', e => { lastTx = e.touches[0].clientX; }, { passive: true });
+  cv.addEventListener('touchmove', e => {
+    if (!GPS0_running() || !lastTx) return;
+    touchDx = (e.touches[0].clientX - lastTx) / 38;
+    lastTx = e.touches[0].clientX;
+  }, { passive: true });
+  cv.addEventListener('touchend', () => { touchDx = 0; lastTx = null; });
+
+  const ctx = cv.getContext('2d');
+  const loop = () => {
+    rafId = requestAnimationFrame(loop);
+    if (!GPS0_running()) return;
+    const W = cv.width, H = cv.height;
+    bgT++;
+
+    // Physique cosmo
+    cosmo.vx += (tiltX + touchDx) * .7; cosmo.vx *= .82;
+    cosmo.vy += GRAV; cosmo.x += cosmo.vx; cosmo.y += cosmo.vy;
+    if (cosmo.x < -cosmo.r) cosmo.x = W + cosmo.r;
+    if (cosmo.x > W + cosmo.r) cosmo.x = -cosmo.r;
+
     // Caméra
-    if(cosmo.y<H*.42+worldY){
-      const diff=(H*.42+worldY)-cosmo.y; worldY-=diff; cosmo.y+=diff;
-      const topP=platforms.reduce((m,p)=>Math.min(m,p.y),9999);
-      while(topP+worldY>-H*.5)_mkPlat(topP-78);
-      platforms=platforms.filter(p=>p.y+worldY<H+50);
+    if (cosmo.y < H * .42 + worldY) {
+      const diff = (H * .42 + worldY) - cosmo.y;
+      worldY -= diff; cosmo.y += diff;
+      let topP = 9999;
+      platforms.forEach(p => { if (p.y < topP) topP = p.y; });
+      while (topP + worldY > -H * .5) _mkPlat(topP - 78);
+      platforms = platforms.filter(p => p.y - worldY < H + 100);
+      seeds = seeds.filter(s => s.y - worldY < H + 50);
     }
+
     // Mort bas
-    if(cosmo.y-worldY>H+60){loseLife();if(GPS0_lives()>0){cosmo.y=H*.6-worldY;cosmo.vy=-9;}return;}
-    // Collisions plateformes
-    if(cosmo.vy>0){
-      platforms.forEach(p=>{
-        const py=p.y-worldY;
-        if(!p.broken&&cosmo.x>p.x&&cosmo.x<p.x+p.w&&cosmo.y+cosmo.r>py&&cosmo.y+cosmo.r<py+p.h+16){
-          if(p.type==='toxic'){loseLife();return;}
-          if(p.type==='break'){p.broken=true;}
-          cosmo.vy=p.type==='spring'?JUMP_V*1.55:JUMP_V;
-          for(let i=0;i<5;i++)particles.push({x:cosmo.x,y:py,vx:(Math.random()-.5)*4,vy:-2,life:18,col:p.type==='spring'?'#00ff88':'#a0c840'});
+    if (cosmo.y - worldY > H + 90) {
+      loseLife();
+      if (GPS0_lives() > 0) { cosmo.y = H * .55 - worldY; cosmo.vy = -9; }
+      return;
+    }
+
+    // Collisions
+    if (cosmo.vy > 0) {
+      platforms.forEach(p => {
+        if (p.broken) return;
+        const py = p.y - worldY;
+        const hitH = p.type === 'mushroom' ? p.h * 1.5 : p.h;
+        if (cosmo.x > p.x && cosmo.x < p.x + p.w && cosmo.y + cosmo.r > py && cosmo.y + cosmo.r < py + hitH + 16) {
+          if (p.type === 'toxic') { loseLife(); return; }
+          if (p.type === 'break') { p.breakT = 1; setTimeout(() => { p.broken = true; }, 220); }
+          const jv = p.type === 'mushroom' ? MUSH_V : JUMP_V;
+          cosmo.vy = jv;
+          navigator.vibrate && navigator.vibrate(p.type === 'mushroom' ? [12, 6, 25] : 14);
+          const col = p.type === 'mushroom' ? '#88ffcc' : '#a0c840';
+          for (let i = 0; i < 6; i++) particles.push({ x: cosmo.x, y: py, vx: (Math.random() - .5) * 5, vy: -1.5 - Math.random() * 2, life: 20, col });
         }
       });
     }
-    // Dust aléatoires
-    if(Math.random()<.001&&dustItems.filter(d=>!d.col).length<4)
-      dustItems.push({x:20+Math.random()*(cv.width-40),y:worldY-cv.height*.3-Math.random()*cv.height*2,col:false});
-    dustItems.forEach(d=>{if(d.col)return;const dy=d.y-worldY;if(Math.sqrt((cosmo.x-d.x)**2+(cosmo.y-dy-worldY+d.y)**2)<cosmo.r+13){d.col=true;addDust(4);for(let i=0;i<5;i++)particles.push({x:d.x,y:dy,vx:(Math.random()-.5)*4,vy:-2.5,life:20,col:'#FFD700'});}});
-    ctx.clearRect(0,0,W,H);
-    // BG jungle spatiale
-    ctx.fillStyle='rgba(20,50,20,.15)';
-    for(let i=0;i<5;i++){const vx=(i*W/5+worldY*.08)%W;ctx.beginPath();ctx.moveTo(vx,0);ctx.bezierCurveTo(vx+25,H/3,vx-20,H*2/3,vx,H);ctx.strokeStyle='rgba(40,120,40,.2)';ctx.lineWidth=2;ctx.stroke();}
-    // Plateformes
-    platforms.forEach(p=>{
-      if(p.broken)return;
-      const py=p.y-worldY;
-      const cs={normal:'#4a9a3a',spring:'#3af070',break:'#c8c040',toxic:'#e05050'};
-      ctx.fillStyle=cs[p.type]||'#4a9a3a';
-      ctx.beginPath();ctx.ellipse(p.x+p.w/2,py+p.h/2,p.w/2,p.h/2,0,0,Math.PI*2);ctx.fill();
-      ctx.strokeStyle='rgba(255,255,255,.25)';ctx.lineWidth=1.5;ctx.stroke();
-      if(p.type==='spring'){ctx.fillStyle='rgba(0,255,136,.5)';ctx.font='14px system-ui';ctx.textAlign='center';ctx.fillText('🌿',p.x+p.w/2,py+p.h/2+5);}
+
+    // Graines
+    seeds = seeds.filter(s => {
+      if (s.col) return false;
+      const dy = s.y - worldY;
+      if (Math.hypot(cosmo.x - s.x, cosmo.y - dy) < cosmo.r + 14) {
+        s.col = true;
+        if (dustCount < DUST_MAX) { dustCount++; addDust(1); }
+        for (let i = 0; i < 8; i++) particles.push({ x: s.x, y: dy, vx: (Math.random() - .5) * 5, vy: -2 - Math.random() * 2, life: 22, col: '#aaff44' });
+        navigator.vibrate && navigator.vibrate([10, 5, 20]);
+        return false;
+      }
+      return dy > -40 && dy < H + 40;
     });
-    dustItems.forEach(d=>{if(d.col)return;const dy=d.y-worldY;if(dy<-20||dy>H+20)return;ctx.fillStyle='#FFD700';ctx.font='17px system-ui';ctx.textAlign='center';ctx.fillText('✨',d.x,dy+6);});
-    particles=particles.filter(p=>p.life>0);
-    particles.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.1;p.life--;ctx.fillStyle=p.col;ctx.globalAlpha=p.life/20;ctx.beginPath();ctx.arc(p.x,p.y,3,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;});
-    drawCosmonaut(ctx,cosmo.x,cosmo.y,cosmo.r,0);
+
+    // Spores (espace écran)
+    spores.forEach(s => {
+      s.x += s.vx + Math.sin(bgT * .018 + s.phase) * .15;
+      s.y += s.vy;
+      if (s.y < -6) s.y = H + 6;
+      if (s.x < -4) s.x = W + 4;
+      if (s.x > W + 4) s.x = -4;
+    });
+
+    // Particules
+    particles = particles.filter(p => p.life > 0);
+    particles.forEach(p => { p.x += p.vx; p.y += p.vy; p.vy += .1; p.life--; });
+
+    ctx.clearRect(0, 0, W, H);
+    _drawBg(ctx, W, H);
+    _drawPlatforms(ctx, W, H);
+    _drawSeeds(ctx, H);
+    _drawSpores(ctx, W, H);
+    particles.forEach(p => {
+      ctx.globalAlpha = p.life / 22; ctx.fillStyle = p.col;
+      ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, Math.PI * 2); ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+    const tilt = Math.max(-.6, Math.min(.6, cosmo.vx * .08));
+    drawCosmonaut(ctx, cosmo.x, cosmo.y, cosmo.r, tilt, 'fly');
+    _drawDustCount(ctx, W, H);
   };
   loop();
 }
-function _mkPlat(y){
-  const types=['normal','normal','normal','normal','spring','break','toxic'];
-  const t=types[Math.floor(Math.random()*types.length)];
-  platforms.push({x:20+Math.random()*(document.getElementById('cv').width-120),y,w:80+Math.random()*30,h:14,type:t,broken:false});
+window.gameStart = gameStart;
+
+function _mkPlat(y) {
+  const W = document.getElementById('cv').width;
+  const types = ['normal', 'normal', 'normal', 'normal', 'mushroom', 'break', 'toxic'];
+  const t = types[Math.floor(Math.random() * types.length)];
+  const w = 70 + Math.random() * 40;
+  platforms.push({ x: 20 + Math.random() * (W - w - 40), y, w, h: 14, type: t, broken: false, breakT: 0 });
+  if ((t === 'normal' || t === 'mushroom') && seedSpawned < DUST_MAX && Math.random() < .38) {
+    seedSpawned++;
+    seeds.push({ x: 24 + Math.random() * (W - 48), y: y - 28 - Math.random() * 18, col: false });
+  }
 }
 
+// ─── DESSIN BG ────────────────────────────────────────────────────────────────
+
+function _drawBg(ctx, W, H) {
+  const sky = ctx.createLinearGradient(0, 0, 0, H);
+  sky.addColorStop(0, '#020c05'); sky.addColorStop(.5, '#061208'); sky.addColorStop(1, '#0a1a0e');
+  ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
+  _drawStars(ctx, W, H);
+  _drawTitan(ctx, W, H);
+  _drawParallaxVeg(ctx, W, H, .06, 'rgba(10,60,20,.18)', 1.8);
+  _drawParallaxVeg(ctx, W, H, .18, 'rgba(20,100,35,.28)', 1.4);
+  _drawParallaxVeg(ctx, W, H, .40, 'rgba(35,140,55,.40)', 1.0);
+}
+
+function _drawStars(ctx, W, H) {
+  for (let i = 0; i < 40; i++) {
+    const sx = (i * 137.5 + 23) % W;
+    const sy = (i * 211.3 + 57) % H;
+    const r = i % 3 === 0 ? 1.4 : .7;
+    ctx.globalAlpha = .18 + .28 * Math.abs(Math.sin(bgT * .007 + i));
+    ctx.fillStyle = '#c8ffc8';
+    ctx.beginPath(); ctx.arc(sx, sy, r, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
+function _drawTitan(ctx, W, H) {
+  const tx = W * .74, ty = H * .11 + worldY * .005;
+  if (ty > H + 60) return;
+  const tr = 44;
+  const tg = ctx.createRadialGradient(tx - tr * .28, ty - tr * .28, tr * .08, tx, ty, tr);
+  tg.addColorStop(0, 'rgba(215,145,60,.85)');
+  tg.addColorStop(.55, 'rgba(175,100,28,.65)');
+  tg.addColorStop(.88, 'rgba(120,58,10,.35)');
+  tg.addColorStop(1, 'rgba(80,28,0,0)');
+  ctx.fillStyle = tg;
+  ctx.beginPath(); ctx.arc(tx, ty, tr * 1.3, 0, Math.PI * 2); ctx.fill();
+  const atm = ctx.createRadialGradient(tx, ty, tr * .72, tx, ty, tr * 1.65);
+  atm.addColorStop(0, 'rgba(255,155,35,0)');
+  atm.addColorStop(.55, 'rgba(255,140,18,.07)');
+  atm.addColorStop(1, 'rgba(255,90,0,0)');
+  ctx.fillStyle = atm;
+  ctx.beginPath(); ctx.arc(tx, ty, tr * 1.65, 0, Math.PI * 2); ctx.fill();
+}
+
+function _drawParallaxVeg(ctx, W, H, factor, col, lineW) {
+  const offset = worldY * factor;
+  ctx.strokeStyle = col; ctx.lineWidth = lineW;
+  for (let i = 0; i < 5; i++) {
+    const baseX = (i * W * .22 + ((i % 2) * W * .11));
+    ctx.beginPath();
+    const x0 = baseX % W;
+    ctx.moveTo(x0, H);
+    for (let y = H; y >= -H * .6; y -= 12) {
+      const xOff = Math.sin((y + offset) * .022 + i * 1.6) * (18 + i * 7);
+      ctx.lineTo(x0 + xOff, y);
+    }
+    ctx.stroke();
+    ctx.fillStyle = col;
+    for (let y = H - 28; y >= -H * .6; y -= 54) {
+      const xOff = Math.sin((y + offset) * .022 + i * 1.6) * (18 + i * 7);
+      ctx.beginPath();
+      ctx.ellipse(x0 + xOff + 14, y, 15, 6, .35, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+}
+
+// ─── DESSIN PLATEFORMES ───────────────────────────────────────────────────────
+
+function _drawPlatforms(ctx, W, H) {
+  platforms.forEach(p => {
+    if (p.broken) return;
+    const py = p.y - worldY;
+    if (py > H + 30 || py < -30) return;
+    if (p.type === 'mushroom') _drawMushroom(ctx, p, py);
+    else if (p.type === 'normal') _drawNormal(ctx, p, py);
+    else if (p.type === 'break') _drawBreak(ctx, p, py);
+    else if (p.type === 'toxic') _drawToxic(ctx, p, py);
+  });
+}
+
+function _drawNormal(ctx, p, py) {
+  const g = ctx.createLinearGradient(p.x, py, p.x, py + p.h);
+  g.addColorStop(0, '#5cba42'); g.addColorStop(1, '#38822a');
+  ctx.fillStyle = g;
+  ctx.beginPath(); ctx.roundRect(p.x, py, p.w, p.h, 5); ctx.fill();
+  ctx.strokeStyle = 'rgba(120,255,80,.32)'; ctx.lineWidth = 1.2; ctx.stroke();
+  ctx.strokeStyle = 'rgba(255,255,255,.10)'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(p.x + 10, py + p.h / 2); ctx.lineTo(p.x + p.w - 10, py + p.h / 2); ctx.stroke();
+}
+
+function _drawMushroom(ctx, p, py) {
+  const mx = p.x + p.w / 2, my = py;
+  const rW = p.w * .52, rH = p.h * 1.55;
+  const intensity = .20 + .14 * Math.sin(bgT * .06 + p.x * .01);
+  const halo = ctx.createRadialGradient(mx, my, 4, mx, my, rW + 20);
+  halo.addColorStop(0, `rgba(100,255,175,${intensity.toFixed(2)})`);
+  halo.addColorStop(1, 'rgba(100,255,175,0)');
+  ctx.fillStyle = halo;
+  ctx.beginPath(); ctx.ellipse(mx, my, rW + 20, rH + 12, 0, 0, Math.PI * 2); ctx.fill();
+  const mg = ctx.createRadialGradient(mx - rW * .22, my - rH * .22, 2, mx, my, rW);
+  mg.addColorStop(0, '#aaffdd'); mg.addColorStop(.5, '#44dd99'); mg.addColorStop(1, '#1a9960');
+  ctx.fillStyle = mg;
+  ctx.beginPath(); ctx.ellipse(mx, my, rW, rH, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = 'rgba(200,255,230,.55)'; ctx.lineWidth = 1.5; ctx.stroke();
+  for (let i = 0; i < 3; i++) {
+    const ax = mx + (i - 1) * rW * .42;
+    ctx.fillStyle = 'rgba(255,255,255,.35)';
+    ctx.beginPath(); ctx.ellipse(ax, my - rH * .18, 4, 3, 0, 0, Math.PI * 2); ctx.fill();
+  }
+}
+
+function _drawBreak(ctx, p, py) {
+  const alpha = p.breakT > 0 ? .55 : 1;
+  ctx.globalAlpha = alpha;
+  ctx.fillStyle = '#c8b840';
+  ctx.beginPath(); ctx.roundRect(p.x, py, p.w, p.h, 5); ctx.fill();
+  ctx.strokeStyle = 'rgba(80,60,0,.45)'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(p.x + p.w * .32, py); ctx.lineTo(p.x + p.w * .42, py + p.h); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(p.x + p.w * .64, py); ctx.lineTo(p.x + p.w * .54, py + p.h); ctx.stroke();
+  ctx.globalAlpha = 1;
+}
+
+function _drawToxic(ctx, p, py) {
+  const g = ctx.createLinearGradient(p.x, py, p.x, py + p.h);
+  g.addColorStop(0, '#d040c0'); g.addColorStop(1, '#7a1870');
+  ctx.fillStyle = g;
+  ctx.beginPath(); ctx.roundRect(p.x, py, p.w, p.h, 5); ctx.fill();
+  ctx.fillStyle = 'rgba(255,100,220,.42)';
+  for (let i = 0; i < 3; i++) {
+    const bx = p.x + p.w * (.25 + i * .25) + Math.sin(bgT * .08 + i * 2.1) * 2.5;
+    ctx.beginPath(); ctx.arc(bx, py - 4 + Math.sin(bgT * .06 + i) * 3, 4, 0, Math.PI * 2); ctx.fill();
+  }
+}
+
+// ─── GRAINES ──────────────────────────────────────────────────────────────────
+
+function _drawSeeds(ctx, H) {
+  seeds.forEach(s => {
+    if (s.col) return;
+    const dy = s.y - worldY;
+    if (dy < -28 || dy > H + 28) return;
+    ctx.save(); ctx.translate(s.x, dy); ctx.rotate(bgT * .03);
+    const hg = ctx.createRadialGradient(0, 0, 2, 0, 0, 18);
+    hg.addColorStop(0, 'rgba(160,255,90,.40)'); hg.addColorStop(1, 'rgba(160,255,90,0)');
+    ctx.fillStyle = hg; ctx.beginPath(); ctx.arc(0, 0, 18, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#88ee44';
+    ctx.beginPath(); ctx.moveTo(0, -11); ctx.lineTo(7, 0); ctx.lineTo(0, 11); ctx.lineTo(-7, 0); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = 'rgba(200,255,90,.60)'; ctx.lineWidth = 1.2; ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,.42)';
+    ctx.beginPath(); ctx.moveTo(0, -9); ctx.lineTo(3, -3); ctx.lineTo(0, -1); ctx.closePath(); ctx.fill();
+    ctx.restore();
+  });
+}
+
+// ─── SPORES ───────────────────────────────────────────────────────────────────
+
+function _drawSpores(ctx, W, H) {
+  spores.forEach(s => {
+    if (s.y < -8 || s.y > H + 8) return;
+    ctx.globalAlpha = s.a * (.65 + .35 * Math.sin(bgT * .04 + s.phase));
+    ctx.fillStyle = '#88ffcc';
+    ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2); ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+}
+
+// ─── COMPTEUR BAS DROITE ──────────────────────────────────────────────────────
+
+function _drawDustCount(ctx, W, H) {
+  ctx.fillStyle = 'rgba(0,0,0,.52)';
+  ctx.beginPath(); ctx.roundRect(W - 90, H - 46, 84, 40, 8); ctx.fill();
+  ctx.fillStyle = '#88ee44'; ctx.font = 'bold 13px system-ui'; ctx.textAlign = 'center';
+  ctx.fillText('\u2736 ' + dustCount + '/' + DUST_MAX, W - 48, H - 21);
+  ctx.fillStyle = 'rgba(136,238,68,.55)'; ctx.font = '10px system-ui';
+  ctx.fillText('graines', W - 48, H - 9);
+}
 </script>
 </body>
 </html>
