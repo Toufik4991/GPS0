@@ -1,11 +1,23 @@
 # 🌙 GPS0 — Game Design Document v3.0
 
-**Version :** 3.24.0 - Jeu 7 Lune de Tempête — Jetpack Joyride désert alien
+**Version :** 3.25.0 - Jeu 8 Lune de Cristal — Crossy Road glace chrome
 **Date :** 22/03/2026
 **Auteur :** Toufik49
-**Statut :** Opérationnel — Jeux 1-7 reconstruits et validés
+**Statut :** Opérationnel — Jeux 1-8 reconstruits et validés
 
 ---
+
+## Changements v3.25.0 (Jeu 8 — Lune de Cristal)
+- **niveau8.html** : Crossy Road style, grille 9 colonnes, caméra suit le joueur (scroll vertical)
+- **Contrôles** : Swipe + D-pad 4 directions, déplacement discret case par case
+- **Wagons chrome** : Lignes alternées G/D, vitesse progressive selon distance (1.4→5.0), 2-3 wagons par ligne
+- **Wrap horizontal** : Les wagons sortent à gauche/droite et réapparaissent côté opposé
+- **Collision** : loseLife() + repoussé 1 rang en arrière + invincibilité 80 frames
+- **Idle 10s** : IDLE_LIMIT=600 frames → loseLife() + warning bar + texte compteàrebours
+- **Sécurité** : Rang 0 safe + tous les 7 rangs une rangée safe
+- **Visuel glace chrome** : Fond cosmos bleu nuit, nébuleuse givre, wagons gradient chrome + neon cyan, rails lumineux
+- **Reward** : Chrono standard shared.js (2min30)
+- Service Worker gps0-v41 / APP_VERSION 3.25.0
 
 ## Changements v3.24.0 (Jeu 7 — Lune de Tempête)
 - **niveau7.html** : Jetpack Joyride style, auto-runner horizontal

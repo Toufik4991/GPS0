@@ -1,4 +1,4 @@
-<!doctype html>
+content = r"""<!doctype html>
 <html lang="fr">
 <head>
 <meta charset="utf-8">
@@ -353,4 +353,35 @@ function _buildDpad() {
 }
 </script>
 </body>
-</html>
+</html>"""
+
+with open(r"c:\Users\Jules\Desktop\GPS0\minijeux\niveau8.html", "w", encoding="utf-8") as f:
+    f.write(content)
+
+import os
+size = os.path.getsize(r"c:\Users\Jules\Desktop\GPS0\minijeux\niveau8.html")
+print(f"OK: {size} bytes")
+
+with open(r"c:\Users\Jules\Desktop\GPS0\minijeux\niveau8.html", encoding="utf-8") as f:
+    txt = f.read()
+
+checks = {
+    "gameStart":      "gameStart" in txt,
+    "_genRow":        "_genRow" in txt,
+    "_tryMove":       "_tryMove" in txt,
+    "swipe":          "touchend" in txt,
+    "dpad":           "_buildDpad" in txt,
+    "camOffY":        "camOffY" in txt,
+    "loseLife":       "loseLife()" in txt,
+    "idle_10s":       "IDLE_LIMIT = 600" in txt,
+    "pushback":       "player.row - 1" in txt,
+    "invTimer":       "invTimer = 80" in txt,
+    "ships_wrap":     "[0, COLS, -COLS]" in txt,
+    "drawCosmonaut":  "drawCosmonaut" in txt,
+    "rowTop":         "rowTop(" in txt,
+    "chrome_wagon":   "#bdd8ee" in txt,
+    "rail_glow":      "rgba(55,195,255" in txt,
+    "speed_progress": "_rowSpeed" in txt,
+}
+for k, v in checks.items():
+    print(f"  {'OK' if v else 'MISSING'}: {k}")
