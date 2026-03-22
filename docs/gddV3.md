@@ -1,11 +1,23 @@
 # 🌙 GPS0 — Game Design Document v3.0
 
-**Version :** 3.33.0 - Niveau 6 Cellule Spatiale — Joystick invisible + 45 ennemis
+**Version :** 3.34.0 - Niveau 7 Jetpack Stellaire — Décor givre + endGame(true)
 **Date :** 22/03/2026
 **Auteur :** Toufik49
 **Statut :** Opérationnel — Jeux 1-9 en cours de reconstruction
 
 ---
+
+## Changements v3.34.0 (Niveau 7 — Jetpack Stellaire Givre)
+- **niveau7.html** : PATCH — Jetpack Joyride conservé, décor transformé en givre
+- **GPS0_onTimerExpired** : ajouté → `endGame(true)` après 2:30 · récompense chrono standard shared.js
+- **GPS0_TIMER_SEC** : explicité à 150 (2:30)
+- **Décor glace** : ciel bleu profond (#020c1e→#1a82b0) · lune froide cyan · étoiles bleutées
+- **Sol glacier** : #88ddff→#3aaa (bleu glacier) · formations de glace sinueuses (remplacent dunes)
+- **Plafond** : bleu nuit profond (remplace violet sombre)
+- **Stalactites de glace** : rgba(160,230,255) avec contour + stroke blanc perle
+- **Particules neige** : couleur #aaddff (remplace sable #d4a050)
+- **TUTO** : "Hold = monte · Relâche = tombe · Évite les lasers de glace"
+- Service Worker gps0-v49 → gps0-v50 / APP_VERSION 3.34.0
 
 ## Changements v3.33.0 (Niveau 6 — Cellule Spatiale)
 - **niveau6.html** : PATCH — Agar.io spatial conservé, 3 fixes ciblés

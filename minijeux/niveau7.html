@@ -9,7 +9,7 @@
 html,body{height:100%;overflow:hidden;background:#000;font-family:system-ui,sans-serif;color:#fff;touch-action:none;user-select:none}
 #hud{position:relative;z-index:20;display:flex;align-items:center;gap:10px;padding:6px 52px 6px 10px;background:rgba(0,0,0,.78);backdrop-filter:blur(6px);flex-shrink:0}
 #lives{font-size:1.1rem;letter-spacing:2px;min-width:54px}
-#timer{flex:1;text-align:center;font-size:.95rem;font-weight:bold;color:#ffaa55}
+#timer{flex:1;text-align:center;font-size:.95rem;font-weight:bold;color:#66ccff}
 #score-hud{font-size:.9rem;color:#FFD700;font-weight:bold;min-width:52px;text-align:right}
 #game-container{position:relative;z-index:1;flex:1;overflow:hidden;display:flex;flex-direction:column}
 canvas{display:block;width:100%;height:100%}
@@ -28,7 +28,9 @@ body{display:flex;flex-direction:column;height:100dvh}
 <script src="shared.js"></script>
 <script>
 window.NIVEAU = 7;
-window.TUTO_TEXT = "Niveau 7 \u2014 Maintien = monte \u00b7 Rel\u00e2che = tombe \u00b7 \u00c9vite les lasers \u00b7 \u2726 cristaux bonus";
+window.GPS0_TIMER_SEC = 150;
+window.GPS0_onTimerExpired = function () { endGame(true); };
+window.TUTO_TEXT = "Niveau 7 \u2014 Hold = monte \u00b7 Rel\u00e2che = tombe \u00b7 \u00c9vite les lasers de glace \u00b7 \u2726 cristaux bonus";
 
 const GRAV = 0.38, THRUST = -0.80, MAX_VY = 8.5;
 const FLOOR_GFX = 55, CEIL_GFX = 45;
@@ -178,31 +180,31 @@ function gameStart() {
     fxParticles.forEach(p => { p.x += p.vx; p.y += p.vy; p.vy += .06; p.life--; });
 
     // ========= DESSIN =========
-    // Ciel desert alien
+    // Ciel givre
     const sky = ctx.createLinearGradient(0, 0, 0, floorY);
-    sky.addColorStop(0, '#0d0020');
-    sky.addColorStop(.42, '#6b1560');
-    sky.addColorStop(.85, '#c84818');
-    sky.addColorStop(1, '#e06820');
+    sky.addColorStop(0, '#020c1e');
+    sky.addColorStop(.38, '#0a2a4e');
+    sky.addColorStop(.82, '#0d5888');
+    sky.addColorStop(1, '#1a82b0');
     ctx.fillStyle = sky; ctx.fillRect(0, 0, W, floorY);
 
-    // Planete BG decorative
+    // Lune givre decorative
     const pg = ctx.createRadialGradient(W*.72, H*.2, 4, W*.72, H*.2, 46);
-    pg.addColorStop(0, 'rgba(185,165,80,.52)'); pg.addColorStop(1, 'rgba(120,80,20,0)');
+    pg.addColorStop(0, 'rgba(200,235,255,.62)'); pg.addColorStop(1, 'rgba(80,140,200,0)');
     ctx.fillStyle = pg; ctx.beginPath(); ctx.arc(W*.72, H*.2, 46, 0, Math.PI*2); ctx.fill();
-    ctx.strokeStyle = 'rgba(200,180,100,.18)'; ctx.lineWidth = 1.5;
+    ctx.strokeStyle = 'rgba(160,220,255,.28)'; ctx.lineWidth = 1.5;
     ctx.beginPath(); ctx.arc(W*.72, H*.2, 46, 0, Math.PI*2); ctx.stroke();
 
     // Etoiles
-    ctx.fillStyle = 'rgba(255,225,185,.52)';
+    ctx.fillStyle = 'rgba(200,235,255,.60)';
     for (let i = 0; i < 20; i++) {
       const sx = ((i * 139 + bgScrollA * .04) % W + W) % W;
       const sy = (i * 47 + 18) % (floorY * .48);
       ctx.beginPath(); ctx.arc(sx, sy, .6 + (i%3)*.5, 0, Math.PI*2); ctx.fill();
     }
 
-    // Dune couche fond lente
-    ctx.fillStyle = 'rgba(108,58,12,.58)';
+    // Glacier couche fond lente
+    ctx.fillStyle = 'rgba(80,140,190,.52)';
     ctx.beginPath(); ctx.moveTo(-2, floorY);
     for (let x = 0; x <= W + 52; x += 9) {
       const dy = Math.sin((x + bgScrollA) * .012) * 26 + Math.sin((x + bgScrollA) * .007) * 13;
@@ -210,8 +212,8 @@ function gameStart() {
     }
     ctx.lineTo(W + 2, floorY); ctx.closePath(); ctx.fill();
 
-    // Dune couche avant rapide
-    ctx.fillStyle = 'rgba(168,102,28,.72)';
+    // Glacier couche avant rapide
+    ctx.fillStyle = 'rgba(140,210,240,.62)';
     ctx.beginPath(); ctx.moveTo(-2, floorY);
     for (let x = 0; x <= W + 52; x += 7) {
       const dy = Math.sin((x + bgScrollB) * .019) * 15 + Math.cos((x + bgScrollB) * .011) * 8;
@@ -219,27 +221,29 @@ function gameStart() {
     }
     ctx.lineTo(W + 2, floorY); ctx.closePath(); ctx.fill();
 
-    // Sol alien
+    // Sol glacier
     const floorGrad = ctx.createLinearGradient(0, floorY, 0, H);
-    floorGrad.addColorStop(0, '#b87830'); floorGrad.addColorStop(1, '#6a4010');
+    floorGrad.addColorStop(0, '#88ddff'); floorGrad.addColorStop(1, '#3a8aaa');
     ctx.fillStyle = floorGrad; ctx.fillRect(0, floorY, W, H - floorY);
 
-    // Plafond alien (roche sombre)
+    // Plafond glace
     const ceilGrad = ctx.createLinearGradient(0, 0, 0, ceilY);
-    ceilGrad.addColorStop(0, '#1a0535'); ceilGrad.addColorStop(1, '#4a1065');
+    ceilGrad.addColorStop(0, '#020c1e'); ceilGrad.addColorStop(1, '#0a3a64');
     ctx.fillStyle = ceilGrad; ctx.fillRect(0, 0, W, ceilY);
-    // Stalactites decoratifs
-    ctx.fillStyle = '#280840';
+    // Stalactites de glace
+    ctx.fillStyle = 'rgba(160,230,255,.72)';
     for (let i = 0; i < 7; i++) {
       const stx = ((i * 87 + bgScrollB * .62) % (W + 50) + W + 50) % (W + 50) - 25;
       const sth = 7 + (i % 3) * 5;
       ctx.beginPath(); ctx.moveTo(stx - 6, ceilY); ctx.lineTo(stx, ceilY - sth); ctx.lineTo(stx + 6, ceilY); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = 'rgba(220,245,255,.45)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(stx - 6, ceilY); ctx.lineTo(stx, ceilY - sth); ctx.lineTo(stx + 6, ceilY); ctx.closePath(); ctx.stroke();
     }
 
     // Particules sable
     sand.forEach(s => {
       ctx.globalAlpha = s.alpha;
-      ctx.fillStyle = '#d4a050';
+      ctx.fillStyle = '#aaddff';
       ctx.beginPath(); ctx.arc(s.x, s.y, s.size, 0, Math.PI*2); ctx.fill();
     });
     ctx.globalAlpha = 1;
