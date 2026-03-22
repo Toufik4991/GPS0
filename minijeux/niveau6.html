@@ -28,11 +28,12 @@ body{display:flex;flex-direction:column;height:100dvh}
 <script src="shared.js"></script>
 <script>
 window.NIVEAU = 6;
-window.GPS0_TIMER_SEC = 180;
-window.TUTO_TEXT = "Niveau 6 \u2014 Joystick gauche \u00b7 Mange les plus petites \u00b7 Fuis les plus grosses \u00b7 \u2726 = +1 poussi\u00e8re (max 50)";
+window.GPS0_TIMER_SEC = 150;
+window.GPS0_onTimerExpired = function () { endGame(true); };
+window.TUTO_TEXT = "Niveau 6 \u2014 Glisse le doigt pour bouger \u00b7 Mange les plus petites \u00b7 Fuis les plus grosses \u00b7 \u2726 = +1 poussi\u00e8re"; 
 
 const MAP = 2400, PLAYER_R0 = 22;
-const FOOD_N = 200, ENEMY_N = 15, CRYSTAL_N = 30, CRYSTAL_MAX = 50;
+const FOOD_N = 200, ENEMY_N = 45, CRYSTAL_N = 30, CRYSTAL_MAX = 50;
 
 let player, enemies, foods, crystals, particles, stars;
 let joystick, dustCount, bgT, rafId;
@@ -322,8 +323,7 @@ function gameStart() {
 
     // Mini-map (coin haut-droite)
     _drawMinimap(ctx, W, H);
-    // Joystick
-    _drawJoystick(ctx, W, H);
+    // Joystick invisible (tracking actif, pas de rendu)
     // HUD info
     _drawHUD(ctx, W, H);
   };

@@ -1,11 +1,19 @@
 # 🌙 GPS0 — Game Design Document v3.0
 
-**Version :** 3.32.0 - Niveau 5 Évasion Magnétique — Aimant + survie
+**Version :** 3.33.0 - Niveau 6 Cellule Spatiale — Joystick invisible + 45 ennemis
 **Date :** 22/03/2026
 **Auteur :** Toufik49
 **Statut :** Opérationnel — Jeux 1-9 en cours de reconstruction
 
 ---
+
+## Changements v3.33.0 (Niveau 6 — Cellule Spatiale)
+- **niveau6.html** : PATCH — Agar.io spatial conservé, 3 fixes ciblés
+- **Joystick invisible** : tracking tactile conservé (touchstart/move/end actifs) mais `_drawJoystick` n'est plus appelé — zéro pollution visuelle
+- **Ennemis** : ENEMY_N 15 → 45 (x3) — IA identique (vision 300px, tTimer 40-75)
+- **Timer** : 180s → 150s (2:30) — `GPS0_onTimerExpired → endGame(true)`
+- **TUTO\_TEXT** : mis à jour ("Glisse le doigt" au lieu de "Joystick gauche")
+- Service Worker gps0-v48 → gps0-v49 / APP_VERSION 3.33.0
 
 ## Changements v3.32.0 (Niveau 5 — Évasion Magnétique)
 - **niveau5.html** : FULL REBUILD — Aimant spatial (remplace labyrinthe DFS cassé)
