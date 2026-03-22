@@ -30,11 +30,11 @@ body{display:flex;flex-direction:column;height:100dvh}
 window.NIVEAU = 7;
 window.GPS0_TIMER_SEC = 150;
 window.GPS0_onTimerExpired = function () { endGame(true); };
-window.TUTO_TEXT = "Niveau 7 \u2014 Hold = monte \u00b7 Rel\u00e2che = tombe \u00b7 \u00c9vite les lasers de glace \u00b7 \u2726 cristaux bonus";
+window.TUTO_TEXT = "❄️ Hold = monte · Relâche = tombe · Passe dans les espaces !<br><small>3 vies · Vitesse croissante · Cristaux bonus ✨</small>";
 
 const GRAV = 0.38, THRUST = -0.80, MAX_VY = 8.5;
 const FLOOR_GFX = 55, CEIL_GFX = 45;
-const LASER_W = 12, LASER_DELAY = 70, GAP_RATIO = 0.44;
+const LASER_W = 12, LASER_DELAY = 70, GAP_RATIO = 0.56;
 const CRYSTAL_SPAWN_FRAMES = [1500, 3000, 4800, 6500, 8000];
 const PLAYER_X = 100;
 
@@ -43,21 +43,21 @@ let frame, bgT, invTimer, currentSpeed, laserTimer;
 let bgScrollA, bgScrollB, holding, rafId;
 
 function _getTargetSpeed() {
-  if (frame < 3600) return 3.5;
-  if (frame < 7200) return 5.2;
-  return 7.0;
+  if (frame < 3600) return 2.45;
+  if (frame < 7200) return 3.64;
+  return 4.90;
 }
 function _getLaserInterval() {
-  if (frame < 3600) return 290;
-  if (frame < 7200) return 215;
-  return 162;
+  if (frame < 3600) return 380;
+  if (frame < 7200) return 280;
+  return 210;
 }
 
 function gameReset() {
   cancelAnimationFrame(rafId);
-  player = { y: 0, vy: 0, r: 18 };
+  player = { y: 0, vy: 0, r: 14 };
   lasers = []; crystals = []; sand = []; fxParticles = [];
-  frame = 0; bgT = 0; invTimer = 0; currentSpeed = 3.5;
+  frame = 0; bgT = 0; invTimer = 0; currentSpeed = 2.45;
   laserTimer = 120; bgScrollA = 0; bgScrollB = 0; holding = false;
 }
 window.gameReset = gameReset;

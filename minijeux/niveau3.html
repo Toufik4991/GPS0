@@ -28,7 +28,7 @@ body{display:flex;flex-direction:column;height:100dvh}
 <script src="shared.js"></script>
 <script>
 window.NIVEAU = 3;
-window.TUTO_TEXT = "Niveau 3 \u2014 Rebond automatique \u00b7 Tape \u25c4 \u25ba pour diriger<br><small>3 vies \u00b7 \u00c9vite les ast\u00e9ro\u00efdes \u00b7 Survive 2 minutes</small>";
+window.TUTO_TEXT = "\u2604\ufe0f Rebond automatique \u00b7 Tape \u25c4 \u25ba pour diriger<br><small>3 vies \u00b7 Bulle prot\u00e8ge 5s apr\u00e8s coup \u00b7 Survive 2 minutes</small>";
 window.GPS0_TIMER_SEC = 120;
 
 // \u2500\u2500 CONSTANTES \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
@@ -37,12 +37,12 @@ const BOUNCE_VY  = -14.5;
 const PLAYER_R   = 22;
 const PLAT_H     = 12;
 const MOVE_SPEED = 4.4;
-const AST_INTERVAL = 88;
+const AST_INTERVAL = 528;
 
 // \u2500\u2500 \u00c9TAT \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 let player, platforms, asteroids, parts, stars;
 let cameraY, genTopY, startPlayerY, maxHeight;
-let frame, bgT, rafId, invincible;
+let frame, bgT, rafId, invincible, bubbleTimer;
 let touching, pointers;
 
 function gameReset() {
@@ -59,6 +59,7 @@ function gameReset() {
   frame        = 0;
   bgT          = 0;
   invincible   = 0;
+  bubbleTimer  = 0;
   touching     = { left: false, right: false };
   pointers     = {};
 }
@@ -226,7 +227,8 @@ function gameStart() {
               life: 32, col: '#FF5020'
             });
           }
-          invincible = 90;
+          invincible = 300;
+          bubbleTimer = 300;
           loseLife();
           if (GPS0_running()) _respawn(W, H);
           break;
@@ -257,6 +259,19 @@ function gameStart() {
     // Cosmonaute (clignotant si invincible)
     const pSY  = player.worldY - cameraY;
     const show = invincible === 0 || Math.floor(invincible / 6) % 2 === 0;
+    // Bulle de protection visible
+    if (bubbleTimer > 0 && show) {
+      const bubbleAlpha = Math.min(1, bubbleTimer / 60) * 0.55;
+      const bubbleR = PLAYER_R + 18 + Math.sin(Date.now() * 0.008) * 4;
+      const bg = ctx.createRadialGradient(player.x, pSY, bubbleR * 0.5, player.x, pSY, bubbleR);
+      bg.addColorStop(0, 'rgba(80,180,255,0)');
+      bg.addColorStop(0.7, `rgba(80,180,255,${bubbleAlpha * 0.4})`);
+      bg.addColorStop(1, `rgba(160,230,255,${bubbleAlpha})`);
+      ctx.beginPath(); ctx.arc(player.x, pSY, bubbleR, 0, Math.PI * 2);
+      ctx.fillStyle = bg; ctx.fill();
+      ctx.strokeStyle = `rgba(180,240,255,${bubbleAlpha * 1.4})`;
+      ctx.lineWidth = 2; ctx.stroke();
+    }
     if (show) {
       const tilt = Math.max(-0.9, Math.min(0.9, player.vx * 0.07));
       drawCosmonaut(ctx, player.x, pSY, PLAYER_R, tilt, 'jump');

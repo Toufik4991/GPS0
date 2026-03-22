@@ -1,9 +1,24 @@
 # 🌙 GPS0 — Game Design Document v3.0
 
-**Version :** 3.36.0 - Niveau 9 Boss Final — Lune Maléfique refonte visuelle complète
+**Version :** 3.37.0 - Bug 19 : 10 corrections all levels
 **Date :** 22/03/2026
 **Auteur :** Toufik49
 **Statut :** Opérationnel — Jeux 1-9 en cours de reconstruction
+
+---
+
+## Changements v3.37.0 (Bug 19 — 10 corrections tous niveaux)
+
+- **shared.js `_showTuto()`** : Suppression totale des noms de lune — format "Niveau X" pur + bouton COMPRIS !
+- **moteur-minijeu.js lune()** : Rate limiting 1 apparition/minute + emojis moqueurs 🌚🌝😏
+- **N2** : Mécanique tap unique (1 tap = 1 saut, suppression du hold continu) + TUTO_TEXT mis à jour
+- **N3** : AST_INTERVAL 88→528 (÷6 météorites) + bulle invincibilité 5s visible (300 frames, lueur cyan)
+- **N4** : 15 rounds au lieu de 10 + gains progressifs (rounds 1-5=1✒, 6-10=2✒, 11-15=7✒ max 50✒)
+- **N5** : Correction boucle RAF (requestAnimationFrame en premier) + fallback canvas size
+- **N7** : Vitesses ×0.7 (2.45/3.64/4.90), GAP_RATIO 0.44→0.56, intervalles laser 380/280/210, hitbox r 18→14
+- **N8** : 1 vaisseau/row (÷4), vitesse ×0.75, safe rows toutes les 5 lignes (au lieu de 7)
+- **N9** : SVG boss Gardien Cosmique inline (corps nébuleux violet, 8 tentacules animées, 1 œil cyan central, pupille-fente dynamique), suppression yeux lune canvas
+- Service Worker gps0-v52 → gps0-v53 / APP_VERSION 3.37.0
 
 ---
 

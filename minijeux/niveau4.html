@@ -20,7 +20,7 @@ body{display:flex;flex-direction:column;height:100dvh}
 <div id="hud">
   <span id="lives">&#10084;&#10084;&#10084;</span>
   <span id="timer">5:00</span>
-  <span id="score-hud">Round 1/10</span>
+  <span id="score-hud">Round 1/15</span>
 </div>
 <div id="game-container">
   <canvas id="cv"></canvas>
@@ -28,7 +28,7 @@ body{display:flex;flex-direction:column;height:100dvh}
 <script src="shared.js"></script>
 <script>
 window.NIVEAU = 4;
-window.TUTO_TEXT = "Niveau 4 — Mémorise la séquence · Reproduis dans l'ordre<br><small>3 vies · 1 erreur/round tolérée (⛨ bouclier) · Atteins le Round 10 !</small>";
+window.TUTO_TEXT = "Mémorise la séquence de cristaux · Reproduis dans l'ordre 🔮<br><small>3 vies · 1 erreur/round tolérée (⛨ bouclier) · Atteins le Round 15 !</small>";
 window.GPS0_TIMER_SEC = 300;
 
 // ── COULEURS CRISTAUX (9 uniques) ───────────────────────────────────────────────────────────────────────
@@ -54,7 +54,7 @@ const SEQ_START_LEN = 2;    // longueur séquence au round 1
 // ── ÉTAT ───────────────────────────────────────────────────────────────────────────────────────
 // phase : "showing_lit" | "showing_dark" | "input" |
 //         "flash_ok" | "flash_err" | "round_clear" | "done"
-let round, sequence, inputIdx, shieldUsed;
+let round, sequence, inputIdx, shieldUsed, totalDust;
 let phase, showIdx, showTimer, showMs;
 let flashIdx, flashTimer, flashMs;
 let crystalRects, bgParts;
@@ -62,7 +62,8 @@ let lastTs, rafId, bgT;
 
 function gameReset() {
   cancelAnimationFrame(rafId);
-  round = 1; sequence = []; inputIdx = 0; shieldUsed = false;
+  round = 1; sequence = []; inputIdx = 0; shieldUsed = false; totalDust = 0;
+  window.GPS0_rewardOverride = 0;
   phase = "showing_lit";
   showIdx = 0; showTimer = 0; showMs = SHOW_MS_START;
   flashIdx = -1; flashTimer = 0; flashMs = 0;
@@ -121,7 +122,7 @@ function _replaySequence() {
 
 function _updateHUD() {
   const el = document.getElementById("score-hud");
-  if (el) el.textContent = "Round " + round + "/10";
+  if (el) el.textContent = "Round " + round + "/15";
 }
 
 function _update(dt, W, H) {
@@ -142,7 +143,12 @@ function _update(dt, W, H) {
     if (flashTimer >= flashMs) {
       flashIdx = -1; inputIdx++;
       if (inputIdx >= sequence.length) {
-        if (round >= 10) { phase = "done"; endGame(true); }
+        // Gain progressif : rounds 1-5=1, 6-10=2, 11-15=7 poussières
+        const gain = round <= 5 ? 1 : round <= 10 ? 2 : 7;
+        totalDust += gain;
+        window.GPS0_rewardOverride = totalDust;
+        addDust(gain);
+        if (round >= 15) { phase = "done"; endGame(true); }
         else { phase = "round_clear"; flashTimer = 0; flashMs = 750; }
       } else { phase = "input"; }
     }

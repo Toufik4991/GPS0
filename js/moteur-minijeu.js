@@ -310,7 +310,20 @@ function fin(ok){
   ov.classList.add('v');
 }
 
-function lune(txt){const e=document.getElementById('lune');if(e){e.textContent='\uD83C\uDF19 '+txt;e.classList.add('v');setTimeout(()=>e.classList.remove('v'),15000);}}
+let _luneLastMs = 0;
+const _luneTaunt = ['🌚 T\'as du mal, hein ? 😏','🌝 Encore raté ! 😏','🌚 La lune te regarde... badly 😏','🌝 Presque ! (non) 😏','🌚 C\'est long pour toi 😏'];
+function lune(txt){
+  const now=Date.now();
+  if(now-_luneLastMs<60000)return;
+  _luneLastMs=now;
+  const e=document.getElementById('lune');
+  if(e){
+    const msg=txt||_luneTaunt[Math.floor(Math.random()*_luneTaunt.length)];
+    e.textContent=msg;
+    e.classList.add('v');
+    setTimeout(()=>e.classList.remove('v'),12000);
+  }
+}
 function sfx(n){try{window.parent.GPS0_Audio&&window.parent.GPS0_Audio.playSFX(n);}catch(e){}}
 function demarrerMusiqueNiveau(){try{const a=window.parent.GPS0_Audio;if(a&&a.isEnabled&&a.isEnabled())a.playMusiqueExploration();}catch(e){}}
 

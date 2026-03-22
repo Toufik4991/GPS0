@@ -28,7 +28,7 @@ body{display:flex;flex-direction:column;height:100dvh}
 <script src="shared.js"></script>
 <script>
 window.NIVEAU = 2;
-window.TUTO_TEXT = "Niveau 2 — Maintiens pour monter · Rel\u00e2che pour tomber · \u00c9vite les colonnes<br><small>3 vies · Cristaux \u2726 = +1 poussi\u00e8re · Le passage se r\u00e9tr\u00e9cit !</small>";
+window.TUTO_TEXT = "🚀 Tape pour sauter · Évite les colonnes de lave · Collecte les cristaux ✨<br><small>3 vies · Le passage se rétrécit avec le temps</small>";
 window.GPS0_TIMER_SEC = 150;
 
 // ── CONSTANTES ────────────────────────────────────────────────────────────────
@@ -80,8 +80,7 @@ function gameStart() {
     // Vitesse progressive : 2.4 → 5.8 sur 150s à 60fps
     speed = Math.min(SPEED_MAX, SPEED_START + (frame / (150 * 60)) * (SPEED_MAX - SPEED_START));
 
-    // Physique oiseau (hold = montée, lâcher = gravité)
-    if (holding) bird.vy = Math.max(bird.vy - THRUST, VY_MAX_UP);
+    // Physique oiseau (gravité seule — tap = impulsion unique)
     bird.vy += GRAV; bird.y += bird.vy;
     if (bird.y < bird.r + 2) { bird.y = bird.r + 2; bird.vy = Math.abs(bird.vy) * .25; }
     if (bird.y > H - bird.r - 2) { bird.y = H - bird.r - 2; bird.vy = -Math.abs(bird.vy) * .25; }
@@ -172,10 +171,10 @@ window.gameStart = gameStart;
 function _onDown(e) {
   e && e.preventDefault();
   if (!GPS0_running()) return;
-  holding = true;
+  bird.vy = VY_MAX_UP;
   navigator.vibrate && navigator.vibrate(8);
 }
-function _onUp() { holding = false; }
+function _onUp() {}
 
 function _spawnWall(W, H) {
   // Gap se rétrécit légèrement avec le temps

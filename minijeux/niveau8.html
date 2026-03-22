@@ -30,7 +30,7 @@ body{display:flex;flex-direction:column;height:100dvh}
 window.NIVEAU = 8;
 window.GPS0_TIMER_SEC = 120;
 window.GPS0_onTimerExpired = function () { endGame(true); };
-window.TUTO_TEXT = "Niveau 8 \u2014 Swipe pour avancer \u00b7 \u00c9vite les vaisseaux \u00b7 10s sans bouger = vie perdue";
+window.TUTO_TEXT = "\ud83d\udef8 Monte vers le haut en évitant les vaisseaux aliens !<br><small>3 vies · 10s sans bouger = vie perdue · Arrive au sommet</small>";
 
 const COLS = 9, ROW_H = 66, IDLE_LIMIT = 600, FLOOR_PCT = 0.82;
 
@@ -43,22 +43,22 @@ function rowTop(r, H) {
 }
 
 function _shipWidth(r) {
-  return Math.min(0.76 + r * 0.021, 1.54);
+  return Math.min(0.65 + r * 0.018, 1.20);
 }
 
 function _rowSpeed(r) {
-  return Math.min(1.4 + r * 0.085, 5.0);
+  return Math.min(1.05 + r * 0.064, 3.75);
 }
 
 function _isSafeRow(r) {
-  return r === 0 || r % 7 === 0;
+  return r === 0 || r % 5 === 0;
 }
 
 function _genRow(r) {
   if (_isSafeRow(r)) return { ships: [], safe: true, dir: 0, spd: 0 };
   const dir = (r % 2 === 0) ? 1 : -1;
   const spd = _rowSpeed(r);
-  const n = r < 6 ? 2 : r < 14 ? 2 + (r % 2) : 3;
+  const n = 1;
   const ships = [];
   for (let i = 0; i < n; i++) {
     ships.push({ x: (i * COLS / n) + 0.2 + Math.random() * 0.6 });

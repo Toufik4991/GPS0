@@ -30,7 +30,7 @@ body{display:flex;flex-direction:column;height:100dvh}
 window.NIVEAU = 5;
 window.GPS0_TIMER_SEC = 150;
 window.GPS0_onTimerExpired = function () { endGame(true); };
-window.TUTO_TEXT = "Hold = aimant actif \u00b7 Attire les bleus \u00b7 Fuis les rouges !<br><small>Maintiens 2:30 pour gagner</small>";
+window.TUTO_TEXT = "\ud83e\uddf2 Maintiens = aimant actif · Attire les bleus · Fuis les rouges !<br><small>Maintiens 2:30 pour gagner</small>";
 
 /* ── CONSTANTES ─────────────────────────────────────────────────────────── */
 const COSMO_R    = 26;
@@ -63,6 +63,12 @@ function gameStart() {
   cv  = document.getElementById('cv');
   ctx = cv.getContext('2d');
   GPS0_resizeCanvas(cv);
+  // Fallback si le game-container n'a pas encore de taille résolue
+  if (!cv.width || !cv.height) {
+    const hud = document.getElementById('hud');
+    cv.width  = window.innerWidth;
+    cv.height = window.innerHeight - (hud ? hud.offsetHeight : 44);
+  }
   W = cv.width; H = cv.height; cx = W / 2; cy = H / 2;
   _initBg();
   cv.addEventListener('pointerdown',   _onDown);
@@ -155,11 +161,13 @@ function _burst(x, y, col, n) {
 
 /* ── BOUCLE ─────────────────────────────────────────────────────────────── */
 function _loop(now) {
-  if (!GPS0_running()) return;
   rafId = requestAnimationFrame(_loop);
+  if (!GPS0_running()) return;
   const dt = Math.min((now - lastT) / 16.67, 3);
   lastT = now; frame++;
-  W = cv.width; H = cv.height; cx = W / 2; cy = H / 2;
+  W = cv.width || window.innerWidth;
+  H = cv.height || (window.innerHeight - 44);
+  cx = W / 2; cy = H / 2;
   arcPhase += 0.027 * dt;
   _update(dt);
   _draw();

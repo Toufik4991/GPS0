@@ -253,13 +253,10 @@
       ov.id = 'tuto-overlay';
       ov.style.cssText = 'position:fixed;inset:0;z-index:700;background:rgba(0,0,0,0.92);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;padding:32px;text-align:center';
       const n = window.NIVEAU || 1;
-      const emojis = ['','🌑','🌒','🌓','🌔','🌕','🌖','🌗','🌘','🌑'];
-      const names = ['','Lune de Verre','Lune de Cendre','Lune de Lierre','Lune de Givre',"Lune d'Ombre","Lune de Fer","Lune de Tempête","Lune de Cristal","Lune d'Éclipse"];
       ov.innerHTML = `
-        <div style="font-size:3rem">${emojis[n]}</div>
-        <div style="font-size:1.4rem;font-weight:900;color:#C8A2C8">${names[n]}</div>
-        <div style="font-size:0.95rem;color:rgba(255,255,255,0.85);max-width:300px;line-height:1.6">${window.TUTO_TEXT || ''}</div>
-        <button id="tuto-ok" style="padding:14px 40px;border:none;border-radius:16px;font-size:1rem;font-weight:bold;cursor:pointer;background:linear-gradient(135deg,#C8A2C8,#8860a8);color:#fff;margin-top:8px">Compris !</button>`;
+        <div style="font-size:1.6rem;font-weight:900;color:#C8A2C8;letter-spacing:3px;text-transform:uppercase">Niveau ${n}</div>
+        <div style="font-size:1rem;color:rgba(255,255,255,0.88);max-width:320px;line-height:1.9">${window.TUTO_TEXT || ''}</div>
+        <button id="tuto-ok" style="padding:14px 44px;border:none;border-radius:16px;font-size:1rem;font-weight:900;cursor:pointer;background:linear-gradient(135deg,#C8A2C8,#8860a8);color:#fff;margin-top:8px;letter-spacing:2px">COMPRIS !</button>`;
       document.body.appendChild(ov);
       document.getElementById('tuto-ok').addEventListener('click', () => {
         ov.remove();
