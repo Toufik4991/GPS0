@@ -1,9 +1,25 @@
 # 🌙 GPS0 — Game Design Document v3.0
 
-**Version :** 3.44.0 - Bug 26 : Backgrounds SVG N3-N9
+**Version :** 3.46.0 - Bug 27 : Refonte visuelle N5 + Centrage fusée
 **Date :** 22/03/2026
 **Auteur :** Toufik49
 **Statut :** Opérationnel — Jeux 1-9 en cours de reconstruction
+
+---
+
+## Changements v3.46.0 (Bug 27 — Refonte visuelle N5 + Centrage fusée)
+
+- **N5 "1,2,3 Soleil !" — Refonte visuelle complète :**
+  - Suppression du texte "AVANCE ! 👆" — le joueur se fie aux chiffres et à la Lune
+  - Ajout d'un **visage de la Lune** (croissant + face) en haut à droite qui guide le joueur :
+    - Yeux ouverts + sourire quand c'est safe (phase count)
+    - Yeux fermés + bouche inquiète quand le soleil regarde (phase stop)
+    - Clignement naturel aléatoire
+  - Chiffres "1  2  3" plus gros (+60% taille police)
+  - "SOLEIL !" plus impactant avec double glow et police plus grande
+  - Phase stop : icône soleil pulsante au lieu de texte "STOP"
+  - Tuto mis à jour : mention de la Lune comme guide
+- **Fusée boussole :** centrage exact sur l'astéroïde via `top:50%;left:50%;margin:-52px`
 
 ---
 

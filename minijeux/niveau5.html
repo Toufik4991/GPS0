@@ -30,7 +30,7 @@ body{display:flex;flex-direction:column;height:100dvh}
 window.NIVEAU = 5;
 window.GPS0_TIMER_SEC = 150;
 window.GPS0_onTimerExpired = function () { endGame(false); };
-window.TUTO_TEXT = "☀️ 1, 2, 3... SOLEIL !<br>TAP vite pour avancer quand le soleil a le DOS tourné 🔆<br><small>ARRÊTE de taper quand il se retourne ! 😡 Atteins 100% pour gagner !</small>";
+window.TUTO_TEXT = "☀️ 1, 2, 3... SOLEIL !<br>TAP quand le soleil a le DOS tourné 🔆<br><small>STOP quand il se retourne ! 😡 La Lune te guide... 🌙</small>";
 
 /* ══════════════════════════════════════════════════════════════════════════
    NIVEAU 5 — 1, 2, 3 SOLEIL ! (version cosmique)
@@ -47,11 +47,14 @@ const COUNT_MAX   = 4000;
 const TURN_MS     = 500;
 const STOP_MIN    = 2000;
 const STOP_MAX    = 4000;
+const MOON_R      = 28;
+const MOON_PAD    = 16;
 
 let cv, ctx, W, H;
 let progress, phase, phaseTimer, countStep, countStepTimer;
 let bgT, stars, dustParts, fxParts;
 let sunFlipProg, stopFlash, difficultyMul;
+let moonBlink, moonBlinkTimer;
 let rafId, lastT;
 
 function gameReset() {
@@ -60,6 +63,7 @@ function gameReset() {
   phaseTimer = _rnd(COUNT_MIN, COUNT_MAX);
   countStep = 0; countStepTimer = 0;
   bgT = 0; sunFlipProg = 0; stopFlash = 0; difficultyMul = 1;
+  moonBlink = 0; moonBlinkTimer = 0;
   fxParts = []; _initStars(); _initDust();
 }
 window.gameReset = gameReset;
@@ -170,6 +174,7 @@ function _loop(now) {
   _updateDifficulty();
   _updatePhase(dt);
   _updateSunFlip(dt);
+  _updateMoon(dt);
   _collectDust();
   _updateFx(dt / 16.67);
   _draw();
@@ -201,6 +206,15 @@ function _updateSunFlip(dt) {
   var speed = dt / TURN_MS;
   if (phase === 'turning' || phase === 'stop') sunFlipProg = Math.min(1, sunFlipProg + speed * 2.5);
   else sunFlipProg = Math.max(0, sunFlipProg - speed * 2.5);
+}
+
+/* ── LUNE (clignement) ─────────────────────────────────────────────────── */
+function _updateMoon(dt) {
+  moonBlinkTimer -= dt;
+  if (moonBlinkTimer <= 0) {
+    moonBlink = moonBlink ? 0 : 1;
+    moonBlinkTimer = moonBlink ? 120 : (2000 + Math.random() * 3000);
+  }
 }
 
 /* ── COLLECTE POUSSIÈRES ───────────────────────────────────────────────── */
@@ -306,6 +320,9 @@ function _draw() {
 
   /* Soleil */
   _drawSun();
+
+  /* Lune guide */
+  _drawMoon();
 
   /* Jauge + Labels */
   _drawProgressBar();
@@ -433,6 +450,84 @@ function _drawSun() {
   ctx.restore();
 }
 
+/* ══════════════════════════════════════════════════════════════════════════
+   LUNE — Visage guide (coin haut-droit)
+   Regarde le joueur quand c'est safe, se cache quand le soleil regarde
+   ══════════════════════════════════════════════════════════════════════════ */
+function _drawMoon() {
+  var mx = W - MOON_R - MOON_PAD, my = _sunY();
+  var safe = (phase === 'count' || phase === 'unturning');
+  var danger = (phase === 'stop');
+
+  /* Halo lunaire */
+  var mHalo = ctx.createRadialGradient(mx, my, MOON_R * 0.3, mx, my, MOON_R * 2.2);
+  mHalo.addColorStop(0, safe ? 'rgba(180,200,255,0.18)' : 'rgba(255,120,60,0.10)');
+  mHalo.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = mHalo; ctx.beginPath(); ctx.arc(mx, my, MOON_R * 2.2, 0, Math.PI * 2); ctx.fill();
+
+  /* Corps lunaire (croissant) */
+  ctx.save();
+  ctx.beginPath(); ctx.arc(mx, my, MOON_R, 0, Math.PI * 2); ctx.clip();
+  var mG = ctx.createRadialGradient(mx - MOON_R * 0.3, my - MOON_R * 0.3, 2, mx, my, MOON_R);
+  mG.addColorStop(0, '#f0f0ff'); mG.addColorStop(0.5, '#d8dce8'); mG.addColorStop(1, '#b0b4c8');
+  ctx.fillStyle = mG; ctx.beginPath(); ctx.arc(mx, my, MOON_R, 0, Math.PI * 2); ctx.fill();
+  /* Ombre croissant */
+  ctx.fillStyle = 'rgba(10,5,30,0.65)';
+  ctx.beginPath(); ctx.arc(mx + MOON_R * 0.45, my, MOON_R * 0.85, 0, Math.PI * 2); ctx.fill();
+  /* Cratères */
+  ctx.fillStyle = 'rgba(140,140,165,0.35)';
+  ctx.beginPath(); ctx.arc(mx - MOON_R * 0.25, my - MOON_R * 0.15, MOON_R * 0.12, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(mx - MOON_R * 0.05, my + MOON_R * 0.30, MOON_R * 0.08, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+
+  /* Contour lumineux */
+  ctx.strokeStyle = safe ? 'rgba(200,210,255,0.5)' : 'rgba(255,150,80,0.3)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.arc(mx, my, MOON_R, 0, Math.PI * 2); ctx.stroke();
+
+  /* Visage de la Lune */
+  var eyeY = my - MOON_R * 0.12;
+  var eyeLX = mx - MOON_R * 0.28, eyeRX = mx - MOON_R * 0.02;
+  var eyeOpen = moonBlink ? 0 : 1;
+
+  if (safe) {
+    /* Yeux ouverts — regarde vers le bas (le joueur) */
+    if (eyeOpen) {
+      ctx.fillStyle = '#222';
+      ctx.beginPath(); ctx.arc(eyeLX, eyeY, MOON_R * 0.07, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(eyeRX, eyeY, MOON_R * 0.07, 0, Math.PI * 2); ctx.fill();
+      /* Pupilles vers le bas */
+      ctx.fillStyle = '#fff';
+      ctx.beginPath(); ctx.arc(eyeLX, eyeY - MOON_R * 0.025, MOON_R * 0.025, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(eyeRX, eyeY - MOON_R * 0.025, MOON_R * 0.025, 0, Math.PI * 2); ctx.fill();
+    } else {
+      ctx.strokeStyle = '#333'; ctx.lineWidth = 1.5; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(eyeLX - MOON_R * 0.06, eyeY); ctx.lineTo(eyeLX + MOON_R * 0.06, eyeY); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(eyeRX - MOON_R * 0.06, eyeY); ctx.lineTo(eyeRX + MOON_R * 0.06, eyeY); ctx.stroke();
+    }
+    /* Petit sourire encourageant */
+    ctx.strokeStyle = '#444'; ctx.lineWidth = 1.3; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.arc(mx - MOON_R * 0.15, my + MOON_R * 0.12, MOON_R * 0.14, 0.2, Math.PI - 0.2); ctx.stroke();
+
+  } else if (danger) {
+    /* Yeux fermés serrés — la Lune se cache */
+    ctx.strokeStyle = '#553333'; ctx.lineWidth = 2; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(eyeLX - MOON_R * 0.07, eyeY - MOON_R * 0.03); ctx.lineTo(eyeLX + MOON_R * 0.07, eyeY + MOON_R * 0.03); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(eyeRX - MOON_R * 0.07, eyeY - MOON_R * 0.03); ctx.lineTo(eyeRX + MOON_R * 0.07, eyeY + MOON_R * 0.03); ctx.stroke();
+    /* Bouche inquiète (petit O) */
+    ctx.strokeStyle = '#553333'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(mx - MOON_R * 0.15, my + MOON_R * 0.15, MOON_R * 0.07, 0, Math.PI * 2); ctx.stroke();
+
+  } else {
+    /* Transition — yeux mi-clos */
+    ctx.strokeStyle = '#444'; ctx.lineWidth = 1.5; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(eyeLX - MOON_R * 0.06, eyeY); ctx.lineTo(eyeLX + MOON_R * 0.06, eyeY); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(eyeRX - MOON_R * 0.06, eyeY); ctx.lineTo(eyeRX + MOON_R * 0.06, eyeY); ctx.stroke();
+    ctx.strokeStyle = '#444'; ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.arc(mx - MOON_R * 0.15, my + MOON_R * 0.12, MOON_R * 0.10, 0.3, Math.PI - 0.3); ctx.stroke();
+  }
+}
+
 /* ── JAUGE DE PROGRESSION ──────────────────────────────────────────────── */
 function _drawProgressBar() {
   var barW = W * 0.65, barH = 14;
@@ -457,42 +552,44 @@ function _drawPhaseLabel() {
   ctx.textAlign = 'center';
 
   if (phase === 'count' || phase === 'unturning') {
-    var labels = ['', '1...', '1... 2...', '1... 2... 3...'];
+    var labels = ['', '1', '1  2', '1  2  3'];
     var txt = countStep >= 4 ? '' : (labels[countStep] || '');
     if (txt) {
-      ctx.save(); ctx.globalAlpha = 0.7 + 0.3 * Math.sin(bgT * 0.1);
+      var numSize = Math.floor(W * 0.13);
+      ctx.save();
+      ctx.globalAlpha = 0.8 + 0.2 * Math.sin(bgT * 0.1);
       ctx.fillStyle = '#ffee88';
-      ctx.font = 'bold ' + Math.floor(W * 0.08) + 'px system-ui';
-      ctx.shadowColor = '#ffcc00'; ctx.shadowBlur = 15;
-      ctx.fillText(txt, cx, y); ctx.restore();
+      ctx.font = 'bold ' + numSize + 'px system-ui';
+      ctx.shadowColor = '#ffcc00'; ctx.shadowBlur = 25;
+      ctx.fillText(txt, cx, y);
+      /* Double glow */
+      ctx.shadowBlur = 50; ctx.globalAlpha = 0.3;
+      ctx.fillText(txt, cx, y);
+      ctx.restore();
     }
-    ctx.save(); ctx.globalAlpha = 0.55 + 0.35 * Math.sin(bgT * 0.12);
-    ctx.fillStyle = '#88ff55';
-    ctx.font = 'bold ' + Math.floor(W * 0.065) + 'px system-ui';
-    ctx.fillText('AVANCE ! 👆', cx, _pathBot() + COSMO_R + 26);
-    ctx.restore();
 
   } else if (phase === 'turning') {
+    var soleilSize = Math.floor(W * 0.13);
     ctx.save();
     var pulse = 0.7 + 0.3 * Math.abs(Math.sin(bgT * 0.3));
     ctx.globalAlpha = pulse; ctx.fillStyle = '#ff4400';
-    ctx.font = 'bold ' + Math.floor(W * 0.10) + 'px system-ui';
-    ctx.shadowColor = '#ff0000'; ctx.shadowBlur = 25;
-    ctx.fillText('SOLEIL ! ☀️', cx, y); ctx.restore();
-
-  } else if (phase === 'stop') {
-    ctx.save(); ctx.globalAlpha = 0.75 + 0.25 * Math.abs(Math.sin(bgT * 0.22));
-    ctx.fillStyle = '#ff2200';
-    ctx.font = 'bold ' + Math.floor(W * 0.09) + 'px system-ui';
-    ctx.shadowColor = '#ff0000'; ctx.shadowBlur = 20;
-    ctx.fillText('🛑 STOP !', cx, _pathBot() + COSMO_R + 26);
+    ctx.font = 'bold ' + soleilSize + 'px system-ui';
+    ctx.shadowColor = '#ff0000'; ctx.shadowBlur = 35;
+    ctx.fillText('SOLEIL !', cx, y);
+    /* Glow intense */
+    ctx.shadowBlur = 70; ctx.globalAlpha = pulse * 0.25;
+    ctx.fillText('SOLEIL !', cx, y);
     ctx.restore();
 
-    ctx.save(); ctx.globalAlpha = 0.6 + 0.4 * Math.sin(bgT * 0.18);
-    ctx.fillStyle = '#ff6600';
-    ctx.font = 'bold ' + Math.floor(W * 0.07) + 'px system-ui';
-    ctx.shadowColor = '#ff4400'; ctx.shadowBlur = 12;
-    ctx.fillText('😡', cx, y); ctx.restore();
+  } else if (phase === 'stop') {
+    /* Icône danger pulsante */
+    ctx.save();
+    var dangerPulse = 0.6 + 0.4 * Math.abs(Math.sin(bgT * 0.25));
+    ctx.globalAlpha = dangerPulse; ctx.fillStyle = '#ff6600';
+    ctx.font = 'bold ' + Math.floor(W * 0.12) + 'px system-ui';
+    ctx.shadowColor = '#ff0000'; ctx.shadowBlur = 30;
+    ctx.fillText('☀️', cx, y);
+    ctx.restore();
   }
 }
 </script>
