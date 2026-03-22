@@ -77,7 +77,6 @@
           <button class="menu-item" id="menu-difficulte">⚙️ Difficulté</button>
           <button class="menu-item" id="menu-reset">🔄 Réinitialiser</button>
           <button class="menu-item" id="menu-debug">&#128027; Mode Debug</button>
-          <button class="menu-item" id="menu-guide">&#10067; Guide du cosmonaute</button>
         </nav>
       </div>
     </header>
@@ -230,90 +229,6 @@
     </div>
   </dialog>
 
-  <!-- MODAL TUTO / FICHE INTRO -->
-  <dialog id="modal-tuto" aria-modal="true" aria-labelledby="tuto-titre">
-    <div class="modal-box intro-fiche-box">
-      <div class="intro-header">
-        <span class="intro-logo">GPS0</span>
-        <h2 id="tuto-titre">&#127769; Le guide du cosmonaute</h2>
-      </div>
-
-      <!-- Étapes paginées -->
-      <div class="intro-steps-wrap" id="intro-steps-wrap">
-
-        <div class="intro-step active" data-step="0">
-          <div class="intro-step-icon">&#128640;</div>
-          <h3>Comment jouer</h3>
-          <p>Marche dans <strong>le monde r&#233;el</strong> jusqu&#8217;&#224; sentir l&#8217;ast&#233;ro&#239;de changer de couleur.<br>
-          Quand il vire au <span style="color:#4FC3F7">bleu</span>, tu es arriv&#233;&nbsp;! Appuie sur <strong>&#128640; Jouer</strong> pour lancer la Lune.</p>
-        </div>
-
-        <div class="intro-step" data-step="1">
-          <div class="intro-step-icon">&#127769;</div>
-          <h3>Les 9 Lunes</h3>
-          <ul style="text-align:left;font-size:.82rem;line-height:1.7;list-style:none;padding:0;margin:0">
-            <li>&#127761; <strong>Lune de Verre</strong> &mdash; Lance cosmique (fronde)</li>
-            <li>&#127762; <strong>Lune de Cendre</strong> &mdash; Vol de cosmonaute</li>
-            <li>&#127763; <strong>Lune de Lierre</strong> &mdash; Sauts infinis</li>
-            <li>&#127764; <strong>Lune de Givre</strong> &mdash; Cordes &amp; grappin</li>
-            <li>&#127765; <strong>Lune d&#8217;Ombre</strong> &mdash; Labyrinthe obscur</li>
-            <li>&#127766; <strong>Lune de Fer</strong> &mdash; Absorbe les particules</li>
-            <li>&#127767; <strong>Lune de Temp&#234;te</strong> &mdash; Jetpack &amp; obstacles</li>
-            <li>&#127768; <strong>Lune de Cristal</strong> &mdash; Traverse le vide</li>
-            <li>&#127761; <strong>Lune d&#8217;&#201;clipse</strong> &mdash; Duel r&#233;flexe final</li>
-          </ul>
-        </div>
-
-        <div class="intro-step" data-step="2">
-          <div class="intro-step-icon">&#11088;</div>
-          <h3>Poussi&#232;res d&#8217;&#233;toile</h3>
-          <p>Chaque Lune r&#233;compense en &#10024; <strong>poussi&#232;res d&#8217;&#233;toile</strong>.<br>
-          Rejoue pour en accumuler davantage&nbsp;!<br>
-          D&#233;pense-les &#224; la <strong>Boutique Lunaire</strong> &#127978; pour recharger ton &#233;nergie.</p>
-        </div>
-
-        <div class="intro-step" data-step="3">
-          <div class="intro-step-icon">&#127756;</div>
-          <h3>Les objets</h3>
-          <ul style="text-align:left;font-size:.83rem;line-height:1.8;list-style:none;padding:0;margin:0">
-            <li>&#128153; <strong>&#201;clat</strong> &mdash; Recharge 10% d&#8217;&#233;nergie (5 &#10024;)</li>
-            <li>&#128142; <strong>Fragment</strong> &mdash; Recharge 25% d&#8217;&#233;nergie (15 &#10024;)</li>
-            <li>&#128311; <strong>Gros Fragment</strong> &mdash; Recharge 50% d&#8217;&#233;nergie (35 &#10024;)</li>
-            <li>&#10084;&#65039; <strong>C&#339;ur Lunaire</strong> &mdash; &#201;nergie &#224; 100% (80 &#10024;)</li>
-          </ul>
-        </div>
-
-        <div class="intro-step" data-step="4">
-          <div class="intro-step-icon">&#128161;</div>
-          <h3>Astuces</h3>
-          <ul style="text-align:left;font-size:.83rem;line-height:1.8;list-style:none;padding:0;margin:0">
-            <li>&#128308; Halo <strong>rouge</strong> = encore loin (+100m)</li>
-            <li>&#129001; Halo <strong>orange</strong> = tu approches (50-100m)</li>
-            <li>&#128994; Halo <strong>vert</strong> = presque l&#224; (10-50m)</li>
-            <li>&#128309; Halo <strong>bleu</strong> = tu y es&nbsp;! (-10m)</li>
-            <li>&#10145;&#65039; <strong>Point suivant</strong> : passer sans jouer si tu veux</li>
-            <li>&#128260; <strong>Rejouer</strong> une Lune pour plus de &#10024;</li>
-          </ul>
-        </div>
-
-      </div>
-
-      <!-- Indicateur de page -->
-      <div class="intro-dots" aria-hidden="true">
-        <span class="intro-dot active" data-dot="0"></span>
-        <span class="intro-dot" data-dot="1"></span>
-        <span class="intro-dot" data-dot="2"></span>
-        <span class="intro-dot" data-dot="3"></span>
-        <span class="intro-dot" data-dot="4"></span>
-      </div>
-      <!-- Boutons navigation -->
-      <div class="intro-nav">
-        <button id="intro-prev" class="btn-ghost" disabled>&#8592; Retour</button>
-        <button id="intro-next" class="btn-primary">Suivant &#8594;</button>
-      </div>
-      <button id="intro-skip" class="btn-ghost" style="font-size:.75rem;margin-top:2px">Je me lance tout de suite ! &#128640;</button>
-    </div>
-  </dialog>
   <!-- MODAL DEMO -->
   <dialog id="modal-demo" aria-modal="true" aria-labelledby="demo-titre">
     <button class="btn-lunar-close" id="demo-fermer" aria-label="Fermer"><svg viewBox="0 0 28 28" width="28" height="28" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M14 4C10 4 7 7 7 11C7 15 10 18 14 18C11 18 8.5 15 8.5 11C8.5 7.5 10.5 5 14 4Z" fill="#C0C0C0" opacity="0.2"/><line x1="8" y1="8" x2="20" y2="20" stroke="#C0C0C0" stroke-width="2.5" stroke-linecap="round"/><line x1="20" y1="8" x2="8" y2="20" stroke="#C0C0C0" stroke-width="2.5" stroke-linecap="round"/></svg></button>

@@ -68,7 +68,7 @@ html,body{height:100%;overflow:hidden;font-family:"Trebuchet MS",sans-serif;colo
 
 /* ── LUNE BULLE ── */
 .lune-bulle{display:flex;align-items:flex-start;gap:10px;max-width:320px;background:rgba(0,0,0,.85);border:1px solid rgba(255,255,255,.2);border-radius:12px;padding:16px 20px;font-size:1rem;min-height:52px;opacity:0;transform:translateY(-10px);transition:opacity .3s ease,transform .3s ease;pointer-events:none;font-weight:bold}
-.lune-bulle.visible{opacity:1;transform:translateY(0)}
+.lune-bulle.visible{opacity:1;transform:translateY(0);pointer-events:auto}
 .lune-avatar{font-size:1.5rem;flex-shrink:0}
 .lune-texte{color:#fff;line-height:1.45;font-size:1rem;font-weight:bold}
 
@@ -84,16 +84,16 @@ html,body{height:100%;overflow:hidden;font-family:"Trebuchet MS",sans-serif;colo
 @keyframes ast-glow-orange{0%,100%{filter:brightness(1.15) drop-shadow(0 0 14px rgba(255,140,0,.65))}50%{filter:brightness(1.55) drop-shadow(0 0 34px rgba(255,140,0,1))}}
 /* Glow vert */
 @keyframes ast-glow-vert{0%,100%{filter:brightness(1.15) drop-shadow(0 0 14px rgba(105,255,71,.65))}50%{filter:brightness(1.55) drop-shadow(0 0 34px rgba(105,255,71,1))}}
-/* ─ États OFF / Épuisé / On+immobile → grisé ─ */
+/* ─ États OFF / Épuisé → grisé ─ */
 .asteroide-wrapper[data-etat="off"] .asteroide-svg,
-.asteroide-wrapper[data-etat="epuise"] .asteroide-svg,
-.asteroide-wrapper[data-etat="on"]:not([data-moving="true"]) .asteroide-svg{animation:none;filter:grayscale(1) brightness(.45);transition:filter .5s ease}
-/* ─ On + en mouvement → glow zone coloré ─ */
-.asteroide-wrapper[data-etat="on"][data-zone="rouge"][data-moving="true"] .asteroide-svg{animation:ast-glow-rouge 2s ease-in-out infinite!important;transition:filter .5s ease}
-.asteroide-wrapper[data-etat="on"][data-zone="orange"][data-moving="true"] .asteroide-svg{animation:ast-glow-orange 1.4s ease-in-out infinite!important;transition:filter .5s ease}
-.asteroide-wrapper[data-etat="on"][data-zone="vert"][data-moving="true"] .asteroide-svg{animation:ast-glow-vert .9s ease-in-out infinite!important;transition:filter .5s ease}
-.asteroide-wrapper[data-etat="on"][data-zone="bleu"][data-moving="true"] .asteroide-svg{animation:ast-glow .6s ease-in-out infinite!important;transition:filter .5s ease}
-/* ─ Zone atteinte → toujours lumineux bleu ─ */
+.asteroide-wrapper[data-etat="epuise"] .asteroide-svg{animation:none;filter:grayscale(1) brightness(.45);transition:filter .5s ease}
+/* ─ On → glow toujours actif, couleur = zone ─ */
+.asteroide-wrapper[data-etat="on"] .asteroide-svg{animation:ast-glow 2s ease-in-out infinite;transition:filter .5s ease}
+.asteroide-wrapper[data-etat="on"][data-zone="rouge"] .asteroide-svg{animation:ast-glow-rouge 2s ease-in-out infinite!important;transition:filter .5s ease}
+.asteroide-wrapper[data-etat="on"][data-zone="orange"] .asteroide-svg{animation:ast-glow-orange 1.4s ease-in-out infinite!important;transition:filter .5s ease}
+.asteroide-wrapper[data-etat="on"][data-zone="vert"] .asteroide-svg{animation:ast-glow-vert .9s ease-in-out infinite!important;transition:filter .5s ease}
+.asteroide-wrapper[data-etat="on"][data-zone="bleu"] .asteroide-svg{animation:ast-glow .6s ease-in-out infinite!important;transition:filter .5s ease}
+/* ─ Zone atteinte → lumineux bleu ─ */
 .asteroide-wrapper[data-etat="zone"] .asteroide-svg{animation:ast-glow .6s ease-in-out infinite!important;transition:filter .5s ease}
 .asteroide-wrapper[data-etat="off"] .energie-ast-overlay{opacity:.35}
 .asteroide-wrapper[data-etat="epuise"]{cursor:default;opacity:.7}
@@ -137,7 +137,7 @@ html,body{height:100%;overflow:hidden;font-family:"Trebuchet MS",sans-serif;colo
 .menu-item:hover{background:rgba(200,162,200,.1)}
 
 /* ── DIALOG ── */
-dialog{border:1px solid rgba(200,162,200,.3);border-radius:20px;background:rgba(10,10,26,.97);color:#fff;padding:0;max-width:min(460px,92vw);width:92vw;backdrop-filter:blur(20px);box-shadow:0 8px 40px rgba(0,0,0,.7)}
+dialog{position:relative;border:1px solid rgba(200,162,200,.3);border-radius:20px;background:rgba(10,10,26,.97);color:#fff;padding:0;max-width:min(460px,92vw);width:92vw;backdrop-filter:blur(20px);box-shadow:0 8px 40px rgba(0,0,0,.7)}
 dialog::backdrop{background:rgba(0,0,0,.72);backdrop-filter:blur(4px)}
 .modal-box{padding:24px 20px;display:flex;flex-direction:column;gap:14px;max-height:92dvh;overflow-y:auto}
 .modal-box h2{font-size:1.2rem;color:var(--accent);word-break:break-word}

@@ -16,19 +16,10 @@ window.GPS0_Boussole = (() => {
     etat = nouvel; _render(); emit('etat', etat);
   }
 
-  function updatePosition({ dist, bearing, zone, speed }) {
+  function updatePosition({ dist, bearing, zone }) {
     const rayon = zone.rayon || 30;
     if (dist <= rayon) { _setEtat('zone'); return; }
     if (etat === 'off' || etat === 'epuise') return;
-    // Suivi vitesse : null = inconnu → considéré en mouvement; ≤ 0.3 m/s = immobile
-    const w = document.getElementById('asteroide-wrapper');
-    if (w) {
-      if (speed === null || speed === undefined || speed > 0.3) {
-        w.dataset.moving = 'true';
-      } else {
-        w.dataset.moving = 'false';
-      }
-    }
     _halo(dist); _fusee(bearing); _distance(dist);
   }
 
@@ -70,7 +61,7 @@ window.GPS0_Boussole = (() => {
       case 'off':
         f && f.classList.add('hidden');
         h && (h.dataset.etat = 'off');
-        if (w) { delete w.dataset.zone; delete w.dataset.moving; } // grisé : pas de zone ni mouvement
+        if (w) { delete w.dataset.zone; }
         tl && (tl.textContent = 'Activer la boussole');
         t && (t.dataset.active = 'false', t.dataset.epuise = 'false');
         bj && (bj.hidden = true);
@@ -84,7 +75,7 @@ window.GPS0_Boussole = (() => {
       case 'epuise':
         f && f.classList.add('hidden');
         h && (h.dataset.etat = 'off');
-        if (w) { delete w.dataset.zone; delete w.dataset.moving; } // grisé
+        if (w) { delete w.dataset.zone; }
         tl && (tl.textContent = 'Boussole épuisée ⚡');
         t && (t.dataset.active = 'false', t.dataset.epuise = 'true');
         bj && (bj.hidden = true);

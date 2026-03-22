@@ -430,9 +430,6 @@ window.GPS0_App = (() => {
         _majToggleDebug();
       }
     });
-    document.getElementById('menu-guide')?.addEventListener('click', () => {
-      _ouvrirGuide();
-    });
     document.querySelectorAll('.demo-niveau-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         document.getElementById('modal-demo').close();
@@ -711,29 +708,6 @@ window.GPS0_App = (() => {
     };
   }
 
-  function _ouvrirGuide() {
-    const m = document.getElementById('modal-tuto');
-    if (!m) return;
-    const steps = m.querySelectorAll('.intro-step');
-    const dots = m.querySelectorAll('.intro-dot');
-    const prevBtn = document.getElementById('intro-prev');
-    const nextBtn = document.getElementById('intro-next');
-    const totalSteps = steps.length;
-    let cur = 0;
-    function go(n) {
-      cur = Math.max(0, Math.min(totalSteps - 1, n));
-      steps.forEach((s, i) => s.classList.toggle('active', i === cur));
-      dots.forEach((d, i) => d.classList.toggle('active', i === cur));
-      if (prevBtn) prevBtn.disabled = cur === 0;
-      if (nextBtn) nextBtn.textContent = cur === totalSteps - 1 ? 'Fermer ✕' : 'Suivant →';
-    }
-    go(0);
-    if (prevBtn) prevBtn.onclick = () => go(cur - 1);
-    if (nextBtn) nextBtn.onclick = () => { if (cur < totalSteps - 1) go(cur + 1); else m.close(); };
-    document.getElementById('intro-skip').onclick = () => m.close();
-    m.showModal();
-  }
-
   function _ouvrirBoutique() {
     const modal = document.getElementById('modal-boutique');
     if (!modal) return;
@@ -761,36 +735,6 @@ window.GPS0_App = (() => {
       container.appendChild(btn);
     });
     modal.showModal();
-  }
-
-  function _tuto() {
-    if (localStorage.getItem('gps0_tuto_vu')) return Promise.resolve();
-    const m = document.getElementById('modal-tuto'); if (!m) return Promise.resolve();
-    m.showModal();
-
-    let currentStep = 0;
-    const steps = m.querySelectorAll('.intro-step');
-    const totalSteps = steps.length;
-    const dots = m.querySelectorAll('.intro-dot');
-    const prevBtn = document.getElementById('intro-prev');
-    const nextBtn = document.getElementById('intro-next');
-
-    function gotoStep(n) {
-      steps.forEach((s, i) => s.classList.toggle('active', i === n));
-      dots.forEach((d, i) => d.classList.toggle('active', i === n));
-      prevBtn.disabled = n === 0;
-      nextBtn.textContent = n === totalSteps - 1 ? 'C\u2019est parti ! \uD83D\uDE80' : 'Suivant \u2192';
-    }
-
-    return new Promise(r => {
-      const _fin = () => { localStorage.setItem('gps0_tuto_vu', '1'); m.close(); r(); };
-      prevBtn.addEventListener('click', () => { if (currentStep > 0) gotoStep(--currentStep); });
-      nextBtn.addEventListener('click', () => {
-        if (currentStep < totalSteps - 1) { gotoStep(++currentStep); }
-        else { _fin(); }
-      });
-      document.getElementById('intro-skip')?.addEventListener('click', _fin, { once: true });
-    });
   }
 
   return { init };
