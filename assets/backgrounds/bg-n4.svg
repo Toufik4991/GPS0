@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 700">
+<defs>
+  <radialGradient id="n4bg" cx="50%" cy="50%" r="75%">
+    <stop offset="0%" stop-color="#0e0820"/>
+    <stop offset="60%" stop-color="#060310"/>
+    <stop offset="100%" stop-color="#020108"/>
+  </radialGradient>
+  <radialGradient id="n4glow1" cx="25%" cy="30%" r="30%">
+    <stop offset="0%" stop-color="#cc88ff" stop-opacity="0.12"/>
+    <stop offset="100%" stop-color="#060310" stop-opacity="0"/>
+  </radialGradient>
+  <radialGradient id="n4glow2" cx="70%" cy="60%" r="35%">
+    <stop offset="0%" stop-color="#ff66aa" stop-opacity="0.08"/>
+    <stop offset="100%" stop-color="#060310" stop-opacity="0"/>
+  </radialGradient>
+  <filter id="n4crys">
+    <feGaussianBlur stdDeviation="3" result="b"/>
+    <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+</defs>
+<!-- Dark cavern bg -->
+<rect width="400" height="700" fill="url(#n4bg)"/>
+<rect width="400" height="700" fill="url(#n4glow1)"/>
+<rect width="400" height="700" fill="url(#n4glow2)"/>
+<!-- Faint stars -->
+<circle cx="55" cy="40" r="0.8" fill="#fff" opacity="0.4"/>
+<circle cx="190" cy="70" r="0.6" fill="#cc88ff" opacity="0.35"/>
+<circle cx="350" cy="100" r="1" fill="#fff" opacity="0.45"/>
+<circle cx="100" cy="180" r="0.7" fill="#cc88ff" opacity="0.3"/>
+<circle cx="280" cy="250" r="0.9" fill="#fff" opacity="0.4"/>
+<circle cx="40" cy="400" r="0.7" fill="#fff" opacity="0.35"/>
+<circle cx="360" cy="500" r="0.8" fill="#cc88ff" opacity="0.3"/>
+<circle cx="150" cy="620" r="0.6" fill="#fff" opacity="0.4"/>
+<!-- Crystal formations -->
+<g filter="url(#n4crys)" opacity="0.5">
+  <!-- Pink crystal cluster (bottom left) -->
+  <polygon points="50,680 60,620 70,680" fill="#ff66aa" opacity="0.4"/>
+  <polygon points="65,680 72,635 80,680" fill="#ff4488" opacity="0.35"/>
+  <polygon points="35,680 48,645 55,680" fill="#ff88bb" opacity="0.3"/>
+</g>
+<g filter="url(#n4crys)" opacity="0.45">
+  <!-- Purple crystals (top right) -->
+  <polygon points="330,0 340,55 350,0" fill="#cc88ff" opacity="0.4"/>
+  <polygon points="345,0 352,40 360,0" fill="#aa66dd" opacity="0.35"/>
+</g>
+<g filter="url(#n4crys)" opacity="0.4">
+  <!-- Cyan crystal (right mid) -->
+  <polygon points="375,340 385,290 395,340" fill="#66ffdd" opacity="0.35"/>
+  <polygon points="360,340 370,305 380,340" fill="#44ddbb" opacity="0.3"/>
+</g>
+<g filter="url(#n4crys)" opacity="0.35">
+  <!-- Gold crystal (left mid) -->
+  <polygon points="5,420 15,375 25,420" fill="#ffd040" opacity="0.4"/>
+  <polygon points="15,420 22,390 30,420" fill="#ffbb20" opacity="0.3"/>
+</g>
+<!-- Stalactites silhouette top -->
+<path d="M0,0 L0,35 15,28 30,45 50,20 75,50 100,30 130,55 155,25 180,48 210,18 240,52 265,28 295,58 320,22 345,48 370,30 395,55 400,38 400,0 Z" fill="#0a0518" opacity="0.7"/>
+<!-- Stalagmites silhouette bottom -->
+<path d="M0,700 L0,665 20,672 45,650 70,675 100,645 125,668 155,640 185,670 210,648 240,662 270,638 300,660 330,642 360,665 385,648 400,658 400,700 Z" fill="#0a0518" opacity="0.7"/>
+</svg>

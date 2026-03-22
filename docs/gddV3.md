@@ -1,9 +1,24 @@
 # 🌙 GPS0 — Game Design Document v3.0
 
-**Version :** 3.43.0 - Bug 25 : Fix N5 crash + Fusée -15% + Nettoyage
+**Version :** 3.44.0 - Bug 26 : Backgrounds SVG N3-N9
 **Date :** 22/03/2026
 **Auteur :** Toufik49
 **Statut :** Opérationnel — Jeux 1-9 en cours de reconstruction
+
+---
+
+## Changements v3.44.0 (Bug 26 — Backgrounds SVG N3-N9)
+
+- **7 fonds SVG uniques créés** dans `assets/backgrounds/` pour renforcer l'identité visuelle de chaque niveau :
+  - `bg-n3.svg` : Champ d'astéroïdes — espace bleu profond (#050510), taches de nébuleuse, 3 astéroïdes flottants avec cratères, anneau de bulle protectrice
+  - `bg-n4.svg` : Caverne de cristaux — purple sombre (#060310), formations cristallines (rose/purple/cyan/or) avec filtre glow gaussien, stalactites/stalagmites
+  - `bg-n5.svg` : Course au soleil — gradient purple→noir, lueur solaire et rayons au sommet, sentier d'étoiles au centre
+  - `bg-n6.svg` : Agar.io cosmique — void sombre, grille style agar.io, particules de nourriture, accent vert lime
+  - `bg-n7.svg` : Mots cosmiques — nébuleuse bleu-purple, lettres flottantes translucides (E,C,N,S,G,O,F), lignes de constellations
+  - `bg-n8.svg` : Station alien — panneaux métalliques industriels (9×8 grille), rivets, voyants d'alerte (rouge/orange/vert)
+  - `bg-n9.svg` : Boss solaire — void infernal, lueur orange/or du soleil, rayons solaires, éruptions, arène de combat en pointillés
+- **Intégration CSS** : `background: #color url(../assets/backgrounds/bg-nX.svg) center/cover no-repeat` sur `html,body` de chaque niveau
+- **SW CORE** : 7 SVG ajoutés au cache, gps0-v60 → gps0-v61 / APP_VERSION 3.44.0
 
 ---
 

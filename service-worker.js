@@ -1,5 +1,5 @@
-﻿const CACHE = 'gps0-v60';
-const APP_VERSION = '3.43.1';
+﻿const CACHE = 'gps0-v61';
+const APP_VERSION = '3.44.0';
 const CORE = [
   'index.html',
   'css/main.css',
@@ -43,7 +43,14 @@ const CORE = [
   'assets/audio/musique/exploration/musique_menu2.mp3',
   'assets/audio/musique/exploration/musique_menu3.mp3',
   'assets/audio/musique/exploration/musique_menu4.mp3',
-  'assets/audio/musique/finale/musique_finale.mp3'
+  'assets/audio/musique/finale/musique_finale.mp3',
+  'assets/backgrounds/bg-n3.svg',
+  'assets/backgrounds/bg-n4.svg',
+  'assets/backgrounds/bg-n5.svg',
+  'assets/backgrounds/bg-n6.svg',
+  'assets/backgrounds/bg-n7.svg',
+  'assets/backgrounds/bg-n8.svg',
+  'assets/backgrounds/bg-n9.svg'
 ];self.addEventListener('install', e => {
   e.waitUntil(
     caches.open(CACHE).then(c => c.addAll(CORE).catch(() => {})).then(() => self.skipWaiting())

@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 700">
+<defs>
+  <radialGradient id="n9bg" cx="50%" cy="25%" r="90%">
+    <stop offset="0%" stop-color="#1a0800"/>
+    <stop offset="30%" stop-color="#0e0408"/>
+    <stop offset="100%" stop-color="#040204"/>
+  </radialGradient>
+  <radialGradient id="n9heat" cx="50%" cy="18%" r="50%">
+    <stop offset="0%" stop-color="#ff6600" stop-opacity="0.12"/>
+    <stop offset="40%" stop-color="#ff3300" stop-opacity="0.04"/>
+    <stop offset="100%" stop-color="#040204" stop-opacity="0"/>
+  </radialGradient>
+  <radialGradient id="n9core" cx="50%" cy="18%" r="18%">
+    <stop offset="0%" stop-color="#ffcc00" stop-opacity="0.08"/>
+    <stop offset="100%" stop-color="#ff6600" stop-opacity="0"/>
+  </radialGradient>
+</defs>
+<!-- Infernal void -->
+<rect width="400" height="700" fill="url(#n9bg)"/>
+<rect width="400" height="700" fill="url(#n9heat)"/>
+<rect width="400" height="700" fill="url(#n9core)"/>
+<!-- Stars (warm-tinted, hostile space) -->
+<circle cx="30" cy="50" r="1" fill="#ffd8b0" opacity="0.5"/>
+<circle cx="170" cy="30" r="0.8" fill="#ffccaa" opacity="0.45"/>
+<circle cx="350" cy="60" r="1.3" fill="#ffd8b0" opacity="0.55"/>
+<circle cx="80" cy="150" r="0.7" fill="#ffccaa" opacity="0.4"/>
+<circle cx="300" cy="200" r="1.1" fill="#ffd8b0" opacity="0.5"/>
+<circle cx="50" cy="330" r="0.9" fill="#ffccaa" opacity="0.4"/>
+<circle cx="360" cy="400" r="1" fill="#ffd8b0" opacity="0.45"/>
+<circle cx="120" cy="480" r="0.8" fill="#ffccaa" opacity="0.4"/>
+<circle cx="280" cy="550" r="1.2" fill="#ffd8b0" opacity="0.5"/>
+<circle cx="200" cy="650" r="0.7" fill="#ffccaa" opacity="0.35"/>
+<!-- Sun rays (faint, radiating from top-center) -->
+<g opacity="0.06" stroke="#ff8800" stroke-width="2" stroke-linecap="round">
+  <line x1="200" y1="100" x2="200" y2="0"/>
+  <line x1="200" y1="100" x2="130" y2="0"/>
+  <line x1="200" y1="100" x2="270" y2="0"/>
+  <line x1="200" y1="100" x2="70" y2="15"/>
+  <line x1="200" y1="100" x2="330" y2="15"/>
+  <line x1="200" y1="100" x2="20" y2="55"/>
+  <line x1="200" y1="100" x2="380" y2="55"/>
+  <line x1="200" y1="100" x2="0" y2="110"/>
+  <line x1="200" y1="100" x2="400" y2="110"/>
+  <line x1="200" y1="100" x2="10" y2="190"/>
+  <line x1="200" y1="100" x2="390" y2="190"/>
+</g>
+<!-- Solar flares (abstract curves) -->
+<g fill="none" stroke="#ff4400" stroke-width="1" opacity="0.08">
+  <path d="M160,100 Q140,150 180,180"/>
+  <path d="M240,100 Q260,150 220,180"/>
+  <path d="M130,110 Q100,170 150,200"/>
+  <path d="M270,110 Q300,170 250,200"/>
+</g>
+<!-- Arena ring (faint circle where battle happens) -->
+<circle cx="200" cy="350" r="140" fill="none" stroke="#ff6600" stroke-width="0.5" opacity="0.06" stroke-dasharray="8,6"/>
+</svg>
