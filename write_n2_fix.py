@@ -1,4 +1,4 @@
-<!doctype html>
+content = """<!doctype html>
 <html lang="fr">
 <head>
 <meta charset="utf-8">
@@ -18,9 +18,9 @@ body{display:flex;flex-direction:column;height:100dvh}
 </head>
 <body>
 <div id="hud">
-  <span id="lives">❤❤❤</span>
+  <span id="lives">\\u2764\\u2764\\u2764</span>
   <span id="timer">2:30</span>
-  <span id="score-hud">0 ✨</span>
+  <span id="score-hud">0 \\u2728</span>
 </div>
 <div id="game-container">
   <canvas id="cv"></canvas>
@@ -28,14 +28,14 @@ body{display:flex;flex-direction:column;height:100dvh}
 <script src="shared.js"></script>
 <script>
 window.NIVEAU = 2;
-window.TUTO_TEXT = "Lune Phobos — Tape pour sauter · Évite les colonnes · 3 vies<br><small>Les bords ne te tuent pas · Cristaux ✦ = +1 poussière</small>";
+window.TUTO_TEXT = "Lune Phobos \\u2014 Tape pour sauter \\xb7 \\xc9vite les colonnes \\xb7 3 vies<br><small>Les bords ne te tuent pas \\xb7 Cristaux \\u2726 = +1 poussi\\xe8re</small>";
 
-// ── CONSTANTES ────────────────────────────────────────────────────────────────
+// ── CONSTANTES ──────────────────────────────────────────────────────────────
 const GRAV = 0.45, JUMP = -9.5, WALL_W = 44;
 const SPEED_START = 2.4, SPEED_MAX = 5.8;
 const CRYSTAL_MAX = 5;
 
-// ── ÉTAT ──────────────────────────────────────────────────────────────────────
+// ── ÉTAT ──────────────────────────────────────────────────────────────────
 let bird, walls, ashParts, parts, crystals;
 let speed, frame, invincible, rafId, bgT, crystalCount;
 
@@ -54,7 +54,6 @@ function gameStart() {
   const W = cv.width, H = cv.height;
   bird.x = W * .22; bird.y = H * .45;
 
-  // Cendres flottantes (init)
   for (let i = 0; i < 32; i++) ashParts.push({
     x: Math.random() * W, y: Math.random() * H,
     vx: -0.1 - Math.random() * .22, vy: -0.04 + Math.random() * .14,
@@ -74,18 +73,15 @@ function gameStart() {
     // Vitesse progressive : 2.4 → 5.8 sur 150s à 60fps
     speed = Math.min(SPEED_MAX, SPEED_START + (frame / (150 * 60)) * (SPEED_MAX - SPEED_START));
 
-    // Physique oiseau
     bird.vy += GRAV; bird.y += bird.vy;
     if (bird.y < bird.r + 2) { bird.y = bird.r + 2; bird.vy = Math.abs(bird.vy) * .25; }
     if (bird.y > H - bird.r - 2) { bird.y = H - bird.r - 2; bird.vy = -Math.abs(bird.vy) * .25; }
     if (invincible > 0) invincible--;
 
-    // Spawn murs (espacement se réduit lentement)
     const spacing = Math.max(200, 370 - frame * .06);
     if (!walls.length || walls[walls.length - 1].x < W - spacing) _spawnWall(W, H);
     walls = walls.filter(w => w.x + WALL_W > -10);
 
-    // Déplacement + collisions murs
     walls.forEach(w => {
       w.x -= speed;
       if (invincible > 0) return;
@@ -99,7 +95,6 @@ function gameStart() {
       }
     });
 
-    // Cristaux
     crystals = crystals.filter(c => {
       c.x -= speed * .72; c.rot += .045;
       if (Math.hypot(bird.x - c.x, bird.y - c.y) < bird.r + 13) {
@@ -112,7 +107,6 @@ function gameStart() {
       return c.x > -30;
     });
 
-    // Cendres
     ashParts.forEach(a => {
       a.x += a.vx; a.y += a.vy;
       if (a.x < -4) a.x = W + 4;
@@ -120,11 +114,9 @@ function gameStart() {
       if (a.y > H + 4) a.y = -4;
     });
 
-    // Particules
     parts = parts.filter(p => p.life > 0);
     parts.forEach(p => { p.x += p.vx; p.y += p.vy; p.vy += .09; p.life--; });
 
-    // Dessin
     ctx.clearRect(0, 0, W, H);
     _drawBg(ctx, W, H);
     _drawWalls(ctx, H);
@@ -165,40 +157,34 @@ function _spawnWall(W, H) {
     phase: Math.random() * Math.PI * 2
   }));
   walls.push({ x: W + 50, gapTop, gapH, teeth, crksTop: mkCrk(), crksBot: mkCrk(), dripsTop: mkDrips(), dripsBot: mkDrips() });
-  // Cristal dans le gap (38% de chance)
   if (crystalCount < CRYSTAL_MAX && Math.random() < .38) {
     crystals.push({ x: W + 85, y: gapTop + gapH / 2, rot: 0 });
   }
 }
 
-// ── DESSIN ────────────────────────────────────────────────────────────────────
+// ── DESSIN ─────────────────────────────────────────────────────────────────
 
 function _drawBg(ctx, W, H) {
-  // Ciel de cendres (rouge sombre)
   const sky = ctx.createLinearGradient(0, 0, 0, H);
   sky.addColorStop(0, '#0d0608');
   sky.addColorStop(.45, '#1c0a08');
   sky.addColorStop(1, '#2e1005');
   ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
 
-  // Nuages de cendres
   for (let i = 0; i < 5; i++) {
     const cx = ((i * W * .22 - bgT * .3) % (W * 1.3) + W * 1.3) % (W * 1.3) - W * .05;
     const cy = H * (.05 + i * .06);
-    ctx.fillStyle = `rgba(90,60,50,${(.06 + i * .018).toFixed(3)})`;
+    ctx.fillStyle = 'rgba(90,60,50,' + (.06 + i * .018).toFixed(3) + ')';
     ctx.beginPath(); ctx.ellipse(cx, cy, 55 + i * 20, 14 + i * 4, 0, 0, Math.PI * 2); ctx.fill();
   }
 
-  // Volcans silhouettes
   _drawVolcans(ctx, W, H);
 
-  // Cendres flottantes
   ashParts.forEach(a => {
-    ctx.fillStyle = `rgba(130,95,75,${a.a.toFixed(2)})`;
+    ctx.fillStyle = 'rgba(130,95,75,' + a.a.toFixed(2) + ')';
     ctx.beginPath(); ctx.arc(a.x, a.y, a.r, 0, Math.PI * 2); ctx.fill();
   });
 
-  // Lave au sol ondulante
   _drawLavaSol(ctx, W, H);
 }
 
@@ -217,10 +203,9 @@ function _drawVolcans(ctx, W, H) {
     ctx.lineTo(v.cx + v.r * .12, H - v.h);
     ctx.lineTo(v.cx + v.r, H);
     ctx.closePath(); ctx.fill();
-    // Lueur cratère pulsante
     const intensity = .18 + .13 * Math.sin(bgT * .03 + v.cx * .01);
     const cg = ctx.createRadialGradient(v.cx, H - v.h, 2, v.cx, H - v.h, v.r * .42);
-    cg.addColorStop(0, `rgba(255,90,10,${intensity.toFixed(2)})`);
+    cg.addColorStop(0, 'rgba(255,90,10,' + intensity.toFixed(2) + ')');
     cg.addColorStop(1, 'rgba(255,40,0,0)');
     ctx.fillStyle = cg;
     ctx.beginPath(); ctx.arc(v.cx, H - v.h, v.r * .42, 0, Math.PI * 2); ctx.fill();
@@ -239,7 +224,6 @@ function _drawLavaSol(ctx, W, H) {
     ctx.lineTo(x, yB + Math.sin(x * .02 + bgT * .04) * 7 + Math.sin(x * .038 + bgT * .025) * 4);
   }
   ctx.lineTo(W, H); ctx.closePath(); ctx.fill();
-  // Lueur orange au-dessus
   const gl = ctx.createLinearGradient(0, yB - 36, 0, yB);
   gl.addColorStop(0, 'rgba(255,80,0,0)');
   gl.addColorStop(1, 'rgba(255,80,0,.22)');
@@ -251,7 +235,6 @@ function _drawWalls(ctx, H) {
     const { x, gapTop, gapH } = w;
     _drawBlock(ctx, x, 0, gapTop, w, false);
     _drawBlock(ctx, x, gapTop + gapH, H - (gapTop + gapH), w, true);
-    // Lueur orange dans le gap
     const gl = ctx.createRadialGradient(x + WALL_W / 2, gapTop + gapH / 2, 4, x + WALL_W / 2, gapTop + gapH / 2, gapH * .6);
     gl.addColorStop(0, 'rgba(255,120,30,.13)');
     gl.addColorStop(1, 'rgba(255,60,0,0)');
@@ -265,34 +248,30 @@ function _drawBlock(ctx, x, y, h, wall, isBot) {
   const cracks = isBot ? wall.crksBot : wall.crksTop;
   const drips = isBot ? wall.dripsBot : wall.dripsTop;
 
-  // Corps roche sombre violet/bleu
   const g = ctx.createLinearGradient(x, 0, x + WALL_W, 0);
   g.addColorStop(0, '#1a1525'); g.addColorStop(.38, '#2e2840');
   g.addColorStop(.68, '#3d3655'); g.addColorStop(1, '#1e182c');
   ctx.fillStyle = g; ctx.fillRect(x, y, WALL_W, h);
 
-  // Dents côté ouverture
   ctx.fillStyle = 'rgba(255,70,10,.38)';
   for (let i = 0; i < Math.ceil(WALL_W / 9); i++) {
     const jag = Math.abs(wall.teeth[i % wall.teeth.length] || 8);
     ctx.fillRect(x + i * 9, isBot ? y : y + h - jag, 8, jag + 2);
   }
 
-  // Fissures dans la roche
   ctx.lineWidth = 1.2;
   cracks.forEach(c => {
     ctx.strokeStyle = 'rgba(255,100,30,.24)';
     ctx.beginPath(); ctx.moveTo(x + c.x1, y + h * c.y1); ctx.lineTo(x + c.x2, y + h * c.y2); ctx.stroke();
   });
 
-  // Lave coulante dans les fissures (stalactites/stalagmites pulsantes)
   const faceY = isBot ? y : y + h;
   const dir = isBot ? -1 : 1;
   drips.forEach(d => {
     const prog = Math.sin(bgT * .025 + d.phase) * .5 + .5;
     const dripLen = 8 + prog * 20;
     const endY = faceY + dir * dripLen;
-    ctx.strokeStyle = `rgba(255,${Math.round(70 + prog * 50)},0,${(.72 - prog * .22).toFixed(2)})`;
+    ctx.strokeStyle = 'rgba(255,' + Math.round(70 + prog * 50) + ',0,' + (.72 - prog * .22).toFixed(2) + ')';
     ctx.lineWidth = 1.6;
     ctx.beginPath(); ctx.moveTo(x + d.x, faceY); ctx.lineTo(x + d.x, endY); ctx.stroke();
     const dropR = 2.2 + prog * 1.8;
@@ -304,9 +283,7 @@ function _drawBlock(ctx, x, y, h, wall, isBot) {
     ctx.beginPath(); ctx.arc(x + d.x, endY, dropR, 0, Math.PI * 2); ctx.fill();
   });
 
-  // Reflet gauche
   ctx.fillStyle = 'rgba(255,255,255,.03)'; ctx.fillRect(x, y, 3, h);
-  // Lueur orange bord gap
   const eg = ctx.createLinearGradient(x, isBot ? y : y + h - 16, x, isBot ? y + 16 : y + h);
   eg.addColorStop(0, 'rgba(255,80,15,.42)');
   eg.addColorStop(1, 'rgba(255,80,15,0)');
@@ -316,16 +293,13 @@ function _drawBlock(ctx, x, y, h, wall, isBot) {
 function _drawCrystals(ctx) {
   crystals.forEach(c => {
     ctx.save(); ctx.translate(c.x, c.y); ctx.rotate(c.rot);
-    // Halo
     const hg = ctx.createRadialGradient(0, 0, 3, 0, 0, 22);
     hg.addColorStop(0, 'rgba(136,238,255,.42)');
     hg.addColorStop(1, 'rgba(136,238,255,0)');
     ctx.fillStyle = hg; ctx.beginPath(); ctx.arc(0, 0, 22, 0, Math.PI * 2); ctx.fill();
-    // Losange
     ctx.fillStyle = '#88EEFF';
     ctx.beginPath(); ctx.moveTo(0, -13); ctx.lineTo(7, 0); ctx.lineTo(0, 13); ctx.lineTo(-7, 0); ctx.closePath(); ctx.fill();
     ctx.strokeStyle = 'rgba(200,255,255,.7)'; ctx.lineWidth = 1.2; ctx.stroke();
-    // Reflet
     ctx.fillStyle = 'rgba(255,255,255,.5)';
     ctx.beginPath(); ctx.moveTo(0, -11); ctx.lineTo(3, -4); ctx.lineTo(0, -2); ctx.closePath(); ctx.fill();
     ctx.restore();
@@ -335,7 +309,6 @@ function _drawCrystals(ctx) {
 function _drawBird(ctx) {
   const tilt = Math.max(-1.1, Math.min(1.1, bird.vy * .08));
   const rising = bird.vy < -2;
-  // Flamme jetpack
   const fH = rising ? 28 : 16;
   const fX = bird.x, fY = bird.y + bird.r * .75;
   const fg = ctx.createRadialGradient(fX, fY, 2, fX, fY + fH * .5, fH);
@@ -344,25 +317,46 @@ function _drawBird(ctx) {
   fg.addColorStop(1, 'rgba(255,30,0,0)');
   ctx.fillStyle = fg;
   ctx.beginPath(); ctx.ellipse(fX, fY + fH * .35, bird.r * .38, fH * .52, 0, 0, Math.PI * 2); ctx.fill();
-  // Cœur bleu (flamme froide)
-  ctx.fillStyle = `rgba(180,220,255,${rising ? .68 : .38})`;
+  ctx.fillStyle = 'rgba(180,220,255,' + (rising ? .68 : .38) + ')';
   ctx.beginPath(); ctx.ellipse(fX, fY + 5, bird.r * .16, rising ? 10 : 6, 0, 0, Math.PI * 2); ctx.fill();
-  // Cosmonaute
   drawCosmonaut(ctx, bird.x, bird.y, bird.r, tilt, 'fly');
 }
 
 function _drawHUD(ctx, W, H) {
-  // Cristaux (bas droite)
   ctx.fillStyle = 'rgba(0,0,0,.52)';
   ctx.beginPath(); ctx.roundRect(W - 90, H - 46, 84, 40, 8); ctx.fill();
   ctx.fillStyle = '#88EEFF'; ctx.font = 'bold 13px system-ui'; ctx.textAlign = 'center';
-  ctx.fillText('✦ ' + crystalCount + '/' + CRYSTAL_MAX, W - 48, H - 21);
+  ctx.fillText('\\u2726 ' + crystalCount + '/' + CRYSTAL_MAX, W - 48, H - 21);
   ctx.fillStyle = 'rgba(136,238,255,.55)'; ctx.font = '10px system-ui';
   ctx.fillText('cristaux', W - 48, H - 9);
-  // Vitesse (bas gauche)
   ctx.fillStyle = 'rgba(255,120,30,.75)'; ctx.font = '11px system-ui'; ctx.textAlign = 'left';
-  ctx.fillText('⚡ x' + speed.toFixed(1), 8, H - 8);
+  ctx.fillText('\\u26a1 x' + speed.toFixed(1), 8, H - 8);
 }
 </script>
 </body>
-</html>
+</html>"""
+
+with open(r"c:\Users\Jules\Desktop\GPS0\minijeux\niveau2.html", "w", encoding="utf-8") as f:
+    f.write(content)
+
+import os
+print("OK:", os.path.getsize(r"c:\Users\Jules\Desktop\GPS0\minijeux\niveau2.html"), "bytes")
+
+# Verify
+with open(r"c:\Users\Jules\Desktop\GPS0\minijeux\niveau2.html", encoding="utf-8") as f:
+    t = f.read()
+
+checks = {
+    "UTF8 correct lives": "\u2764\u2764\u2764" in t,
+    "UTF8 score":         "\u2728" in t,
+    "TUTO_TEXT":          "Lune Phobos" in t,
+    "crystal HUD":        "\u2726" in t and "crystalCount" in t,
+    "speed HUD":          "\u26a1" in t and "speed.toFixed" in t,
+    "drawCosmonaut":      "drawCosmonaut" in t,
+    "loseLife":           "loseLife()" in t,
+    "GPS0_running":       "GPS0_running()" in t,
+    "no mojibake lives":  "â¤" not in t,
+    "no mojibake tick":   "âœ¨" not in t,
+}
+for k, v in checks.items():
+    print(f"  {'OK' if v else 'FAIL'}: {k}")

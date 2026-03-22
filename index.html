@@ -150,9 +150,11 @@
       </button>
     </section>
 
-    <!-- BOUTON JOUER EN HAUT (zone atteinte) -->
-    <button id="btn-jouer-haut" hidden aria-label="Lancer le mini-jeu">🚀 JOUER !</button>
-    <button id="btn-prochain-point" hidden aria-label="Point suivant">➡️ Point suivant</button>
+    <!-- BOUTONS ZONE BLEUE côte à côte -->
+    <div id="zone-btns" hidden>
+      <button id="btn-jouer-haut" aria-label="Lancer le mini-jeu">🚀 JOUER !</button>
+      <button id="btn-prochain-point" aria-label="Point suivant">➡️ Suivant</button>
+    </div>
 
     <footer class="objectif-bar" role="contentinfo">
       <span class="objectif-icon" aria-hidden="true">🎯</span>
@@ -239,15 +241,15 @@
         <button id="debug-toggle" style="padding:8px 20px;border-radius:20px;border:1px solid rgba(255,255,255,.15);font-size:.82rem;font-weight:bold;cursor:pointer;transition:all .2s;background:rgba(50,50,50,.4);color:rgba(255,255,255,.35)">&#9898; Debug OFF</button>
       </div>
       <div class="difficulte-grille" role="group" style="margin:10px 0">
-        <button class="diff-carte demo-niveau-btn" data-niveau="1"><span class="diff-emoji">&#128302;</span><span class="diff-nom">Lune de Verre</span><span class="diff-desc">Miroirs</span></button>
-        <button class="diff-carte demo-niveau-btn" data-niveau="2"><span class="diff-emoji">&#128293;</span><span class="diff-nom">Lune de Cendre</span><span class="diff-desc">Gravité inversée</span></button>
-        <button class="diff-carte demo-niveau-btn" data-niveau="3"><span class="diff-emoji">&#127807;</span><span class="diff-nom">Lune de Lierre</span><span class="diff-desc">Plantes</span></button>
-        <button class="diff-carte demo-niveau-btn" data-niveau="4"><span class="diff-emoji">&#10052;</span><span class="diff-nom">Lune de Givre</span><span class="diff-desc">Glace</span></button>
-        <button class="diff-carte demo-niveau-btn" data-niveau="5"><span class="diff-emoji">&#128123;</span><span class="diff-nom">Lune d'Ombre</span><span class="diff-desc">Invisibilité</span></button>
-        <button class="diff-carte demo-niveau-btn" data-niveau="6"><span class="diff-emoji">&#129302;</span><span class="diff-nom">Lune de Fer</span><span class="diff-desc">Aimant</span></button>
-        <button class="diff-carte demo-niveau-btn" data-niveau="7"><span class="diff-emoji">&#127786;</span><span class="diff-nom">Lune de Tempête</span><span class="diff-desc">Vent</span></button>
-        <button class="diff-carte demo-niveau-btn" data-niveau="8"><span class="diff-emoji">&#128142;</span><span class="diff-nom">Lune de Cristal</span><span class="diff-desc">Cristaux</span></button>
-        <button class="diff-carte demo-niveau-btn" data-niveau="9"><span class="diff-emoji">&#127758;</span><span class="diff-nom">Lune d'Éclipse</span><span class="diff-desc">Boss Final</span></button>
+        <button class="diff-carte demo-niveau-btn" data-niveau="1"><span class="diff-emoji">&#127756;</span><span class="diff-nom">Lune Séléné</span><span class="diff-desc">Slingshot</span></button>
+        <button class="diff-carte demo-niveau-btn" data-niveau="2"><span class="diff-emoji">&#128293;</span><span class="diff-nom">Lune Phobos</span><span class="diff-desc">Flappy Bird</span></button>
+        <button class="diff-carte demo-niveau-btn" data-niveau="3"><span class="diff-emoji">&#127807;</span><span class="diff-nom">Lune Titan</span><span class="diff-desc">Doodle Jump</span></button>
+        <button class="diff-carte demo-niveau-btn" data-niveau="4"><span class="diff-emoji">&#10052;</span><span class="diff-nom">Lune Europe</span><span class="diff-desc">Temple Run</span></button>
+        <button class="diff-carte demo-niveau-btn" data-niveau="5"><span class="diff-emoji">&#128123;</span><span class="diff-nom">Lune Ganymède</span><span class="diff-desc">Labyrinthe</span></button>
+        <button class="diff-carte demo-niveau-btn" data-niveau="6"><span class="diff-emoji">&#129302;</span><span class="diff-nom">Lune Io</span><span class="diff-desc">Agar.io</span></button>
+        <button class="diff-carte demo-niveau-btn" data-niveau="7"><span class="diff-emoji">&#127786;</span><span class="diff-nom">Lune Callisto</span><span class="diff-desc">Jetpack</span></button>
+        <button class="diff-carte demo-niveau-btn" data-niveau="8"><span class="diff-emoji">&#128142;</span><span class="diff-nom">Lune Encelade</span><span class="diff-desc">Crossy Road</span></button>
+        <button class="diff-carte demo-niveau-btn" data-niveau="9"><span class="diff-emoji">&#127758;</span><span class="diff-nom">Boss Final</span><span class="diff-desc">Éclipse</span></button>
       </div>
       <p style="font-size:0.72rem;color:rgba(255,255,255,0.35);text-align:center;margin-top:4px"><span id="debug-version">v?</span></p>
     </div>

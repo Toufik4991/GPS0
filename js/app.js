@@ -293,11 +293,9 @@ window.GPS0_App = (() => {
       GPS0_Audio.playSFX('halo_bip');
       GPS0_Boussole.forceEtat('zone');
       _pauseGlobalClock(); // Zone bleue : horloge en pause
-      // Afficher bouton JOUER + bouton POINT SUIVANT
-      const bjh = document.getElementById('btn-jouer-haut');
-      if (bjh) bjh.hidden = false;
-      const bpp = document.getElementById('btn-prochain-point');
-      if (bpp) bpp.hidden = false;
+      // Afficher boutons JOUER + POINT SUIVANT côte à côte
+      const wb = document.getElementById('zone-btns');
+      if (wb) wb.hidden = false;
     });
     GPS0_GPS.on('jeu_termine', () => {
       // La finale est déclenchée via le bouton 'Finir l'aventure' dans _afficherResultats
@@ -355,18 +353,16 @@ window.GPS0_App = (() => {
     // Bouton JOUER en haut (zone atteinte)
     document.getElementById('btn-jouer-haut')?.addEventListener('click', () => {
       if (_zoneAutoTimer) { clearTimeout(_zoneAutoTimer); _zoneAutoTimer = null; }
-      const bjh = document.getElementById('btn-jouer-haut');
-      if (bjh) bjh.hidden = true;
-      const bpp = document.getElementById('btn-prochain-point');
-      if (bpp) bpp.hidden = true;
+      const wb = document.getElementById('zone-btns');
+      if (wb) wb.hidden = true;
       const z = GPS0_GPS.zoneActuelle();
       if (z) _lancerMiniJeu(z.mini_jeu);
     });
 
     // Bouton POINT SUIVANT (zone atteinte, sans jouer)
     document.getElementById('btn-prochain-point')?.addEventListener('click', () => {
-      document.getElementById('btn-jouer-haut').hidden = true;
-      document.getElementById('btn-prochain-point').hidden = true;
+      const wb = document.getElementById('zone-btns');
+      if (wb) wb.hidden = true;
       GPS0_GPS.zoneSuivante(); _majObjectif();
       GPS0_Boussole.forceEtat('off');
       _resumeGlobalClock();
@@ -520,6 +516,7 @@ window.GPS0_App = (() => {
 
   function _ouvrirIframe(niveau) {
     _pauseGlobalClock();
+    GPS0_Lune.setMiniJeuActif(true);
     document.getElementById('app').classList.remove('visible');
     const iframe = document.createElement('iframe');
     iframe.src = 'minijeux/niveau' + niveau + '.html';
@@ -530,6 +527,7 @@ window.GPS0_App = (() => {
       if (!e.data || e.data.source !== 'gps0_minijeu') return;
       window.removeEventListener('message', handler);
       iframe.remove();
+      GPS0_Lune.setMiniJeuActif(false);
       document.getElementById('app').classList.add('visible');
       _resumeGlobalClock();
       if (e.data.quit) return; // Quitter sans résultat
@@ -554,8 +552,8 @@ window.GPS0_App = (() => {
       ov.id = 'countdown-overlay';
       // Cosmonaut info
       const selfieB64 = typeof GPS0_Avatar !== 'undefined' ? GPS0_Avatar.getSelfie() : null;
-      const luneNames = ['','Verre','Cendre','Lierre','Givre','Ombre','Fer','Tempête','Cristal','Éclipse'];
-      const luneEmojis = ['','🌑','🌒','🌓','🌔','🌕','🌖','🌗','🌘','🌑'];
+      const luneNames = ['',' Séléné',' Phobos',' Titan',' Europe',' Ganymède',' Io',' Callisto',' Encelade',' Boss Final'];
+      const luneEmojis = ['','🌛','🔥','🌿','❄️','👻','🤖','🌪️','💎','☄️'];
       const n = niveau || 1;
       // Draw selfie on canvas
       const cosmoHtml = selfieB64
@@ -688,16 +686,16 @@ window.GPS0_App = (() => {
       overlay.style.display = 'none';
       // Poussières déjà ajoutées — juste navigation
       if (_resultNiveau) GPS0_Economie.setCooldown(_resultNiveau);
-      document.getElementById('btn-jouer-haut').hidden = true;
-      document.getElementById('btn-prochain-point').hidden = true;
+      const wb = document.getElementById('zone-btns');
+      if (wb) wb.hidden = true;
       GPS0_GPS.zoneSuivante(); _majObjectif();
       GPS0_Boussole.forceEtat('off');
       _resumeGlobalClock();
     };
     if (suivantBtn) suivantBtn.onclick = () => {
       overlay.style.display = 'none';
-      document.getElementById('btn-jouer-haut').hidden = true;
-      document.getElementById('btn-prochain-point').hidden = true;
+      const wb2 = document.getElementById('zone-btns');
+      if (wb2) wb2.hidden = true;
       GPS0_GPS.zoneSuivante(); _majObjectif();
       GPS0_Boussole.forceEtat('off');
       _resumeGlobalClock();

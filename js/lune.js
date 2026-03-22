@@ -60,6 +60,7 @@ window.GPS0_Lune = (() => {
   const MIN_GAP_MS = 8000;  // délai minimum entre deux popups
   let _queue = [], _processing = false, _lastShown = 0, tId = null;
   let _shownTimestamps = []; // horodatages des pop-ups de la minute écoulée
+  let _miniJeuActif = false; // bloquer popups quand iframe mini-jeu actif
 
   function _timeUntilCanShow() {
     const now = Date.now();
@@ -88,8 +89,8 @@ window.GPS0_Lune = (() => {
   }
 
   function _afficher(cat) {
-    // Ne pas afficher en zone bleue (bouton JOUER visible, superposition)
-    if (typeof GPS0_Boussole !== 'undefined' && GPS0_Boussole.getEtat() === 'zone') {
+    // Ne pas afficher en zone bleue ou pendant un mini-jeu (iframe actif)
+    if (_miniJeuActif || (typeof GPS0_Boussole !== 'undefined' && GPS0_Boussole.getEtat() === 'zone')) {
       _processing = false; _dequeux(); return;
     }
     const bulle = document.getElementById('lune-bulle');
@@ -126,11 +127,17 @@ window.GPS0_Lune = (() => {
     if (!_processing) { _processing = true; _dequeux(); }
   }
 
+  function setMiniJeuActif(val) {
+    _miniJeuActif = !!val;
+    // Si on sort du mini-jeu et qu'il y a des popups en queue, vider
+    if (!val) { _queue = []; _processing = false; }
+  }
+
   let _survId = null;
   function demarrerSurveillance() {
     if (_survId) clearInterval(_survId);
     _survId = setInterval(() => { if (Math.random() < 0.05) parler('random_fun'); }, 180000);
   }
 
-  return { parler, demarrerSurveillance };
+  return { parler, demarrerSurveillance, setMiniJeuActif };
 })();

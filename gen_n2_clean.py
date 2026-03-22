@@ -1,4 +1,10 @@
-<!doctype html>
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""Rewrite niveau2.html from scratch with correct encoding."""
+
+FILEPATH = r'c:\Users\Jules\Desktop\GPS0\minijeux\niveau2.html'
+
+HTML = '''<!doctype html>
 <html lang="fr">
 <head>
 <meta charset="utf-8">
@@ -18,9 +24,9 @@ body{display:flex;flex-direction:column;height:100dvh}
 </head>
 <body>
 <div id="hud">
-  <span id="lives">❤❤❤</span>
+  <span id="lives">\u2764\u2764\u2764</span>
   <span id="timer">2:30</span>
-  <span id="score-hud">0 ✨</span>
+  <span id="score-hud">0 \u2728</span>
 </div>
 <div id="game-container">
   <canvas id="cv"></canvas>
@@ -28,14 +34,14 @@ body{display:flex;flex-direction:column;height:100dvh}
 <script src="shared.js"></script>
 <script>
 window.NIVEAU = 2;
-window.TUTO_TEXT = "Lune Phobos — Tape pour sauter · Évite les colonnes · 3 vies<br><small>Les bords ne te tuent pas · Cristaux ✦ = +1 poussière</small>";
+window.TUTO_TEXT = "Lune Phobos \u2014 Tape pour sauter \u00b7 \u00c9vite les colonnes \u00b7 3 vies<br><small>Les bords ne te tuent pas \u00b7 Cristaux \u2726 = +1 poussi\u00e8re</small>";
 
-// ── CONSTANTES ────────────────────────────────────────────────────────────────
+// \u2500\u2500 CONSTANTES \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 const GRAV = 0.45, JUMP = -9.5, WALL_W = 44;
 const SPEED_START = 2.4, SPEED_MAX = 5.8;
 const CRYSTAL_MAX = 5;
 
-// ── ÉTAT ──────────────────────────────────────────────────────────────────────
+// \u2500\u2500 \u00c9TAT \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 let bird, walls, ashParts, parts, crystals;
 let speed, frame, invincible, rafId, bgT, crystalCount;
 
@@ -48,7 +54,7 @@ function gameReset() {
 window.gameReset = gameReset;
 
 function gameStart() {
-  const cv = document.getElementById('cv');
+  const cv = document.getElementById(\'cv\');
   GPS0_resizeCanvas(cv);
   gameReset();
   const W = cv.width, H = cv.height;
@@ -62,8 +68,8 @@ function gameStart() {
   });
 
   _spawnWall(W, H);
-  cv.addEventListener('pointerdown', _tap);
-  const ctx = cv.getContext('2d');
+  cv.addEventListener(\'pointerdown\', _tap);
+  const ctx = cv.getContext(\'2d\');
 
   const loop = () => {
     rafId = requestAnimationFrame(loop);
@@ -71,7 +77,7 @@ function gameStart() {
     const W = cv.width, H = cv.height;
     frame++; bgT++;
 
-    // Vitesse progressive : 2.4 → 5.8 sur 150s à 60fps
+    // Vitesse progressive : 2.4 \u2192 5.8 sur 150s \u00e0 60fps
     speed = Math.min(SPEED_MAX, SPEED_START + (frame / (150 * 60)) * (SPEED_MAX - SPEED_START));
 
     // Physique oiseau
@@ -80,12 +86,12 @@ function gameStart() {
     if (bird.y > H - bird.r - 2) { bird.y = H - bird.r - 2; bird.vy = -Math.abs(bird.vy) * .25; }
     if (invincible > 0) invincible--;
 
-    // Spawn murs (espacement se réduit lentement)
+    // Spawn murs (espacement se r\u00e9duit lentement)
     const spacing = Math.max(200, 370 - frame * .06);
     if (!walls.length || walls[walls.length - 1].x < W - spacing) _spawnWall(W, H);
     walls = walls.filter(w => w.x + WALL_W > -10);
 
-    // Déplacement + collisions murs
+    // D\u00e9placement + collisions murs
     walls.forEach(w => {
       w.x -= speed;
       if (invincible > 0) return;
@@ -93,7 +99,7 @@ function gameStart() {
         const inGap = bird.y - bird.r > w.gapTop && bird.y + bird.r < w.gapTop + w.gapH;
         if (!inGap) {
           invincible = 90; bird.vy = JUMP * .5;
-          for (let j = 0; j < 12; j++) parts.push({ x: bird.x, y: bird.y, vx: (Math.random() - .5) * 5, vy: -2 - Math.random() * 3, life: 28, col: '#ff7040' });
+          for (let j = 0; j < 12; j++) parts.push({ x: bird.x, y: bird.y, vx: (Math.random() - .5) * 5, vy: -2 - Math.random() * 3, life: 28, col: \'#ff7040\' });
           loseLife();
         }
       }
@@ -105,7 +111,7 @@ function gameStart() {
       if (Math.hypot(bird.x - c.x, bird.y - c.y) < bird.r + 13) {
         crystalCount++;
         addDust(1);
-        for (let j = 0; j < 10; j++) parts.push({ x: c.x, y: c.y, vx: (Math.random() - .5) * 7, vy: -3 - Math.random() * 3, life: 24, col: '#88EEFF' });
+        for (let j = 0; j < 10; j++) parts.push({ x: c.x, y: c.y, vx: (Math.random() - .5) * 7, vy: -3 - Math.random() * 3, life: 24, col: \'#88EEFF\' });
         navigator.vibrate && navigator.vibrate([15, 8, 30]);
         return false;
       }
@@ -135,7 +141,7 @@ function gameStart() {
     });
     ctx.globalAlpha = 1;
     if (invincible > 0 && Math.floor(invincible / 6) % 2 === 0) {
-      ctx.fillStyle = 'rgba(255,100,0,.22)';
+      ctx.fillStyle = \'rgba(255,100,0,.22)\';
       ctx.beginPath(); ctx.arc(bird.x, bird.y, bird.r + 14, 0, Math.PI * 2); ctx.fill();
     }
     _drawBird(ctx);
@@ -152,7 +158,7 @@ function _tap() {
 }
 
 function _spawnWall(W, H) {
-  // Gap se rétrécit légèrement avec le temps
+  // Gap se r\u00e9tr\u00e9cit l\u00e9g\u00e8rement avec le temps
   const gapH = Math.max(130, 225 - frame * .038);
   const gapTop = H * .07 + Math.random() * (H * .8 - gapH);
   const teeth = Array.from({ length: 6 }, () => (Math.random() - .5) * 18);
@@ -171,14 +177,14 @@ function _spawnWall(W, H) {
   }
 }
 
-// ── DESSIN ────────────────────────────────────────────────────────────────────
+// \u2500\u2500 DESSIN \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 
 function _drawBg(ctx, W, H) {
   // Ciel de cendres (rouge sombre)
   const sky = ctx.createLinearGradient(0, 0, 0, H);
-  sky.addColorStop(0, '#0d0608');
-  sky.addColorStop(.45, '#1c0a08');
-  sky.addColorStop(1, '#2e1005');
+  sky.addColorStop(0, \'#0d0608\');
+  sky.addColorStop(.45, \'#1c0a08\');
+  sky.addColorStop(1, \'#2e1005\');
   ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
 
   // Nuages de cendres
@@ -209,7 +215,7 @@ function _drawVolcans(ctx, W, H) {
     { cx: W * .88, h: H * .42, r: W * .10 },
   ].forEach(v => {
     const vg = ctx.createLinearGradient(v.cx - v.r, H, v.cx, H - v.h);
-    vg.addColorStop(0, '#1a0d0a'); vg.addColorStop(1, '#2e1610');
+    vg.addColorStop(0, \'#1a0d0a\'); vg.addColorStop(1, \'#2e1610\');
     ctx.fillStyle = vg;
     ctx.beginPath();
     ctx.moveTo(v.cx - v.r, H);
@@ -217,11 +223,11 @@ function _drawVolcans(ctx, W, H) {
     ctx.lineTo(v.cx + v.r * .12, H - v.h);
     ctx.lineTo(v.cx + v.r, H);
     ctx.closePath(); ctx.fill();
-    // Lueur cratère pulsante
+    // Lueur crat\u00e8re pulsante
     const intensity = .18 + .13 * Math.sin(bgT * .03 + v.cx * .01);
     const cg = ctx.createRadialGradient(v.cx, H - v.h, 2, v.cx, H - v.h, v.r * .42);
     cg.addColorStop(0, `rgba(255,90,10,${intensity.toFixed(2)})`);
-    cg.addColorStop(1, 'rgba(255,40,0,0)');
+    cg.addColorStop(1, \'rgba(255,40,0,0)\');
     ctx.fillStyle = cg;
     ctx.beginPath(); ctx.arc(v.cx, H - v.h, v.r * .42, 0, Math.PI * 2); ctx.fill();
   });
@@ -230,9 +236,9 @@ function _drawVolcans(ctx, W, H) {
 function _drawLavaSol(ctx, W, H) {
   const yB = H - H * .082;
   const lava = ctx.createLinearGradient(0, yB, 0, H);
-  lava.addColorStop(0, 'rgba(255,85,5,.94)');
-  lava.addColorStop(.35, 'rgba(220,52,0,.97)');
-  lava.addColorStop(1, 'rgba(140,22,0,1)');
+  lava.addColorStop(0, \'rgba(255,85,5,.94)\');
+  lava.addColorStop(.35, \'rgba(220,52,0,.97)\');
+  lava.addColorStop(1, \'rgba(140,22,0,1)\');
   ctx.fillStyle = lava;
   ctx.beginPath(); ctx.moveTo(0, H);
   for (let x = 0; x <= W; x += 16) {
@@ -241,8 +247,8 @@ function _drawLavaSol(ctx, W, H) {
   ctx.lineTo(W, H); ctx.closePath(); ctx.fill();
   // Lueur orange au-dessus
   const gl = ctx.createLinearGradient(0, yB - 36, 0, yB);
-  gl.addColorStop(0, 'rgba(255,80,0,0)');
-  gl.addColorStop(1, 'rgba(255,80,0,.22)');
+  gl.addColorStop(0, \'rgba(255,80,0,0)\');
+  gl.addColorStop(1, \'rgba(255,80,0,.22)\');
   ctx.fillStyle = gl; ctx.fillRect(0, yB - 36, W, 36);
 }
 
@@ -253,8 +259,8 @@ function _drawWalls(ctx, H) {
     _drawBlock(ctx, x, gapTop + gapH, H - (gapTop + gapH), w, true);
     // Lueur orange dans le gap
     const gl = ctx.createRadialGradient(x + WALL_W / 2, gapTop + gapH / 2, 4, x + WALL_W / 2, gapTop + gapH / 2, gapH * .6);
-    gl.addColorStop(0, 'rgba(255,120,30,.13)');
-    gl.addColorStop(1, 'rgba(255,60,0,0)');
+    gl.addColorStop(0, \'rgba(255,120,30,.13)\');
+    gl.addColorStop(1, \'rgba(255,60,0,0)\');
     ctx.fillStyle = gl;
     ctx.beginPath(); ctx.ellipse(x + WALL_W / 2, gapTop + gapH / 2, WALL_W + 22, gapH * .52, 0, 0, Math.PI * 2); ctx.fill();
   });
@@ -267,12 +273,12 @@ function _drawBlock(ctx, x, y, h, wall, isBot) {
 
   // Corps roche sombre violet/bleu
   const g = ctx.createLinearGradient(x, 0, x + WALL_W, 0);
-  g.addColorStop(0, '#1a1525'); g.addColorStop(.38, '#2e2840');
-  g.addColorStop(.68, '#3d3655'); g.addColorStop(1, '#1e182c');
+  g.addColorStop(0, \'#1a1525\'); g.addColorStop(.38, \'#2e2840\');
+  g.addColorStop(.68, \'#3d3655\'); g.addColorStop(1, \'#1e182c\');
   ctx.fillStyle = g; ctx.fillRect(x, y, WALL_W, h);
 
-  // Dents côté ouverture
-  ctx.fillStyle = 'rgba(255,70,10,.38)';
+  // Dents c\u00f4t\u00e9 ouverture
+  ctx.fillStyle = \'rgba(255,70,10,.38)\';
   for (let i = 0; i < Math.ceil(WALL_W / 9); i++) {
     const jag = Math.abs(wall.teeth[i % wall.teeth.length] || 8);
     ctx.fillRect(x + i * 9, isBot ? y : y + h - jag, 8, jag + 2);
@@ -281,7 +287,7 @@ function _drawBlock(ctx, x, y, h, wall, isBot) {
   // Fissures dans la roche
   ctx.lineWidth = 1.2;
   cracks.forEach(c => {
-    ctx.strokeStyle = 'rgba(255,100,30,.24)';
+    ctx.strokeStyle = \'rgba(255,100,30,.24)\';
     ctx.beginPath(); ctx.moveTo(x + c.x1, y + h * c.y1); ctx.lineTo(x + c.x2, y + h * c.y2); ctx.stroke();
   });
 
@@ -297,19 +303,19 @@ function _drawBlock(ctx, x, y, h, wall, isBot) {
     ctx.beginPath(); ctx.moveTo(x + d.x, faceY); ctx.lineTo(x + d.x, endY); ctx.stroke();
     const dropR = 2.2 + prog * 1.8;
     const dropG = ctx.createRadialGradient(x + d.x, endY, 0, x + d.x, endY, dropR * 2);
-    dropG.addColorStop(0, 'rgba(255,220,60,.95)');
-    dropG.addColorStop(.4, 'rgba(255,80,0,.8)');
-    dropG.addColorStop(1, 'rgba(255,40,0,0)');
+    dropG.addColorStop(0, \'rgba(255,220,60,.95)\');
+    dropG.addColorStop(.4, \'rgba(255,80,0,.8)\');
+    dropG.addColorStop(1, \'rgba(255,40,0,0)\');
     ctx.fillStyle = dropG;
     ctx.beginPath(); ctx.arc(x + d.x, endY, dropR, 0, Math.PI * 2); ctx.fill();
   });
 
   // Reflet gauche
-  ctx.fillStyle = 'rgba(255,255,255,.03)'; ctx.fillRect(x, y, 3, h);
+  ctx.fillStyle = \'rgba(255,255,255,.03)\'; ctx.fillRect(x, y, 3, h);
   // Lueur orange bord gap
   const eg = ctx.createLinearGradient(x, isBot ? y : y + h - 16, x, isBot ? y + 16 : y + h);
-  eg.addColorStop(0, 'rgba(255,80,15,.42)');
-  eg.addColorStop(1, 'rgba(255,80,15,0)');
+  eg.addColorStop(0, \'rgba(255,80,15,.42)\');
+  eg.addColorStop(1, \'rgba(255,80,15,0)\');
   ctx.fillStyle = eg; ctx.fillRect(x, isBot ? y : y + h - 16, WALL_W, 16);
 }
 
@@ -318,15 +324,15 @@ function _drawCrystals(ctx) {
     ctx.save(); ctx.translate(c.x, c.y); ctx.rotate(c.rot);
     // Halo
     const hg = ctx.createRadialGradient(0, 0, 3, 0, 0, 22);
-    hg.addColorStop(0, 'rgba(136,238,255,.42)');
-    hg.addColorStop(1, 'rgba(136,238,255,0)');
+    hg.addColorStop(0, \'rgba(136,238,255,.42)\');
+    hg.addColorStop(1, \'rgba(136,238,255,0)\');
     ctx.fillStyle = hg; ctx.beginPath(); ctx.arc(0, 0, 22, 0, Math.PI * 2); ctx.fill();
     // Losange
-    ctx.fillStyle = '#88EEFF';
+    ctx.fillStyle = \'#88EEFF\';
     ctx.beginPath(); ctx.moveTo(0, -13); ctx.lineTo(7, 0); ctx.lineTo(0, 13); ctx.lineTo(-7, 0); ctx.closePath(); ctx.fill();
-    ctx.strokeStyle = 'rgba(200,255,255,.7)'; ctx.lineWidth = 1.2; ctx.stroke();
+    ctx.strokeStyle = \'rgba(200,255,255,.7)\'; ctx.lineWidth = 1.2; ctx.stroke();
     // Reflet
-    ctx.fillStyle = 'rgba(255,255,255,.5)';
+    ctx.fillStyle = \'rgba(255,255,255,.5)\';
     ctx.beginPath(); ctx.moveTo(0, -11); ctx.lineTo(3, -4); ctx.lineTo(0, -2); ctx.closePath(); ctx.fill();
     ctx.restore();
   });
@@ -339,30 +345,54 @@ function _drawBird(ctx) {
   const fH = rising ? 28 : 16;
   const fX = bird.x, fY = bird.y + bird.r * .75;
   const fg = ctx.createRadialGradient(fX, fY, 2, fX, fY + fH * .5, fH);
-  fg.addColorStop(0, 'rgba(255,210,60,.97)');
-  fg.addColorStop(.4, 'rgba(255,80,0,.78)');
-  fg.addColorStop(1, 'rgba(255,30,0,0)');
+  fg.addColorStop(0, \'rgba(255,210,60,.97)\');
+  fg.addColorStop(.4, \'rgba(255,80,0,.78)\');
+  fg.addColorStop(1, \'rgba(255,30,0,0)\');
   ctx.fillStyle = fg;
   ctx.beginPath(); ctx.ellipse(fX, fY + fH * .35, bird.r * .38, fH * .52, 0, 0, Math.PI * 2); ctx.fill();
-  // Cœur bleu (flamme froide)
+  // C\u0153ur bleu (flamme froide)
   ctx.fillStyle = `rgba(180,220,255,${rising ? .68 : .38})`;
   ctx.beginPath(); ctx.ellipse(fX, fY + 5, bird.r * .16, rising ? 10 : 6, 0, 0, Math.PI * 2); ctx.fill();
   // Cosmonaute
-  drawCosmonaut(ctx, bird.x, bird.y, bird.r, tilt, 'fly');
+  drawCosmonaut(ctx, bird.x, bird.y, bird.r, tilt, \'fly\');
 }
 
 function _drawHUD(ctx, W, H) {
   // Cristaux (bas droite)
-  ctx.fillStyle = 'rgba(0,0,0,.52)';
+  ctx.fillStyle = \'rgba(0,0,0,.52)\';
   ctx.beginPath(); ctx.roundRect(W - 90, H - 46, 84, 40, 8); ctx.fill();
-  ctx.fillStyle = '#88EEFF'; ctx.font = 'bold 13px system-ui'; ctx.textAlign = 'center';
-  ctx.fillText('✦ ' + crystalCount + '/' + CRYSTAL_MAX, W - 48, H - 21);
-  ctx.fillStyle = 'rgba(136,238,255,.55)'; ctx.font = '10px system-ui';
-  ctx.fillText('cristaux', W - 48, H - 9);
+  ctx.fillStyle = \'#88EEFF\'; ctx.font = \'bold 13px system-ui\'; ctx.textAlign = \'center\';
+  ctx.fillText(\'\u2726 \' + crystalCount + \'/\' + CRYSTAL_MAX, W - 48, H - 21);
+  ctx.fillStyle = \'rgba(136,238,255,.55)\'; ctx.font = \'10px system-ui\';
+  ctx.fillText(\'cristaux\', W - 48, H - 9);
   // Vitesse (bas gauche)
-  ctx.fillStyle = 'rgba(255,120,30,.75)'; ctx.font = '11px system-ui'; ctx.textAlign = 'left';
-  ctx.fillText('⚡ x' + speed.toFixed(1), 8, H - 8);
+  ctx.fillStyle = \'rgba(255,120,30,.75)\'; ctx.font = \'11px system-ui\'; ctx.textAlign = \'left\';
+  ctx.fillText(\'\u26a1 x\' + speed.toFixed(1), 8, H - 8);
 }
 </script>
 </body>
-</html>
+</html>'''
+
+with open(FILEPATH, 'w', encoding='utf-8', newline='\n') as f:
+    f.write(HTML)
+
+# Verify
+with open(FILEPATH, 'r', encoding='utf-8') as f:
+    content = f.read()
+
+checks = [
+    ('\u2764\u2764\u2764', 'hearts'),
+    ('\u2726', 'crystal star'),
+    ('\u26a1', 'lightning'),
+    ('\u2014', 'em-dash'),
+    ('Lune Phobos', 'lune name'),
+]
+with open(r'c:\Users\Jules\Desktop\GPS0\fix_n2_test.txt', 'w', encoding='utf-8') as log:
+    for char, name in checks:
+        found = char in content
+        log.write(('OK' if found else 'MISSING') + ': ' + name + '\n')
+    log.write('Size: ' + str(len(content)) + ' chars\n')
+    i = content.find('id="lives">')
+    log.write('Lives: ' + repr(content[i:i+25]) + '\n')
+    i2 = content.find('TUTO_TEXT')
+    log.write('TUTO: ' + repr(content[i2:i2+120]) + '\n')

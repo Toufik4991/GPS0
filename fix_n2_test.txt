@@ -1,0 +1,8 @@
+OK: hearts
+OK: crystal star
+OK: lightning
+OK: em-dash
+OK: lune name
+Size: 14236 chars
+Lives: 'id="lives">❤❤❤</span>\n  <'
+TUTO: 'TUTO_TEXT = "Lune Phobos — Tape pour sauter · Évite les colonnes · 3 vies<br><small>Les bords ne te tuent pas · Cristaux'
