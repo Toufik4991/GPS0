@@ -1,9 +1,18 @@
 # 🌙 GPS0 — Game Design Document v3.0
 
-**Version :** 3.42.0 - Bug 24 : Refonte N7 Mots Cosmiques
+**Version :** 3.43.0 - Bug 25 : Fix N5 crash + Fusée -15% + Nettoyage
 **Date :** 22/03/2026
 **Auteur :** Toufik49
 **Statut :** Opérationnel — Jeux 1-9 en cours de reconstruction
+
+---
+
+## Changements v3.43.0 (Bug 25 — Fix N5 + Fusée + Nettoyage)
+
+- **N5 "1, 2, 3 Soleil !" fix écran noir (VRAI fix)** : `window.onResize` appelait `GPS0_resizeCanvas(cv)` qui lui-même rappelait `window.onResize` → récursion infinie → stack overflow → crash. Fix : `onResize` appelle uniquement `_fixSize()` sans reboucler
+- **Fusée boussole -15%** : Wrapper 122→104px, SVG 154→131px, repositionnée top:45 left:45 (centrée visuellement sur l'astéroïde, corrigé le décalage bas-droite)
+- **Nettoyage projet** : 22 fichiers temp/génération retirés du repo (gen*.py, write*.py, fix*.py, *.txt, *.bat, backups), .gitignore mis à jour pour les exclure définitivement
+- Service Worker gps0-v58 → gps0-v59 / APP_VERSION 3.43.0
 
 ---
 

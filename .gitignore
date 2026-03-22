@@ -2,5 +2,15 @@
 minijeux/*_backup.html
 minijeux/*_new.html
 minijeux/*_clean.html
+minijeux/*_old_*.html
 *.bak.html
 fix_n5_*.txt
+
+# Scripts de génération temporaires
+gen*.py
+write_*.py
+fix_*.py
+run_*.bat
+*_result.txt
+status.txt
+log_result.txt

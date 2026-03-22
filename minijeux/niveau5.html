@@ -75,7 +75,7 @@ function gameStart() {
   rafId = requestAnimationFrame(_loop);
 }
 window.gameStart = gameStart;
-window.onResize = function () { GPS0_resizeCanvas(cv); _fixSize(); };
+window.onResize = function () { _fixSize(); };
 
 function _fixSize() {
   W = cv.width; H = cv.height;
