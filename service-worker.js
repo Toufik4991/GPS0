@@ -1,5 +1,5 @@
-﻿const CACHE = 'gps0-v59';
-const APP_VERSION = '3.43.0';
+﻿const CACHE = 'gps0-v60';
+const APP_VERSION = '3.43.1';
 const CORE = [
   'index.html',
   'css/main.css',
@@ -26,15 +26,6 @@ const CORE = [
   'minijeux/niveau7.html',
   'minijeux/niveau8.html',
   'minijeux/niveau9.html',
-  'assets/backgrounds/fond_ecran1.jpeg',
-  'assets/backgrounds/fond_ecran2.jpeg',
-  'assets/backgrounds/fond_ecran3.jpeg',
-  'assets/backgrounds/fond_ecran4.jpeg',
-  'assets/backgrounds/fond_ecran5.jpeg',
-  'assets/backgrounds/fond_ecran6.jpeg',
-  'assets/backgrounds/fond_ecran7.jpeg',
-  'assets/backgrounds/fond_ecran8.jpeg',
-  'assets/backgrounds/fond_ecran9.jpeg',
   'assets/audio/sfx/achat.mp3',
   'assets/audio/sfx/boussole_on.mp3',
   'assets/audio/sfx/boussole_off.mp3',
