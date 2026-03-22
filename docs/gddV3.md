@@ -75,7 +75,7 @@
 | 1 | Verre | Lance-pierre | Drag opposé au vecteur, trajectoire prédictive, blocs HP, caméra suit |
 | 2 | Cendre | Flappy Bird | Vitesse progressive (2.4→5.8), colonnes roche+lave animée, cristaux +dust, jetpack glow, ciel volcanique |
 | 3 | Lierre | Doodle Jump | Tilt+swipe, champignon bioluminescent (×2), graines +dust max5, parallaxe lierre + Titan, spores flottantes, 3min |
-| 4 | Givre | Swing/Pendule | Tap accroche, swipe longueur corde, physique pendule |
+| 4 | Givre | Swing/Pendule | Stalactites oscillantes, longueur auto, murs mortels, cristaux drift +dust max5, givre visuel, caverne refractions, 3min |
 | 5 | Ombre | Labyrinthe | Rayon lumière 70px, lampes +20px (doré +12), D-pad continu 4 boutons, maze 33×33 |
 | 6 | Fer | Agar.io | Croissance +10%, vitesse inverse, 25 ennemis, map 3×, IA évitement |
 | 7 | Tempête | Jetpack | Poussée -40%, gravité +20%, rebond sol/plafond, obstacles -30% |

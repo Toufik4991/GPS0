@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="fr">
 <head>
 <meta charset="utf-8">
@@ -6,11 +6,10 @@
 <title>GPS0 N4</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;overflow:hidden;background:#0A0A1A;font-family:system-ui,sans-serif;color:#fff;touch-action:none;user-select:none}
-#bg{position:fixed;inset:0;z-index:0;background:radial-gradient(ellipse at 50% 20%,rgba(100,200,255,.14) 0%,transparent 60%),linear-gradient(180deg,#060e18 0%,#020810 100%);}
+html,body{height:100%;overflow:hidden;background:#050c14;font-family:system-ui,sans-serif;color:#fff;touch-action:none;user-select:none}
 #hud{position:relative;z-index:20;display:flex;align-items:center;gap:10px;padding:6px 52px 6px 10px;background:rgba(0,0,0,.65);backdrop-filter:blur(6px);flex-shrink:0}
 #lives{font-size:1.1rem;letter-spacing:2px;min-width:54px}
-#timer{flex:1;text-align:center;font-size:.95rem;font-weight:bold;color:#4FC3F7}
+#timer{flex:1;text-align:center;font-size:.95rem;font-weight:bold;color:#7DD8FA}
 #score-hud{font-size:.9rem;color:#FFD700;font-weight:bold;min-width:52px;text-align:right}
 #game-container{position:relative;z-index:1;flex:1;overflow:hidden;display:flex;flex-direction:column}
 canvas{display:block;width:100%;height:100%}
@@ -18,10 +17,9 @@ body{display:flex;flex-direction:column;height:100dvh}
 </style>
 </head>
 <body>
-<div id="bg"></div>
 <div id="hud">
   <span id="lives">❤❤❤</span>
-  <span id="timer">2:30</span>
+  <span id="timer">3:00</span>
   <span id="score-hud">0 ✨</span>
 </div>
 <div id="game-container">
@@ -30,99 +28,303 @@ body{display:flex;flex-direction:column;height:100dvh}
 <script src="shared.js"></script>
 <script>
 window.NIVEAU = 4;
+window.GPS0_TIMER_SEC = 180;
+window.TUTO_TEXT = "Lune de Givre — Tape pour t'accrocher · Retape pour lâcher · Évite murs et pics<br><small>Cristaux ✦ = +1 poussière (max 5) · La combinaison gèle si tu restes immobile</small>";
 
-window.TUTO_TEXT = "Tape pour t'accrocher à une stalactite.<br>Swipe haut/bas pour changer la longueur de la corde.<br>Retape pour te lâcher et voler !";
+const GRAV = 0.38;
+const DUST_MAX = 5;
+const CRYSTAL_INTERVAL = Math.floor(180 * 60 / DUST_MAX); // 1 toutes les 36s @60fps
 
-let cosmo,anchors,attached,rope,dustItems,particles,spikes,rafId,swStart;
+let cosmo, anchors, attached, rope, crystals, particles, spikes;
+let dustCount, frostLevel, bgT, frame, nextCrystalAt, rafId;
 
-function gameReset(){
+function gameReset() {
   cancelAnimationFrame(rafId);
-  cosmo={x:0,y:0,vx:2.5,vy:0,r:22};
-  attached=null; rope={len:0,angle:0,angVel:0};
-  dustItems=[]; particles=[]; spikes=[];
+  cosmo = { x: 0, y: 0, vx: 2.5, vy: 0, r: 22 };
+  attached = null; rope = { len: 0, angle: 0, angVel: 0 };
+  crystals = []; particles = []; spikes = [];
+  dustCount = 0; frostLevel = 0; bgT = 0; frame = 0;
+  nextCrystalAt = CRYSTAL_INTERVAL;
 }
-window.gameReset=gameReset;
+window.gameReset = gameReset;
 
-function gameStart(){
-  const cv=document.getElementById('cv');
+function gameStart() {
+  const cv = document.getElementById('cv');
   GPS0_resizeCanvas(cv);
   gameReset();
-  const W=cv.width,H=cv.height;
-  cosmo.x=W*.1; cosmo.y=H*.38;
-  anchors=[];
-  for(let i=0;i<13;i++) anchors.push({x:W*.04+i*(W*.08),y:H*.07+Math.random()*H*.12,r:10});
-  for(let i=0;i<Math.floor(W/28);i++) spikes.push({x:i*28+14,y:H-26});
-  for(let i=0;i<8;i++) dustItems.push({x:W*.1+i*(W*.12),y:H*.2+Math.random()*H*.55,r:12,col:false});
-  cv.addEventListener('pointerdown',_tap);
-  cv.addEventListener('touchstart',e=>{swStart={y:e.touches[0].clientY};},{passive:true});
-  cv.addEventListener('touchmove',e=>{
-    if(!swStart||attached===null)return;
-    const dy=e.touches[0].clientY-swStart.y;
-    rope.len=Math.max(40,Math.min(220,rope.len+dy*.35));
-    swStart={y:e.touches[0].clientY};
-  },{passive:true});
-  const ctx=cv.getContext('2d');
-  const loop=()=>{
-    rafId=requestAnimationFrame(loop);
-    if(!GPS0_running())return;
-    if(attached){
-      const G=.38,gc=G*Math.cos(rope.angle)/rope.len;
-      rope.angVel-=gc; rope.angVel*=.998; rope.angle+=rope.angVel;
-      cosmo.x=attached.x+Math.sin(rope.angle)*rope.len;
-      cosmo.y=attached.y+Math.cos(rope.angle)*rope.len;
-      cosmo.vx=rope.angVel*rope.len*Math.cos(rope.angle);
-      cosmo.vy=rope.angVel*rope.len*Math.sin(rope.angle);
+  const W = cv.width, H = cv.height;
+  cosmo.x = W * .2; cosmo.y = H * .38;
+
+  // Stalactites : 8 fixes (i%3!=1) + 5 oscillantes (i%3===1)
+  anchors = Array.from({ length: 13 }, (_, i) => ({
+    baseX: W * .055 + i * (W * .075),
+    x: W * .055 + i * (W * .075),
+    y: H * .07 + Math.random() * H * .12,
+    r: 10,
+    osc: i % 3 === 1,
+    phase: Math.random() * Math.PI * 2,
+    amp: i % 3 === 1 ? (W * .035 + Math.random() * W * .035) : 0
+  }));
+
+  // Pics bas
+  for (let i = 0; i < Math.floor(W / 26); i++) spikes.push({ x: i * 26 + 13, y: H - 28 });
+
+  cv.addEventListener('pointerdown', _tap);
+  const ctx = cv.getContext('2d');
+
+  const loop = () => {
+    rafId = requestAnimationFrame(loop);
+    if (!GPS0_running()) return;
+    const W = cv.width, H = cv.height;
+    bgT++; frame++;
+
+    // Oscillation stalactites
+    anchors.forEach(a => { if (a.osc) a.x = a.baseX + Math.sin(bgT * .018 + a.phase) * a.amp; });
+
+    // Physique
+    if (attached) {
+      const gc = GRAV * Math.cos(rope.angle) / rope.len;
+      rope.angVel -= gc; rope.angVel *= .999; rope.angle += rope.angVel;
+      cosmo.x = attached.x + Math.sin(rope.angle) * rope.len;
+      cosmo.y = attached.y + Math.cos(rope.angle) * rope.len;
+      cosmo.vx = rope.angVel * rope.len * Math.cos(rope.angle);
+      cosmo.vy = rope.angVel * rope.len * Math.sin(rope.angle);
     } else {
-      cosmo.vx*=.99; cosmo.vy+=.38; cosmo.x+=cosmo.vx; cosmo.y+=cosmo.vy;
+      cosmo.vx *= .99; cosmo.vy += GRAV;
+      cosmo.x += cosmo.vx; cosmo.y += cosmo.vy;
     }
-    if(cosmo.x<cosmo.r){cosmo.x=cosmo.r;cosmo.vx=Math.abs(cosmo.vx)*.6;}
-    if(cosmo.x>cv.width-cosmo.r){cosmo.x=cv.width-cosmo.r;cosmo.vx=-Math.abs(cosmo.vx)*.6;}
-    if(cosmo.y<cosmo.r){cosmo.y=cosmo.r;cosmo.vy=Math.abs(cosmo.vy)*.5;}
-    if(cosmo.y>cv.height-55){loseLife();if(GPS0_lives()>0){cosmo.y=cv.height*.38;cosmo.x=cv.width*.1;cosmo.vx=2.5;cosmo.vy=0;attached=null;}return;}
-    dustItems.forEach(d=>{if(d.col)return;if(Math.sqrt((cosmo.x-d.x)**2+(cosmo.y-d.y)**2)<cosmo.r+d.r){d.col=true;addDust(4);for(let i=0;i<6;i++)particles.push({x:d.x,y:d.y,vx:(Math.random()-.5)*5,vy:-3,life:22,col:'#FFD700'});}});
-    ctx.clearRect(0,0,cv.width,cv.height);
-    // Glace fond
-    ctx.strokeStyle='rgba(160,210,240,.08)';ctx.lineWidth=2;
-    for(let i=0;i<8;i++){const x=i*cv.width/8;ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,cv.height);ctx.stroke();}
-    // Stalactites + anchors
-    anchors.forEach(a=>{
-      ctx.fillStyle='rgba(150,220,255,.65)';
-      ctx.beginPath();ctx.moveTo(a.x-a.r,0);ctx.lineTo(a.x+a.r,0);ctx.lineTo(a.x,a.y+30);ctx.closePath();ctx.fill();
-      ctx.beginPath();ctx.arc(a.x,a.y,a.r,0,Math.PI*2);ctx.fill();
-      if(attached===a){
-        ctx.strokeStyle='rgba(79,195,247,.9)';ctx.lineWidth=3;ctx.beginPath();ctx.arc(a.x,a.y,a.r+5,0,Math.PI*2);ctx.stroke();
-        ctx.strokeStyle='rgba(200,235,255,.7)';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(cosmo.x,cosmo.y);ctx.stroke();
+
+    // Bord haut rebond
+    if (cosmo.y < cosmo.r) { cosmo.y = cosmo.r; cosmo.vy = Math.abs(cosmo.vy) * .45; }
+
+    // Murs latéraux = mort
+    if (cosmo.x < cosmo.r + 5 || cosmo.x > W - cosmo.r - 5) {
+      for (let i = 0; i < 12; i++) particles.push({ x: cosmo.x, y: cosmo.y, vx: (Math.random() - .5) * 7, vy: -2 - Math.random() * 3, life: 26, col: '#aee8ff' });
+      attached = null; loseLife();
+      if (GPS0_lives() > 0) { cosmo.x = W / 2; cosmo.y = H * .38; cosmo.vx = 2.5; cosmo.vy = 0; frostLevel = 0; }
+      return;
+    }
+
+    // Pics bas = mort
+    if (cosmo.y > H - 55) {
+      for (let i = 0; i < 12; i++) particles.push({ x: cosmo.x, y: cosmo.y, vx: (Math.random() - .5) * 6, vy: -3 - Math.random() * 2, life: 26, col: '#aee8ff' });
+      attached = null; loseLife();
+      if (GPS0_lives() > 0) { cosmo.x = W / 2; cosmo.y = H * .38; cosmo.vx = 2.5; cosmo.vy = 0; frostLevel = 0; }
+      return;
+    }
+
+    // Frost (visuel seulement)
+    const spd = Math.hypot(cosmo.vx, cosmo.vy);
+    frostLevel = spd < 1.2 && !attached
+      ? Math.min(1, frostLevel + .003)
+      : Math.max(0, frostLevel - .01);
+
+    // Spawn cristaux progressifs (1 par 36s)
+    if (dustCount < DUST_MAX && frame >= nextCrystalAt) {
+      nextCrystalAt += CRYSTAL_INTERVAL;
+      crystals.push({
+        x: W * .12 + Math.random() * W * .76,
+        y: H * .12 + Math.random() * H * .68,
+        vx: (Math.random() - .5) * .55, vy: (Math.random() - .5) * .40,
+        rot: 0, phase: Math.random() * Math.PI * 2
+      });
+    }
+
+    // Cristaux - mouvement + collecte
+    crystals = crystals.filter(c => {
+      c.x += c.vx; c.y += c.vy; c.rot += .022;
+      if (c.x < 18 || c.x > W - 18) c.vx *= -1;
+      if (c.y < 18 || c.y > H - 58) c.vy *= -1;
+      if (Math.hypot(cosmo.x - c.x, cosmo.y - c.y) < cosmo.r + 16) {
+        dustCount++; addDust(1);
+        for (let i = 0; i < 11; i++) particles.push({ x: c.x, y: c.y, vx: (Math.random() - .5) * 7, vy: -2.5 - Math.random() * 2.5, life: 26, col: '#cdf0ff' });
+        navigator.vibrate && navigator.vibrate([12, 6, 24]);
+        return false;
       }
+      return true;
     });
-    // Pics
-    ctx.fillStyle='rgba(150,200,230,.8)';
-    spikes.forEach(s=>{ctx.beginPath();ctx.moveTo(s.x-13,cv.height);ctx.lineTo(s.x,s.y);ctx.lineTo(s.x+13,cv.height);ctx.closePath();ctx.fill();});
-    dustItems.forEach(d=>{if(!d.col){ctx.fillStyle='#FFD700';ctx.font='17px system-ui';ctx.textAlign='center';ctx.fillText('✨',d.x,d.y+6);}});
-    particles=particles.filter(p=>p.life>0);
-    particles.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.1;p.life--;ctx.fillStyle=p.col;ctx.globalAlpha=p.life/22;ctx.beginPath();ctx.arc(p.x,p.y,3,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;});
-    drawCosmonaut(ctx,cosmo.x,cosmo.y,cosmo.r,0);
-    ctx.fillStyle='rgba(255,255,255,.4)';ctx.font='12px system-ui';ctx.textAlign='center';
-    ctx.fillText(attached?'TAP pour lâcher':'TAP pour s\'accrocher',cv.width/2,cv.height-8);
+
+    // Particules
+    particles = particles.filter(p => p.life > 0);
+    particles.forEach(p => { p.x += p.vx; p.y += p.vy; p.vy += .09; p.life--; });
+
+    // Dessin
+    ctx.clearRect(0, 0, W, H);
+    _drawBg(ctx, W, H);
+    _drawDangerWalls(ctx, W, H);
+    _drawSpikes(ctx, H);
+    _drawAnchors(ctx);
+    _drawCrystals(ctx, H);
+    particles.forEach(p => {
+      ctx.globalAlpha = p.life / 26; ctx.fillStyle = p.col;
+      ctx.beginPath(); ctx.arc(p.x, p.y, 3.2, 0, Math.PI * 2); ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+    const tilt = attached
+      ? Math.max(-1, Math.min(1, rope.angle * .5))
+      : Math.max(-.5, Math.min(.5, cosmo.vx * .06));
+    drawCosmonaut(ctx, cosmo.x, cosmo.y, cosmo.r, tilt, 'fly');
+    if (frostLevel > .04) _drawFrost(ctx);
+    _drawDustHUD(ctx, W, H);
+    ctx.fillStyle = 'rgba(200,240,255,.32)'; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText(attached ? "TAP pour lâcher" : "TAP pour s'accrocher", W / 2, H - 7);
   };
   loop();
 }
-function _tap(){
-  if(!GPS0_running())return;
-  if(attached){
-    cosmo.vx=-Math.sin(rope.angle)*rope.angVel*rope.len*.7;
-    cosmo.vy=Math.cos(rope.angle)*rope.angVel*rope.len*.7;
-    attached=null;return;
+window.gameStart = gameStart;
+
+function _tap() {
+  if (!GPS0_running()) return;
+  if (attached) {
+    cosmo.vx = rope.angVel * rope.len * Math.cos(rope.angle);
+    cosmo.vy = rope.angVel * rope.len * Math.sin(rope.angle);
+    attached = null; return;
   }
-  let best=null,bestD=150;
-  anchors.forEach(a=>{const d=Math.sqrt((cosmo.x-a.x)**2+(cosmo.y-a.y)**2);if(d<bestD){bestD=d;best=a;}});
-  if(best){
-    attached=best;
-    rope.len=Math.max(40,Math.sqrt((cosmo.x-best.x)**2+(cosmo.y-best.y)**2));
-    rope.angle=Math.atan2(cosmo.x-best.x,cosmo.y-best.y);
-    rope.angVel=(cosmo.vx*Math.cos(rope.angle)+cosmo.vy*Math.sin(rope.angle))/rope.len;
+  let best = null, bestD = 165;
+  anchors.forEach(a => { const d = Math.hypot(cosmo.x - a.x, cosmo.y - a.y); if (d < bestD) { bestD = d; best = a; } });
+  if (best) {
+    attached = best;
+    rope.len = Math.max(40, bestD);
+    rope.angle = Math.atan2(cosmo.x - best.x, cosmo.y - best.y);
+    rope.angVel = (cosmo.vx * Math.cos(rope.angle) + cosmo.vy * Math.sin(rope.angle)) / rope.len;
   }
 }
 
+// ─── BACKGROUND Caverne cristaux ─────────────────────────────────────────────
+
+function _drawBg(ctx, W, H) {
+  const bg = ctx.createLinearGradient(0, 0, 0, H);
+  bg.addColorStop(0, '#030c18'); bg.addColorStop(.55, '#040e1c'); bg.addColorStop(1, '#060a15');
+  ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+
+  // Refractions lumineuses diagonales
+  for (let i = 0; i < 6; i++) {
+    const ax = ((i * W * .19) + bgT * .10) % (W * 1.15) - W * .07;
+    const int = (.010 + .007 * Math.sin(bgT * .011 + i * 1.4)).toFixed(3);
+    ctx.strokeStyle = `rgba(150,225,255,${int})`;
+    ctx.lineWidth = 14 + i * 3;
+    ctx.beginPath(); ctx.moveTo(ax, 0); ctx.lineTo(ax + H * .42, H); ctx.stroke();
+  }
+
+  // Cristaux muraux gauche
+  for (let i = 0; i < 5; i++) {
+    const y = H * (.10 + i * .17), len = 22 + i * 7;
+    const g = ctx.createLinearGradient(0, y, len, y - len * .4);
+    g.addColorStop(0, 'rgba(180,235,255,.52)'); g.addColorStop(1, 'rgba(100,200,245,.06)');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.moveTo(0, y - 7); ctx.lineTo(len, y - len * .28); ctx.lineTo(0, y + 7); ctx.closePath(); ctx.fill();
+  }
+  // Cristaux muraux droite
+  for (let i = 0; i < 4; i++) {
+    const y = H * (.18 + i * .19), len = 20 + i * 8;
+    const g = ctx.createLinearGradient(W, y, W - len, y - len * .4);
+    g.addColorStop(0, 'rgba(180,235,255,.52)'); g.addColorStop(1, 'rgba(100,200,245,.06)');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.moveTo(W, y - 6); ctx.lineTo(W - len, y - len * .28); ctx.lineTo(W, y + 6); ctx.closePath(); ctx.fill();
+  }
+}
+
+function _drawDangerWalls(ctx, W, H) {
+  const pulse = .12 + .08 * Math.sin(bgT * .07);
+  const lw = ctx.createLinearGradient(0, 0, 18, 0);
+  lw.addColorStop(0, `rgba(255,70,70,${pulse.toFixed(2)})`); lw.addColorStop(1, 'rgba(255,70,70,0)');
+  ctx.fillStyle = lw; ctx.fillRect(0, 0, 18, H);
+  const rw = ctx.createLinearGradient(W, 0, W - 18, 0);
+  rw.addColorStop(0, `rgba(255,70,70,${pulse.toFixed(2)})`); rw.addColorStop(1, 'rgba(255,70,70,0)');
+  ctx.fillStyle = rw; ctx.fillRect(W - 18, 0, 18, H);
+  ctx.strokeStyle = `rgba(255,90,90,${(pulse * .7).toFixed(2)})`; ctx.lineWidth = 1.5;
+  ctx.setLineDash([5, 4]);
+  ctx.beginPath(); ctx.moveTo(5, 0); ctx.lineTo(5, H); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(W - 5, 0); ctx.lineTo(W - 5, H); ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+function _drawSpikes(ctx, H) {
+  spikes.forEach(s => {
+    const g = ctx.createLinearGradient(s.x, H, s.x, s.y);
+    g.addColorStop(0, 'rgba(180,228,255,.92)'); g.addColorStop(1, 'rgba(225,248,255,.55)');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.moveTo(s.x - 13, H); ctx.lineTo(s.x, s.y); ctx.lineTo(s.x + 13, H); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,.16)'; ctx.lineWidth = .8; ctx.stroke();
+  });
+}
+
+function _drawAnchors(ctx) {
+  anchors.forEach(a => {
+    const isAtt = attached === a;
+    // Corps stalactite
+    const sg = ctx.createLinearGradient(a.x, 0, a.x, a.y + 34);
+    sg.addColorStop(0, 'rgba(200,238,255,.78)'); sg.addColorStop(1, 'rgba(140,212,250,.18)');
+    ctx.fillStyle = sg;
+    ctx.beginPath(); ctx.moveTo(a.x - a.r, 0); ctx.lineTo(a.x + a.r, 0); ctx.lineTo(a.x, a.y + 32); ctx.closePath(); ctx.fill();
+    // Boule
+    const ballCol = isAtt ? 'rgba(110,215,255,.97)' : `rgba(160,230,255,${a.osc ? '.80' : '.62'})`;
+    ctx.fillStyle = ballCol;
+    ctx.beginPath(); ctx.arc(a.x, a.y, a.r, 0, Math.PI * 2); ctx.fill();
+    if (isAtt) {
+      ctx.strokeStyle = 'rgba(255,255,255,.80)'; ctx.lineWidth = 2.6;
+      ctx.beginPath(); ctx.arc(a.x, a.y, a.r + 5, 0, Math.PI * 2); ctx.stroke();
+      // Corde avec effet givre
+      ctx.strokeStyle = 'rgba(255,255,255,.14)'; ctx.lineWidth = 6;
+      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(cosmo.x, cosmo.y); ctx.stroke();
+      ctx.strokeStyle = 'rgba(200,242,255,.78)'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(cosmo.x, cosmo.y); ctx.stroke();
+    }
+    // Reflet
+    ctx.fillStyle = 'rgba(255,255,255,.28)';
+    ctx.beginPath(); ctx.arc(a.x - a.r * .25, a.y - a.r * .28, a.r * .30, 0, Math.PI * 2); ctx.fill();
+    // Indicateur oscillant
+    if (a.osc) {
+      ctx.strokeStyle = 'rgba(120,210,255,.35)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.arc(a.x, a.y, a.r + 9, 0, Math.PI * 2); ctx.stroke();
+    }
+  });
+}
+
+function _drawCrystals(ctx, H) {
+  const W = document.getElementById('cv').width;
+  crystals.forEach(c => {
+    ctx.save(); ctx.translate(c.x, c.y); ctx.rotate(c.rot);
+    const pulse = .28 + .18 * Math.sin(bgT * .05 + c.phase);
+    const hg = ctx.createRadialGradient(0, 0, 3, 0, 0, 24);
+    hg.addColorStop(0, `rgba(190,242,255,${pulse.toFixed(2)})`);
+    hg.addColorStop(1, 'rgba(190,242,255,0)');
+    ctx.fillStyle = hg; ctx.beginPath(); ctx.arc(0, 0, 24, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#c8f0ff';
+    ctx.beginPath(); ctx.moveTo(0, -13); ctx.lineTo(6, 0); ctx.lineTo(0, 13); ctx.lineTo(-6, 0); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,.65)'; ctx.lineWidth = 1.3; ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,.45)';
+    ctx.beginPath(); ctx.moveTo(0, -11); ctx.lineTo(3, -4); ctx.lineTo(0, -2); ctx.closePath(); ctx.fill();
+    ctx.restore();
+  });
+}
+
+function _drawFrost(ctx) {
+  const alpha = frostLevel * .58;
+  ctx.globalAlpha = alpha;
+  ctx.strokeStyle = 'rgba(200,240,255,1)'; ctx.lineWidth = 1;
+  const R = cosmo.r + 26;
+  for (let i = 0; i < 8; i++) {
+    const a = (i / 8) * Math.PI * 2;
+    const fx = cosmo.x + Math.cos(a) * R, fy = cosmo.y + Math.sin(a) * R;
+    ctx.beginPath();
+    ctx.moveTo(cosmo.x + Math.cos(a) * (cosmo.r + 4), cosmo.y + Math.sin(a) * (cosmo.r + 4));
+    ctx.lineTo(fx, fy);
+    ctx.moveTo(fx, fy); ctx.lineTo(fx + Math.cos(a + .58) * 7, fy + Math.sin(a + .58) * 7);
+    ctx.moveTo(fx, fy); ctx.lineTo(fx + Math.cos(a - .58) * 7, fy + Math.sin(a - .58) * 7);
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+}
+
+function _drawDustHUD(ctx, W, H) {
+  ctx.fillStyle = 'rgba(0,0,0,.52)';
+  ctx.beginPath(); ctx.roundRect(W - 90, H - 90, 84, 40, 8); ctx.fill();
+  ctx.fillStyle = '#c8f0ff'; ctx.font = 'bold 13px system-ui'; ctx.textAlign = 'center';
+  ctx.fillText('\u2736 ' + dustCount + '/' + DUST_MAX, W - 48, H - 65);
+  ctx.fillStyle = 'rgba(200,242,255,.55)'; ctx.font = '10px system-ui';
+  ctx.fillText('cristaux', W - 48, H - 53);
+}
 </script>
 </body>
 </html>
