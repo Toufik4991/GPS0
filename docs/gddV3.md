@@ -1,9 +1,18 @@
 # 🌙 GPS0 — Game Design Document v3.0
 
-**Version :** 3.46.0 - Bug 27 : Refonte visuelle N5 + Centrage fusée
+**Version :** 3.47.0 - Nettoyage fichiers inutiles
 **Date :** 22/03/2026
 **Auteur :** Toufik49
 **Statut :** Opérationnel — Jeux 1-9 en cours de reconstruction
+
+---
+
+## Changements v3.47.0 (Nettoyage — Suppression fichiers inutiles)
+
+- **`boutique_config.json` supprimé** — non utilisé par le code (économie hardcodée dans `economie.js`)
+- **`js/minijeux.js` supprimé** — stub mort (4 lignes), `<script>` retiré de `index.html`
+- **SW CORE nettoyé** — 2 entrées retirées, cache gps0-v64
+- **Fichiers temporaires supprimés du disque** — 11 scripts Python, 4 fichiers texte/bat, 6 backups HTML
 
 ---
 

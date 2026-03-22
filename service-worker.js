@@ -1,5 +1,5 @@
-﻿const CACHE = 'gps0-v63';
-const APP_VERSION = '3.46.0';
+﻿const CACHE = 'gps0-v64';
+const APP_VERSION = '3.47.0';
 const CORE = [
   'index.html',
   'css/main.css',
@@ -11,7 +11,6 @@ const CORE = [
   'js/lune.js',
   'js/avatar.js',
   'js/audio.js',
-  'js/minijeux.js',
   'js/moteur-minijeu.js',
   'js/finale.js',
   'gps_config.json',
