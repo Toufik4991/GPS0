@@ -1,11 +1,23 @@
 # 🌙 GPS0 — Game Design Document v3.0
 
-**Version :** 3.22.0 - Jeu 5 Lune d'Ombre — labyrinthe obscur complet
+**Version :** 3.23.0 - Jeu 6 Lune de Fer — Agar.io complet
 **Date :** 22/03/2026
 **Auteur :** Toufik49
-**Statut :** Opérationnel — Jeux 1-5 reconstruits et validés
+**Statut :** Opérationnel — Jeux 1-6 reconstruits et validés
 
 ---
+
+## Changements v3.23.0 (Jeu 6 — Lune de Fer)
+- **niveau6.html** : Agar.io spatial — grande map 2400×2400, caméra centrée
+- **Joueur** : Cellule cosmo, grossit en mangeant (r 22→140), ralentit quand plus grosse
+- **Nourriture** : 200 pellets colorés, respawn immédiat quand mangés
+- **IA ennemis** : 15 cellules, tailles variées (r 15-53), chasse proies/fuit prédateurs
+- **Cristaux ✦** : 30 dispersés, max 50 dust (+1 chacun)
+- **Vies** : loseLife() quand mangé par une cellule plus grosse (> 110%)
+- **Joystick** : Appuyer zone gauche, stick suit le doigt dans rayon 52px
+- **Mini-map** : Coin haut-droite, ennemis + cristaux + joueur
+- **Timer** : 3min (GPS0_TIMER_SEC=180), chrono standard
+- Service Worker gps0-v39 / APP_VERSION 3.23.0
 
 ## Changements v3.22.0 (Jeu 5 — Lune d'Ombre)
 - **niveau5.html** : Labyrinthe obscur complet (DFS maze 21×21 → 33×33 à frame 4500)

@@ -1,4 +1,4 @@
-<!doctype html>
+content = r"""<!doctype html>
 <html lang="fr">
 <head>
 <meta charset="utf-8">
@@ -393,4 +393,30 @@ function _drawHUD(ctx, W, H) {
 }
 </script>
 </body>
-</html>
+</html>"""
+
+with open(r"c:\Users\Jules\Desktop\GPS0\minijeux\niveau6.html", "w", encoding="utf-8") as f:
+    f.write(content)
+
+import os
+size = os.path.getsize(r"c:\Users\Jules\Desktop\GPS0\minijeux\niveau6.html")
+print(f"OK: {size} bytes")
+
+with open(r"c:\Users\Jules\Desktop\GPS0\minijeux\niveau6.html", encoding="utf-8") as f:
+    txt = f.read()
+
+checks = {
+    "gameStart":     "gameStart" in txt,
+    "_genMaze/AI":   "_spawnEnemy" in txt,
+    "joystick":      "joystick.active" in txt,
+    "loseLife":      "loseLife()" in txt,
+    "addDust":       "addDust(1)" in txt,
+    "CRYSTAL_MAX50": "CRYSTAL_MAX = 50" in txt,
+    "GPS0_TIMER180": "GPS0_TIMER_SEC = 180" in txt,
+    "minimap":       "_drawMinimap" in txt,
+    "foods":         "FOOD_N = 200" in txt,
+    "drawCosmonaut": "drawCosmonaut" in txt,
+    "vitesse-taille":"PLAYER_R0, 0.42" in txt,
+}
+for k, v in checks.items():
+    print(f"  {'OK' if v else 'MISSING'}: {k}")
