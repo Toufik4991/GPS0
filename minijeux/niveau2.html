@@ -28,22 +28,26 @@ body{display:flex;flex-direction:column;height:100dvh}
 <script src="shared.js"></script>
 <script>
 window.NIVEAU = 2;
-window.TUTO_TEXT = "Niveau 2 — Tape pour sauter · Évite les colonnes · 3 vies<br><small>Les bords ne te tuent pas · Cristaux ✦ = +1 poussière</small>";
+window.TUTO_TEXT = "Niveau 2 — Maintiens pour monter · Rel\u00e2che pour tomber · \u00c9vite les colonnes<br><small>3 vies · Cristaux \u2726 = +1 poussi\u00e8re · Le passage se r\u00e9tr\u00e9cit !</small>";
+window.GPS0_TIMER_SEC = 150;
 
 // ── CONSTANTES ────────────────────────────────────────────────────────────────
-const GRAV = 0.45, JUMP = -9.5, WALL_W = 44;
-const SPEED_START = 2.4, SPEED_MAX = 5.8;
+const GRAV = 0.38, THRUST = 0.65, VY_MAX_UP = -7.5;
+const WALL_W = 48;
+const SPEED_START = 2.2, SPEED_MAX = 5.2;
 const CRYSTAL_MAX = 5;
 
 // ── ÉTAT ──────────────────────────────────────────────────────────────────────
-let bird, walls, ashParts, parts, crystals;
+let bird, walls, ashParts, parts, crystals, lavaEmbers;
 let speed, frame, invincible, rafId, bgT, crystalCount;
+let holding = false;
 
 function gameReset() {
   cancelAnimationFrame(rafId);
   bird = { x: 0, y: 0, vy: 0, r: 22 };
-  walls = []; ashParts = []; parts = []; crystals = [];
+  walls = []; ashParts = []; parts = []; crystals = []; lavaEmbers = [];
   speed = SPEED_START; frame = 0; invincible = 0; bgT = 0; crystalCount = 0;
+  holding = false;
 }
 window.gameReset = gameReset;
 
@@ -62,7 +66,9 @@ function gameStart() {
   });
 
   _spawnWall(W, H);
-  cv.addEventListener('pointerdown', _tap);
+  cv.addEventListener('pointerdown', _onDown);
+  cv.addEventListener('pointerup', _onUp);
+  cv.addEventListener('pointercancel', _onUp);
   const ctx = cv.getContext('2d');
 
   const loop = () => {
@@ -74,7 +80,8 @@ function gameStart() {
     // Vitesse progressive : 2.4 → 5.8 sur 150s à 60fps
     speed = Math.min(SPEED_MAX, SPEED_START + (frame / (150 * 60)) * (SPEED_MAX - SPEED_START));
 
-    // Physique oiseau
+    // Physique oiseau (hold = montée, lâcher = gravité)
+    if (holding) bird.vy = Math.max(bird.vy - THRUST, VY_MAX_UP);
     bird.vy += GRAV; bird.y += bird.vy;
     if (bird.y < bird.r + 2) { bird.y = bird.r + 2; bird.vy = Math.abs(bird.vy) * .25; }
     if (bird.y > H - bird.r - 2) { bird.y = H - bird.r - 2; bird.vy = -Math.abs(bird.vy) * .25; }
@@ -92,7 +99,7 @@ function gameStart() {
       if (bird.x + bird.r > w.x && bird.x - bird.r < w.x + WALL_W) {
         const inGap = bird.y - bird.r > w.gapTop && bird.y + bird.r < w.gapTop + w.gapH;
         if (!inGap) {
-          invincible = 90; bird.vy = JUMP * .5;
+          invincible = 90; bird.vy = -3;
           for (let j = 0; j < 12; j++) parts.push({ x: bird.x, y: bird.y, vx: (Math.random() - .5) * 5, vy: -2 - Math.random() * 3, life: 28, col: '#ff7040' });
           loseLife();
         }
@@ -120,6 +127,16 @@ function gameStart() {
       if (a.y > H + 4) a.y = -4;
     });
 
+    // Braises de lave (embers)
+    if (frame % 2 === 0) lavaEmbers.push({
+      x: Math.random() * W, y: H - H * .08,
+      vx: (Math.random() - .5) * 1.4, vy: -1.2 - Math.random() * 2.8,
+      life: 35 + Math.random() * 40, r: .8 + Math.random() * 1.6,
+      col: Math.random() < .6 ? '#FF6010' : '#FFD030'
+    });
+    lavaEmbers = lavaEmbers.filter(e => e.life > 0);
+    lavaEmbers.forEach(e => { e.x += e.vx; e.y += e.vy; e.vy += 0.045; e.vx *= .98; e.life--; });
+
     // Particules
     parts = parts.filter(p => p.life > 0);
     parts.forEach(p => { p.x += p.vx; p.y += p.vy; p.vy += .09; p.life--; });
@@ -127,6 +144,13 @@ function gameStart() {
     // Dessin
     ctx.clearRect(0, 0, W, H);
     _drawBg(ctx, W, H);
+    // Braises flottantes
+    lavaEmbers.forEach(e => {
+      ctx.globalAlpha = Math.min(1, e.life / 30);
+      ctx.fillStyle = e.col;
+      ctx.beginPath(); ctx.arc(e.x, e.y, e.r, 0, Math.PI * 2); ctx.fill();
+    });
+    ctx.globalAlpha = 1;
     _drawWalls(ctx, H);
     _drawCrystals(ctx);
     parts.forEach(p => {
@@ -145,11 +169,13 @@ function gameStart() {
 }
 window.gameStart = gameStart;
 
-function _tap() {
+function _onDown(e) {
+  e && e.preventDefault();
   if (!GPS0_running()) return;
-  bird.vy = JUMP;
-  navigator.vibrate && navigator.vibrate(18);
+  holding = true;
+  navigator.vibrate && navigator.vibrate(8);
 }
+function _onUp() { holding = false; }
 
 function _spawnWall(W, H) {
   // Gap se rétrécit légèrement avec le temps
