@@ -649,7 +649,23 @@ window.GPS0_App = (() => {
     if (!overlay) return;
     document.getElementById('res-icon').textContent = succes ? '🌟' : '💫';
     document.getElementById('res-titre').textContent = succes ? 'Lune complétée !' : 'Presque...';
-    document.getElementById('res-poussieres').textContent = poussieres > 0 ? '+' + poussieres + ' ✨' : '';
+
+    // Afficher les poussières avec animation de gain
+    const resP = document.getElementById('res-poussieres');
+    if (resP) {
+      resP.textContent = poussieres > 0 ? '+' + poussieres + ' ✨' : '';
+      resP.classList.remove('gain-anim');
+      // force reflow pour relancer l'animation
+      void resP.offsetWidth;
+      if (poussieres > 0) resP.classList.add('gain-anim');
+    }
+
+    // ✅ localStorage mis à jour IMMÉDIATEMENT (sans attendre le clic bouton)
+    if (poussieres > 0) {
+      GPS0_Economie.ajouterPoussieres(poussieres);
+      GPS0_Economie.updateHUD();
+    }
+
     overlay.style.display = 'flex';
     // Détecter si c'est la dernière zone (level 9 / final)
     const currentZone = GPS0_GPS.zoneActuelle();
@@ -658,7 +674,6 @@ window.GPS0_App = (() => {
     const suivantBtn = document.getElementById('res-suivant');
     const recompenseBtn = document.getElementById('res-recompense');
     if (isFinalZone) {
-      // Cacher suivant+recompense, montrer finale
       if (suivantBtn) suivantBtn.style.display = 'none';
       if (recompenseBtn) recompenseBtn.style.display = 'none';
       if (finaleBtn) finaleBtn.style.display = '';
@@ -670,11 +685,11 @@ window.GPS0_App = (() => {
     // Bind result buttons
     document.getElementById('res-rejouer').onclick = () => {
       overlay.style.display = 'none';
-      if (_resultNiveau) _ouvrirIframe(_resultNiveau); // bypass cooldown pour rejouer
+      if (_resultNiveau) _ouvrirIframe(_resultNiveau);
     };
     if (recompenseBtn) recompenseBtn.onclick = () => {
       overlay.style.display = 'none';
-      if (poussieres > 0) { GPS0_Economie.ajouterPoussieres(poussieres); GPS0_Economie.updateHUD(); }
+      // Poussières déjà ajoutées — juste navigation
       if (_resultNiveau) GPS0_Economie.setCooldown(_resultNiveau);
       document.getElementById('btn-jouer-haut').hidden = true;
       document.getElementById('btn-prochain-point').hidden = true;
@@ -692,7 +707,6 @@ window.GPS0_App = (() => {
     };
     if (finaleBtn) finaleBtn.onclick = () => {
       overlay.style.display = 'none';
-      if (poussieres > 0) { GPS0_Economie.ajouterPoussieres(poussieres); GPS0_Economie.updateHUD(); }
       GPS0_Finale && GPS0_Finale.lancer && GPS0_Finale.lancer();
     };
   }

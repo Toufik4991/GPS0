@@ -13,7 +13,7 @@
 (function () {
 
   // ── ÉTAT GLOBAL ────────────────────────────────────────────────────────────
-  let lives = 3, dust = 0, timerSec = 150, running = false, gameover = false;
+  let lives = 3, dust = 0, timerSec = 150, timerTotal = 150, running = false, gameover = false;
   let timerInterval = null;
   let _rafIds = []; // requestAnimationFrame ids à annuler pour rejouer
   let _evHandlers = []; // { el, type, fn } à retirer pour rejouer
@@ -175,24 +175,15 @@
     gameover = true; running = false;
     clearInterval(timerInterval);
     let finalDust;
-    // Jeux avec récompense personnalisée (ex: efficacité tir N1)
+    // Récompense personnalisée (ex: efficacité N1 ou boss N9)
     if (window.GPS0_rewardOverride !== undefined) {
-      finalDust = Math.min(50, Math.max(5, Math.round(window.GPS0_rewardOverride)));
+      finalDust = Math.min(50, Math.max(1, Math.round(window.GPS0_rewardOverride)));
     } else {
-      let base;
-      if (success) {
-        // Récompense basée sur le temps restant (rapidité = performance)
-        if (timerSec >= 120) base = 40 + Math.floor(Math.random() * 11); // 40–50 : excellent
-        else if (timerSec >= 60) base = 25 + Math.floor(Math.random() * 16); // 25–40 : bon
-        else base = 15 + Math.floor(Math.random() * 11); // 15–25 : correct
-      } else {
-        // Échec : proportionnel au temps de jeu (engagement)
-        const played = 150 - timerSec;
-        if (played < 30) base = 1 + Math.floor(Math.random() * 5); // 1–5
-        else if (played < 90) base = 5 + Math.floor(Math.random() * 8); // 5–12
-        else base = 10 + Math.floor(Math.random() * 6); // 10–15
-      }
-      finalDust = Math.min(50, base + dust); // max 50 absolu
+      // Formule chrono : gain = floor((tempsJoué / tempsTotal) * 50)
+      const tempsJoue = timerTotal - timerSec;
+      finalDust = Math.floor((tempsJoue / timerTotal) * 50);
+      if (tempsJoue > 5 && finalDust < 1) finalDust = 1; // min 1 si > 5 secondes
+      finalDust = Math.min(50, finalDust); // max 50
     }
     setTimeout(() => {
       window.parent.postMessage({
@@ -318,6 +309,11 @@
   window.GPS0_timerSec = () => timerSec;
 
   async function _boot() {
+    // Permettre aux niveaux de définir leur durée : window.GPS0_TIMER_SEC = 180 (3min)
+    if (window.GPS0_TIMER_SEC && window.GPS0_TIMER_SEC > 0) {
+      timerSec = window.GPS0_TIMER_SEC;
+    }
+    timerTotal = timerSec; // mémoriser la durée totale pour le calcul du gain
     livesEl = _q('lives');
     timerEl = _q('timer');
     scoreEl = _q('score-hud');

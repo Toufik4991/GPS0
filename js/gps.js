@@ -64,7 +64,8 @@ window.GPS0_GPS = (() => {
       if (zone.lat === 0 && zone.lng === 0) { emit('position', { lat: 0, lng: 0, dist: 9999, bearing: 0, zone }); return; }
       const dist = Math.round(haversine(pos.coords.latitude, pos.coords.longitude, zone.lat, zone.lng));
       const bear = bearing(pos.coords.latitude, pos.coords.longitude, zone.lat, zone.lng);
-      emit('position', { lat: pos.coords.latitude, lng: pos.coords.longitude, dist, bearing: bear, zone });
+      const spd = pos.coords.speed; // m/s, peut être null
+      emit('position', { lat: pos.coords.latitude, lng: pos.coords.longitude, dist, bearing: bear, zone, speed: spd });
       if (dist <= (zone.rayon || 30)) {
         if (!_zoneAtteintePending) { _zoneAtteintePending = true; emit('zone_atteinte', zone); }
       } else {

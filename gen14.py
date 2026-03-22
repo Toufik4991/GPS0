@@ -371,21 +371,21 @@ function _drawHUD(ctx,W,H){
 # NIVEAU 2 — Lune de Cendre (Flappy — murs de roche lunaire + rush)
 # ═══════════════════════════════════════════════════════════════════
 N2_JS = r"""
-window.TUTO_TEXT = "Tape pour sauter · Évite les murs de roche !<br>Les bords ne te tuent pas.<br><small>Ta survie détermine ta récompense · Attention aux RUSH !</small>";
+window.TUTO_TEXT = "Tape pour sauter · Évite les murs de roche !<br>Les bords ne te tuent pas.<br><small>Plus tu survis longtemps, plus tu gagnes de poussières ! Max 50 ✨</small>";
 
 const GRAV=.45, JUMP=-9.5, WALL_W=44;
-const NORMAL_DUR=1800, RUSH_DUR=600;
+const NORMAL_DUR=1800, RUSH_DUR=600, TOTAL_TICKS=9000; // 150s×60fps
 let bird,walls,ashParts,parts;
-let speed,frame,framesAlive,invincible,rafId,bgT;
+let speed,frame,invincible,rafId,bgT;
 let isRush,waveT;
 
 function gameReset(){
   cancelAnimationFrame(rafId);
   bird={x:0,y:0,vy:0,r:22};
   walls=[]; ashParts=[]; parts=[];
-  speed=2.4; frame=0; framesAlive=0; invincible=0; bgT=0;
+  speed=2.4; frame=0; invincible=0; bgT=0;
   isRush=false; waveT=0;
-  window.GPS0_rewardOverride=5;
+  window.GPS0_rewardOverride=1;
 }
 window.gameReset=gameReset;
 
@@ -401,7 +401,7 @@ function gameStart(){
     r:.7+Math.random()*1.6, a:.1+Math.random()*.3
   });
   window.GPS0_onTimerExpired=function(){
-    window.GPS0_rewardOverride=Math.round(5+(framesAlive/Math.max(1,frame))*45);
+    window.GPS0_rewardOverride=Math.min(50,Math.round(1+(frame/TOTAL_TICKS)*49));
     endGame(true);
   };
   _spawnWall(W,H);
@@ -423,7 +423,6 @@ function gameStart(){
     if(bird.y>H-bird.r-2){bird.y=H-bird.r-2;bird.vy=-Math.abs(bird.vy)*.25;}
     // Invincibilité
     if(invincible>0)invincible--;
-    else framesAlive++;
     // Spawn murs
     const spacing=isRush?255:370;
     if(!walls.length||walls[walls.length-1].x<W-spacing)_spawnWall(W,H);
@@ -521,15 +520,20 @@ function _drawBlock(ctx,x,y,h,teeth,isBot,cracks){
   ctx.fillStyle=eg; ctx.fillRect(x,isBot?y:y+h-18,WALL_W,18);
 }
 function _drawHUD(ctx,W,H){
-  const pct=Math.round((framesAlive/Math.max(1,frame))*100);
-  const rew=Math.round(5+(pct/100)*45);
-  ctx.fillStyle='rgba(0,0,0,.52)';
-  ctx.beginPath();ctx.roundRect(6,H-46,136,40,7);ctx.fill();
-  const col=pct>=75?'#7CFC00':pct>=45?'#FFD700':'#ff8080';
-  ctx.fillStyle=col; ctx.font='bold 13px system-ui'; ctx.textAlign='left';
-  ctx.fillText('🛡 '+pct+'% survie',12,H-27);
-  ctx.fillStyle='rgba(255,215,0,.55)'; ctx.font='11px system-ui';
-  ctx.fillText('Récompense estimée : '+rew+' ✨',12,H-10);
+  const rew=Math.min(50,Math.round(1+(frame/TOTAL_TICKS)*49));
+  const prog=Math.min(1,frame/TOTAL_TICKS);
+  const panW=150, panH=44;
+  ctx.fillStyle='rgba(0,0,0,.58)';
+  ctx.beginPath();ctx.roundRect(6,H-panH-4,panW,panH,7);ctx.fill();
+  // Barre progrès
+  ctx.fillStyle='rgba(255,255,255,.1)'; ctx.fillRect(12,H-16,panW-16,5);
+  const col=rew>=40?'#FFD700':rew>=20?'#4FC3F7':'#aaaadd';
+  ctx.fillStyle=col; ctx.fillRect(12,H-16,(panW-16)*prog,5);
+  // Label
+  ctx.fillStyle='rgba(255,255,255,.7)'; ctx.font='11px system-ui'; ctx.textAlign='left';
+  ctx.fillText('Poussières gagnées',12,H-24);
+  ctx.fillStyle=col; ctx.font='bold 16px system-ui';
+  ctx.fillText(rew+' / 50 ✨',12,H-36);
 }
 """
 

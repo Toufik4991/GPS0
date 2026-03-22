@@ -76,11 +76,26 @@ html,body{height:100%;overflow:hidden;font-family:"Trebuchet MS",sans-serif;colo
 .asteroide-wrapper{position:relative;width:200px;height:200px;display:flex;align-items:center;justify-content:center;cursor:pointer}
 .asteroide-svg{position:absolute;animation:ast-glow 2s ease-in-out infinite;will-change:filter}
 .ast-body{transition:filter .5s}
+/* Glow de base (bleu) */
 @keyframes ast-glow{0%,100%{filter:brightness(1.15) drop-shadow(0 0 12px rgba(79,195,247,.55))}50%{filter:brightness(1.45) drop-shadow(0 0 28px rgba(79,195,247,.95))}}
-.asteroide-wrapper[data-etat="off"] .asteroide-svg{animation:none;filter:grayscale(1) brightness(.45);transition:filter .5s ease}
-.asteroide-wrapper:not([data-etat="off"]):not([data-etat="epuise"]) .asteroide-svg{transition:filter .5s ease}
+/* Glow rouge */
+@keyframes ast-glow-rouge{0%,100%{filter:brightness(1.15) drop-shadow(0 0 14px rgba(255,51,51,.65))}50%{filter:brightness(1.55) drop-shadow(0 0 34px rgba(255,51,51,1))}}
+/* Glow orange */
+@keyframes ast-glow-orange{0%,100%{filter:brightness(1.15) drop-shadow(0 0 14px rgba(255,140,0,.65))}50%{filter:brightness(1.55) drop-shadow(0 0 34px rgba(255,140,0,1))}}
+/* Glow vert */
+@keyframes ast-glow-vert{0%,100%{filter:brightness(1.15) drop-shadow(0 0 14px rgba(105,255,71,.65))}50%{filter:brightness(1.55) drop-shadow(0 0 34px rgba(105,255,71,1))}}
+/* ─ États OFF / Épuisé / On+immobile → grisé ─ */
+.asteroide-wrapper[data-etat="off"] .asteroide-svg,
+.asteroide-wrapper[data-etat="epuise"] .asteroide-svg,
+.asteroide-wrapper[data-etat="on"]:not([data-moving="true"]) .asteroide-svg{animation:none;filter:grayscale(1) brightness(.45);transition:filter .5s ease}
+/* ─ On + en mouvement → glow zone coloré ─ */
+.asteroide-wrapper[data-etat="on"][data-zone="rouge"][data-moving="true"] .asteroide-svg{animation:ast-glow-rouge 2s ease-in-out infinite!important;transition:filter .5s ease}
+.asteroide-wrapper[data-etat="on"][data-zone="orange"][data-moving="true"] .asteroide-svg{animation:ast-glow-orange 1.4s ease-in-out infinite!important;transition:filter .5s ease}
+.asteroide-wrapper[data-etat="on"][data-zone="vert"][data-moving="true"] .asteroide-svg{animation:ast-glow-vert .9s ease-in-out infinite!important;transition:filter .5s ease}
+.asteroide-wrapper[data-etat="on"][data-zone="bleu"][data-moving="true"] .asteroide-svg{animation:ast-glow .6s ease-in-out infinite!important;transition:filter .5s ease}
+/* ─ Zone atteinte → toujours lumineux bleu ─ */
+.asteroide-wrapper[data-etat="zone"] .asteroide-svg{animation:ast-glow .6s ease-in-out infinite!important;transition:filter .5s ease}
 .asteroide-wrapper[data-etat="off"] .energie-ast-overlay{opacity:.35}
-.asteroide-wrapper[data-etat="zone"] .asteroide-svg{animation-duration:2s}
 .asteroide-wrapper[data-etat="epuise"]{cursor:default;opacity:.7}
 @keyframes ast-flash{0%{filter:drop-shadow(0 0 8px rgba(79,195,247,.35))}45%{filter:brightness(2.8) drop-shadow(0 0 35px rgba(255,255,255,.9));transform:scale(1.07)}100%{filter:drop-shadow(0 0 8px rgba(79,195,247,.35));transform:scale(1)}}
 .asteroide-svg.flash{animation:ast-flash .42s ease-out forwards!important}
@@ -242,7 +257,9 @@ dialog{position:relative}
 #overlay-resultats{position:fixed;inset:0;z-index:200;background:rgba(10,10,26,.95);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:28px;text-align:center}
 .res-icon{font-size:3rem;filter:drop-shadow(0 0 16px rgba(200,162,200,.7))}
 .res-titre{font-size:1.3rem;color:var(--accent);font-weight:bold}
-.res-poussieres{font-size:1.8rem;color:#FFD700;font-weight:bold}
+.res-poussieres{font-size:1.8rem;color:#FFD700;font-weight:bold;min-height:2.4rem}
+.res-poussieres.gain-anim{animation:res-gain-pop .6s cubic-bezier(.22,1,.36,1) forwards}
+@keyframes res-gain-pop{0%{opacity:0;transform:scale(.4) translateY(20px)}60%{transform:scale(1.25) translateY(-4px)}100%{opacity:1;transform:scale(1) translateY(0)}}
 .res-actions{display:flex;flex-direction:column;gap:10px;width:100%;max-width:280px;margin-top:8px}
 .res-btn{padding:13px 20px;border:none;border-radius:14px;font-weight:bold;font-size:.95rem;cursor:pointer;transition:opacity .2s}
 .res-btn:active{opacity:.75}

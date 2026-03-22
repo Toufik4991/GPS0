@@ -1,13 +1,42 @@
 # 🌙 GPS0 — Game Design Document v3.0
 
-**Version :** 3.15.0 - Jeu 2 redesign : Flappy murs de roche lunaire, tap=saut, bords rebond (pas de mort), rush 30s/10s, survie → GPS0_rewardOverride 5-50, bg-n2.svg volcanique
-**Date :** 24/03/2026
+**Version :** 3.16.0 - Bugs globaux : astéroïde zone-coloré+vitesse, gain chrono progressif, localStorage immédiat
+**Date :** 22/03/2026
 **Auteur :** Toufik49
-**Statut :** Opérationnel - Bug 14 appliqué intégralement
+**Statut :** Opérationnel - Bugs 1-2-3 appliqués intégralement
 
 ---
 
-## Changements v3.11.0 (Bug 14)
+## Changements v3.16.0 (Bugs globaux 1-2-3)
+
+### A. Astéroïde — États visuels (Bug 1)
+- **Lumineux** : GPS actif (`data-etat="on"`) + vitesse > 0.3 m/s (`data-moving="true"`) → glow coloré selon zone
+- **Grisé** : GPS inactif (`off`/`epuise`) OU vitesse ≤ 0.3 m/s (`data-moving="false"` ou absent)
+- Keyframes zone-specific : `ast-glow-rouge` / `ast-glow-orange` / `ast-glow-vert` / `ast-glow` (bleu)
+- Vitesse transmise depuis `gps.js` via `pos.coords.speed` dans chaque emit `position`
+- `boussole.js updatePosition()` : set `data-moving="true"` si speed null ou > 0.3 m/s sinon `"false"`
+- `_render('off')` et `_render('epuise')` : `delete w.dataset.moving` + `delete w.dataset.zone`
+- `data-etat="zone"` (zone atteinte) : toujours lumineux bleu indépendamment della vitesse
+
+### B. Système de gain par chrono (Bug 3)
+- **Formule** : `gain = Math.floor((tempsJoué / tempsTotal) * 50)`
+- Minimum 1 poussière si `tempsJoué > 5s`
+- Maximum 50 poussières si timer épuisé
+- Résultat identique succès et échec (basé sur le temps, pas l'issue)
+- `timerTotal` mémorisé au boot dans `shared.js`, configurable via `window.GPS0_TIMER_SEC`
+- Valeur par défaut : 150s (2min30). Niveaux 3min : `window.GPS0_TIMER_SEC = 180`
+- `GPS0_rewardOverride` toujours prioritaire (N1 slingshot, N9 boss)
+
+### C. Poussières intégrées immédiatement (Bug 2)
+- `_afficherResultats()` dans `app.js` appelle `GPS0_Economie.ajouterPoussieres()` **immédiatement** à l'affichage de l'overlay
+- Plus besoin de cliquer "Prendre la récompense" pour sauvegarder
+- Bouton "Prendre la récompense" = navigation vers point suivant + `setCooldown()`
+- Animation gain : `#res-poussieres` avec keyframe `res-gain-pop` (scale 0.4→1.25→1)
+- Service Worker : `gps0-v32` / APP_VERSION `3.12.0`
+
+---
+
+## Changements v3.15.0 (Bug 14 — Jeu 2 redesign)
 
 ### A. Architecture mini-jeux — shared.js
 - Nouveau fichier `minijeux/shared.js` : moteur commun à tous les 9 niveaux
