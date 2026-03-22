@@ -1,9 +1,25 @@
 # 🌙 GPS0 — Game Design Document v3.0
 
-**Version :** 3.47.0 - Nettoyage fichiers inutiles
+**Version :** 3.48.0 - Bug 28 : Hublot fusée + N5 timing + N7 poussières
 **Date :** 22/03/2026
 **Auteur :** Toufik49
 **Statut :** Opérationnel — Jeux 1-9 en cours de reconstruction
+
+---
+
+## Changements v3.48.0 (Bug 28 — Hublot fusée + N5 timing + N7 poussières)
+
+- **Fusée boussole :** le **hublot** (pas le centre de la fusée) est désormais aligné avec le centre de l'astéroïde SVG
+  - `margin-top:-64px` + `transform-origin:52px 64px` pour que la rotation pivote autour du hublot
+- **N5 « 1,2,3 Soleil ! » — timing progressif :**
+  - Chaque chiffre/mot dure **1s au début** puis descend à **0.5s** au fur et à mesure de la progression
+  - Interpolation linéaire via `progress * 1.5` (capé à 1)
+  - Plus de `difficultyMul` sur le phaseTimer — la difficulté est dans le stepDur
+- **N7 « Mots Cosmiques » :**
+  - **5 poussières par mot trouvé** (au lieu de 2) → 50 total pour 10 mots
+  - **Timer supprimé** — `GPS0_HIDE_TIMER = true`, pas de chrono
+  - `shared.js` : support du flag `GPS0_HIDE_TIMER` (cache le timer + ne lance pas `_startTimer`)
+  - Tuto mis à jour : « Pas de chrono »
 
 ---
 

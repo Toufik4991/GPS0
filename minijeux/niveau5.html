@@ -47,6 +47,8 @@ const COUNT_MAX   = 4000;
 const TURN_MS     = 500;
 const STOP_MIN    = 2000;
 const STOP_MAX    = 4000;
+const STEP_DUR_START = 1000;
+const STEP_DUR_END   = 500;
 const MOON_R      = 28;
 const MOON_PAD    = 16;
 
@@ -60,13 +62,19 @@ let rafId, lastT;
 function gameReset() {
   cancelAnimationFrame(rafId);
   progress = 0; phase = 'count';
-  phaseTimer = _rnd(COUNT_MIN, COUNT_MAX);
   countStep = 0; countStepTimer = 0;
+  phaseTimer = _countPhaseDur();
   bgT = 0; sunFlipProg = 0; stopFlash = 0; difficultyMul = 1;
   moonBlink = 0; moonBlinkTimer = 0;
   fxParts = []; _initStars(); _initDust();
 }
 window.gameReset = gameReset;
+
+function _countPhaseDur() {
+  var t = Math.min(1, progress * 1.5);
+  var stepDur = STEP_DUR_START + (STEP_DUR_END - STEP_DUR_START) * t;
+  return stepDur * 4 + _rnd(200, 600);
+}
 
 function gameStart() {
   cv = document.getElementById('cv');
@@ -186,10 +194,11 @@ function _updateDifficulty() {
 
 /* ── MACHINE À ÉTATS ───────────────────────────────────────────────────── */
 function _updatePhase(dt) {
-  phaseTimer -= dt * difficultyMul;
+  phaseTimer -= dt;
   if (phaseTimer > 0) {
     if (phase === 'count') {
-      var stepDur = (COUNT_MAX / difficultyMul) / 4;
+      var t = Math.min(1, progress * 1.5);
+      var stepDur = STEP_DUR_START + (STEP_DUR_END - STEP_DUR_START) * t;
       countStepTimer += dt;
       if (countStepTimer > stepDur && countStep < 3) { countStep++; countStepTimer = 0; }
     }
@@ -198,7 +207,7 @@ function _updatePhase(dt) {
   if (phase === 'count')         { countStep = 4; phase = 'turning'; phaseTimer = TURN_MS; }
   else if (phase === 'turning')  { phase = 'stop'; phaseTimer = Math.max(1500, _rnd(STOP_MIN, STOP_MAX) / difficultyMul); }
   else if (phase === 'stop')     { phase = 'unturning'; phaseTimer = TURN_MS; }
-  else                           { phase = 'count'; countStep = 0; countStepTimer = 0; phaseTimer = Math.max(800, _rnd(COUNT_MIN, COUNT_MAX) / difficultyMul); }
+  else                           { phase = 'count'; countStep = 0; countStepTimer = 0; phaseTimer = _countPhaseDur(); }
 }
 
 /* ── FLIP SOLEIL ───────────────────────────────────────────────────────── */

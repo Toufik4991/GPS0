@@ -317,6 +317,7 @@
     livesEl = _q('lives');
     timerEl = _q('timer');
     scoreEl = _q('score-hud');
+    if (window.GPS0_HIDE_TIMER && timerEl) timerEl.style.display = 'none';
     _updateLives();
     _updateTimer();
     _loadSelfie();
@@ -327,7 +328,7 @@
     // Phase 3 : jeu (bouton quitter APRÈS le countdown)
     _addQuitButton();
     running = true;
-    _startTimer();
+    if (!window.GPS0_HIDE_TIMER) _startTimer();
     if (window.gameStart) window.gameStart();
   }
 

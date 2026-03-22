@@ -85,9 +85,10 @@ body{display:flex;flex-direction:column;height:100dvh}
    2 poussières/mot + bonus 30 si 10/10 = 50 total
    ══════════════════════════════════════════════════════════════════════ */
 window.NIVEAU = 7;
-window.GPS0_TIMER_SEC = 150;
-window.GPS0_onTimerExpired = function(){ endGame(true); };
-window.TUTO_TEXT = "🔤 Mots Cosmiques !<br>Devine les 10 mots spatiaux 🚀<br><small>Lis la définition → tape le mot → valide !</small>";
+window.GPS0_TIMER_SEC = 0;
+window.GPS0_onTimerExpired = function(){ };
+window.GPS0_HIDE_TIMER = true;
+window.TUTO_TEXT = "🔤 Mots Cosmiques !<br>Devine les 10 mots spatiaux 🚀<br><small>Lis la définition → tape le mot → valide ! Pas de chrono ⚔️</small>";
 
 /* ── 10 MOTS ──────────────────────────────────────────────────────── */
 var WORDS = [
@@ -254,12 +255,11 @@ function _validate(){
     var rect = cards[aw].getBoundingClientRect();
     _spawnStarExplosion(rect.left + rect.width/2, rect.top + rect.height/2);
 
-    addDust(2);
+    addDust(5);
     if(navigator.vibrate) navigator.vibrate([8,4,15]);
 
     // All 10 found?
     if(nFound >= 10){
-      addDust(30); // 20 from words + 30 bonus = 50 total
       window.GPS0_rewardOverride = 50;
       setTimeout(function(){ endGame(true); }, 1200);
     }

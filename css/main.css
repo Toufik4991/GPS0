@@ -103,7 +103,7 @@ html,body{height:100%;overflow:hidden;font-family:"Trebuchet MS",sans-serif;colo
 .asteroide-svg.flash{animation:ast-flash .45s ease-out forwards!important}
 
 /* ── FUSÉE ── */
-.fusee-wrapper{position:absolute;width:104px;height:104px;top:50%;left:50%;margin-top:-52px;margin-left:-52px;transform-origin:center center;transition:transform .4s cubic-bezier(.25,.46,.45,.94);will-change:transform}
+.fusee-wrapper{position:absolute;width:104px;height:104px;top:50%;left:50%;margin-top:-64px;margin-left:-52px;transform-origin:52px 64px;transition:transform .4s cubic-bezier(.25,.46,.45,.94);will-change:transform}
 .fusee-wrapper.hidden{opacity:0;pointer-events:none}
 .flamme{transform-origin:40px 72px;animation:flame .3s ease-in-out infinite alternate}
 .flamme2{transform-origin:40px 76px;animation:flame .3s ease-in-out infinite alternate-reverse}
