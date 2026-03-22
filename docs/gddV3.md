@@ -1,9 +1,22 @@
 # 🌙 GPS0 — Game Design Document v3.0
 
-**Version :** 3.41.0 - Bug 23 : Fix Fusée Boussole + Debug N5 & N7
+**Version :** 3.42.0 - Bug 24 : Refonte N7 Mots Cosmiques
 **Date :** 22/03/2026
 **Auteur :** Toufik49
 **Statut :** Opérationnel — Jeux 1-9 en cours de reconstruction
+
+---
+
+## Changements v3.42.0 (Bug 24 — Refonte N7 "Mots Cosmiques")
+
+- **N7 recodé de zéro : "Mots Cosmiques"** au lieu de mots croisés (grille 13×13 trop petite sur mobile, clavier pas ergonomique)
+- **Nouveau format** : Liste scrollable de 10 définitions spatiales avec emoji, tap pour sélectionner, cases de lettres au-dessus du clavier
+- **Clavier AZERTY agrandi** : touches 48px de haut, boutons ⬅ (rouge) et OK (vert) bien visibles, largeur 100% écran
+- **Animation étoiles explosives** : Canvas overlay, 28 particules étoiles (or/blanc/bleu/rose/vert/orange) à chaque mot trouvé, gravité + rotation + fade
+- **Feedback lettres** : lettres correctes en vert, mauvaises en rouge lors de la validation
+- **Auto-sélection** : après un mot trouvé, le prochain mot non trouvé est sélectionné automatiquement
+- **Mêmes règles** : 10 mots (ETOILE, COMETE, ORBITE, NEBULEUSE, CRATERE, GALAXIE, SATELLITE, FUSEE, APESANTEUR, COSMOS), 2 poussières/mot + bonus 30 si 10/10 = 50 total, timer 2min30
+- Service Worker gps0-v57 → gps0-v58 / APP_VERSION 3.42.0
 
 ---
 

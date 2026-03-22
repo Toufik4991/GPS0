@@ -13,130 +13,103 @@ body{display:flex;flex-direction:column;height:100dvh}
 #timer{flex:1;text-align:center;font-size:.95rem;font-weight:bold;color:#66ccff}
 #score-hud{font-size:.9rem;color:#FFD700;font-weight:bold;min-width:52px;text-align:right}
 
-#game-container{flex:1;overflow:hidden;display:flex;flex-direction:column;align-items:center;padding:4px 4px 2px;position:relative;z-index:1}
+#game-container{flex:1;overflow:hidden;display:flex;flex-direction:column;position:relative;z-index:1}
 
 /* ── ÉTOILES DE FOND ─────────────────────────────────────────────── */
 #stars-bg{position:fixed;inset:0;z-index:0;pointer-events:none}
 
-/* ── GRILLE ──────────────────────────────────────────────────────── */
-#grid-wrap{position:relative;margin:0 auto;flex-shrink:0}
-.gc{position:absolute;border:1px solid rgba(70,160,255,.22);background:rgba(8,14,38,.88);display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;transition:background .25s,color .25s,border-color .25s;border-radius:2px}
-.gc.empty{border-color:transparent;background:transparent;pointer-events:none}
-.gc.filled{color:#d8efff;text-shadow:0 0 5px rgba(100,200,255,.45)}
-.gc.found{background:rgba(40,180,80,.5);color:#fff;border-color:rgba(80,255,130,.45);text-shadow:0 0 7px rgba(80,255,130,.5)}
-.gc.sel{background:rgba(55,125,255,.38);border-color:rgba(100,175,255,.65);box-shadow:0 0 7px rgba(80,160,255,.45)}
-.gc.wrong{background:rgba(255,35,35,.45);border-color:#f44;animation:shake .4s}
-.gc .nm{position:absolute;top:1px;left:2px;font-weight:700;color:rgba(190,215,255,.72);pointer-events:none}
-@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-3px)}50%{transform:translateX(3px)}75%{transform:translateX(-2px)}}
-@keyframes flash{0%{box-shadow:0 0 0 transparent}50%{box-shadow:0 0 16px rgba(80,255,130,.75)}100%{box-shadow:0 0 0 transparent}}
+/* ── CANVAS FX (explosions étoiles) ──────────────────────────────── */
+#fx-cv{position:fixed;inset:0;z-index:50;pointer-events:none}
 
-/* ── BARRE DÉFINITION ────────────────────────────────────────────── */
-#def-bar{width:100%;max-width:440px;min-height:40px;padding:5px 10px;margin:3px auto;background:rgba(8,18,50,.88);border:1px solid rgba(70,160,255,.28);border-radius:10px;text-align:center;font-size:.8rem;color:#a8d8ff;line-height:1.35;display:none}
-#def-bar.show{display:block}
-#def-bar b{color:#ffd700}
+/* ── LISTE DES MOTS ──────────────────────────────────────────────── */
+#word-list{flex:1;overflow-y:auto;padding:6px 8px 4px;display:flex;flex-direction:column;gap:5px;-webkit-overflow-scrolling:touch}
+.wcard{padding:10px 12px;background:rgba(15,25,60,.85);border:1px solid rgba(70,160,255,.2);border-radius:12px;cursor:pointer;transition:background .2s,border-color .2s}
+.wcard.sel{background:rgba(55,100,220,.35);border-color:rgba(100,175,255,.7)}
+.wcard.found{background:rgba(30,140,60,.35);border-color:rgba(80,255,130,.4);pointer-events:none}
+.wcard.wrong{animation:shake .4s}
+.wdef{font-size:.85rem;color:#c0d8ff;line-height:1.35}
+.winfo{display:flex;align-items:center;gap:8px;margin-top:4px}
+.wlen{font-size:.72rem;color:rgba(180,200,255,.5);font-weight:bold}
+.wans{font-size:.95rem;font-weight:900;letter-spacing:3px;color:#80ff80;display:none}
+.wcard.found .wans{display:inline}
+.wcard.found .wlen{display:none}
+.wnum{width:22px;height:22px;border-radius:50%;background:rgba(70,130,255,.45);display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:900;flex-shrink:0}
+.wcard.found .wnum{background:rgba(50,180,80,.6)}
 
-/* ── CLAVIER ─────────────────────────────────────────────────────── */
-#kb{display:none;width:100%;max-width:440px;margin:2px auto 0;padding:0 2px}
-#kb.show{display:flex;flex-direction:column;gap:3px}
-.kr{display:flex;justify-content:center;gap:2px}
-.kk{min-width:26px;height:36px;border:none;border-radius:5px;background:rgba(35,55,115,.72);color:#d8eeff;font-size:.82rem;font-weight:bold;cursor:pointer;display:flex;align-items:center;justify-content:center;border:1px solid rgba(70,150,255,.18);transition:background .12s}
-.kk:active{background:rgba(75,125,255,.55)}
-.kk.wide{min-width:44px;font-size:.72rem}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}50%{transform:translateX(4px)}75%{transform:translateX(-3px)}}
+
+/* ── ZONE DE SAISIE (lettres) ────────────────────────────────────── */
+#input-area{display:none;padding:6px 8px;flex-shrink:0;text-align:center}
+#input-area.show{display:block}
+#letter-boxes{display:flex;justify-content:center;gap:4px;flex-wrap:wrap}
+.lbox{width:32px;height:38px;border:2px solid rgba(100,170,255,.35);border-radius:8px;background:rgba(10,20,50,.9);display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:900;color:#fff;transition:border-color .15s,background .15s}
+.lbox.filled{border-color:rgba(100,190,255,.7);background:rgba(30,60,130,.7);color:#d8f0ff;text-shadow:0 0 6px rgba(100,200,255,.4)}
+.lbox.correct{border-color:rgba(80,255,130,.65);background:rgba(30,120,50,.5);color:#80ff80}
+.lbox.wrong-letter{border-color:#f44;background:rgba(180,30,30,.35);color:#faa}
+
+/* ── CLAVIER AZERTY ──────────────────────────────────────────────── */
+#kb{display:none;width:100%;padding:4px 3px 8px;flex-shrink:0}
+#kb.show{display:flex;flex-direction:column;gap:5px}
+.kr{display:flex;justify-content:center;gap:4px}
+.kk{flex:1;max-width:42px;height:48px;border:none;border-radius:8px;background:rgba(35,55,120,.8);color:#d8eeff;font-size:1.05rem;font-weight:bold;cursor:pointer;display:flex;align-items:center;justify-content:center;border:1px solid rgba(70,150,255,.2);transition:background .1s;-webkit-tap-highlight-color:transparent}
+.kk:active{background:rgba(80,130,255,.6)}
+.kk.wide{max-width:64px;font-size:.85rem;letter-spacing:1px}
+.kk.action-back{background:rgba(180,60,60,.6);border-color:rgba(255,80,80,.3)}
+.kk.action-back:active{background:rgba(220,80,80,.7)}
+.kk.action-ok{background:rgba(40,150,70,.65);border-color:rgba(80,255,130,.3)}
+.kk.action-ok:active{background:rgba(60,200,90,.7)}
 </style>
 </head>
 <body>
 <canvas id="stars-bg"></canvas>
+<canvas id="fx-cv"></canvas>
 <div id="hud">
   <span id="lives">&#10084;&#10084;&#10084;</span>
   <span id="timer">2:30</span>
   <span id="score-hud">0 &#10024;</span>
 </div>
 <div id="game-container">
-  <div id="grid-wrap"></div>
-  <div id="def-bar"></div>
-  <div id="kb">
-    <div class="kr" id="kr1"></div>
-    <div class="kr" id="kr2"></div>
-    <div class="kr" id="kr3"></div>
+  <div id="word-list"></div>
+  <div id="input-area">
+    <div id="letter-boxes"></div>
   </div>
+  <div id="kb"></div>
 </div>
 
 <script src="shared.js"></script>
 <script>
 /* ══════════════════════════════════════════════════════════════════════
-   NIVEAU 7 — MOTS CROISÉS COSMIQUES
-   Grille 13×13, 10 mots, clavier custom, 2 pous./mot + bonus 30
+   NIVEAU 7 — MOTS COSMIQUES
+   10 mots spatiaux à deviner depuis leurs définitions
+   Clavier AZERTY ergonomique, animation étoiles explosives
+   2 poussières/mot + bonus 30 si 10/10 = 50 total
    ══════════════════════════════════════════════════════════════════════ */
 window.NIVEAU = 7;
 window.GPS0_TIMER_SEC = 150;
 window.GPS0_onTimerExpired = function(){ endGame(true); };
-window.TUTO_TEXT = "🔤 Mots Croisés Cosmiques !<br>Trouve les 10 mots spatiaux 🚀<br><small>Tape un numéro → lis la définition → écris le mot !</small>";
-
-var SZ = 13; // grid size
+window.TUTO_TEXT = "🔤 Mots Cosmiques !<br>Devine les 10 mots spatiaux 🚀<br><small>Lis la définition → tape le mot → valide !</small>";
 
 /* ── 10 MOTS ──────────────────────────────────────────────────────── */
 var WORDS = [
-  {w:'ETOILE',    d:'Boule de gaz brillante dans le ciel nocturne'},
-  {w:'COMETE',    d:'Astre chevelu avec une longue queue lumineuse'},
-  {w:'ORBITE',    d:"Trajectoire d'un objet autour d'un autre dans l'espace"},
-  {w:'NEBULEUSE', d:'Immense nuage de gaz et de poussière cosmique'},
-  {w:'CRATERE',   d:"Trou formé par l'impact d'une météorite"},
-  {w:'GALAXIE',   d:"Ensemble de milliards d'étoiles, comme la Voie Lactée"},
-  {w:'SATELLITE', d:"Objet qui tourne autour d'une planète, naturel ou artificiel"},
-  {w:'FUSEE',     d:"Véhicule propulsé pour voyager dans l'espace"},
-  {w:'APESANTEUR',d:"État où l'on flotte, sans gravité"},
-  {w:'COSMOS',    d:"Autre nom pour désigner l'Univers tout entier"}
-];
-
-/* ── PLACEMENT VÉRIFIÉ (8 croisements) ────────────────────────────
-   Grille 13×13, coordonnées 0-based.
-
-   HORIZONTAUX :
-     ETOILE     row 3  cols 1-6     E T O I L E
-     FUSEE      row 4  cols 4-8     F U S E E
-     CRATERE    row 5  cols 4-10    C R A T E R E
-     COMETE     row 7  cols 2-7     C O M E T E
-     NEBULEUSE  row 9  cols 3-11    N E B U L E U S E
-     COSMOS     row 12 cols 0-5     C O S M O S
-
-   VERTICAUX :
-     SATELLITE  col 1  rows 0-8     S A T E L L I T E
-     APESANTEUR col 6  rows 1-10    A P E S A N T E U R
-     ORBITE     col 10 rows 0-5     O R B I T E
-     GALAXIE    col 11 rows 3-9     G A L A X I E
-
-   CROISEMENTS :
-     (3,1)  ETOILE[0]=E   SATELLITE[3]=E  ✓
-     (3,6)  ETOILE[5]=E   APESANTEUR[2]=E ✓
-     (4,6)  FUSEE[2]=S    APESANTEUR[3]=S ✓
-     (5,6)  CRATERE[2]=A  APESANTEUR[4]=A ✓
-     (5,10) CRATERE[6]=E  ORBITE[5]=E     ✓
-     (7,6)  COMETE[4]=T   APESANTEUR[6]=T ✓
-     (9,6)  NEBULEUSE[3]=U APESANTEUR[8]=U ✓
-     (9,11) NEBULEUSE[8]=E GALAXIE[6]=E   ✓
-   ────────────────────────────────────────────────────────────────── */
-var PL = [
-  // [wordIdx, row, col, 'H'|'V']
-  [0,  3,  1, 'H'],  // ETOILE
-  [1,  7,  2, 'H'],  // COMETE
-  [2,  0, 10, 'V'],  // ORBITE
-  [3,  9,  3, 'H'],  // NEBULEUSE
-  [4,  5,  4, 'H'],  // CRATERE
-  [5,  3, 11, 'V'],  // GALAXIE
-  [6,  0,  1, 'V'],  // SATELLITE
-  [7,  4,  4, 'H'],  // FUSEE
-  [8,  1,  6, 'V'],  // APESANTEUR
-  [9, 12,  0, 'H']   // COSMOS
+  {w:'ETOILE',    d:'Boule de gaz brillante dans le ciel nocturne ⭐'},
+  {w:'COMETE',    d:'Astre chevelu avec une longue queue lumineuse ☄️'},
+  {w:'ORBITE',    d:"Trajectoire d'un objet autour d'un autre dans l'espace 🪐"},
+  {w:'NEBULEUSE', d:'Immense nuage de gaz et de poussière cosmique 🌌'},
+  {w:'CRATERE',   d:"Trou formé par l'impact d'une météorite 💥"},
+  {w:'GALAXIE',   d:"Ensemble de milliards d'étoiles, comme la Voie Lactée 🌀"},
+  {w:'SATELLITE', d:"Objet qui tourne autour d'une planète 🛰️"},
+  {w:'FUSEE',     d:"Véhicule propulsé pour voyager dans l'espace 🚀"},
+  {w:'APESANTEUR',d:"État où l'on flotte, sans gravité 🧑‍🚀"},
+  {w:'COSMOS',    d:"Autre nom pour désigner l'Univers tout entier 🌠"}
 ];
 
 /* ── ÉTAT ──────────────────────────────────────────────────────────── */
-var grid;      // grid[r][c] = {ch:null, wi:[], num:null}
-var ws;        // [{found, cells:[{r,c}], dir, row, col}]  per word
-var els;       // DOM cell elements [r][c]
-var aw = -1;   // active word index
-var buf = '';   // input buffer
+var aw = -1;      // active word index
+var buf = '';      // input buffer
 var nFound = 0;
-var cellSz;
+var fxParts = [];  // particles for star explosions
+var fxRaf = 0;
+var fxCv, fxCtx;
 
 /* ── ÉTOILES DE FOND ──────────────────────────────────────────────── */
 function _drawStars(){
@@ -151,200 +124,265 @@ function _drawStars(){
   }
 }
 
-/* ── GÉNÉRATION GRILLE ─────────────────────────────────────────────── */
-function _genGrid(){
-  grid=[]; ws=[];
-  var r,c;
-  for(r=0;r<SZ;r++){grid[r]=[];for(c=0;c<SZ;c++) grid[r][c]={ch:null,wi:[],num:null};}
-
-  for(var p=0;p<PL.length;p++){
-    var pl=PL[p], wi=pl[0], row=pl[1], col=pl[2], dir=pl[3];
-    var word=WORDS[wi].w, cells=[];
-    for(var i=0;i<word.length;i++){
-      var rr=dir==='H'?row:row+i, cc=dir==='H'?col+i:col;
-      var g=grid[rr][cc];
-      g.ch=word[i]; g.wi.push(wi);
-      cells.push({r:rr,c:cc});
-    }
-    ws[wi]={found:false,cells:cells,dir:dir,row:row,col:col};
-  }
-
-  // Assign numbers in reading order (top→bottom, left→right)
-  var starts=[];
-  for(var wi2=0;wi2<WORDS.length;wi2++){
-    var fc=ws[wi2].cells[0];
-    starts.push({wi:wi2,r:fc.r,c:fc.c});
-  }
-  starts.sort(function(a,b){return a.r!==b.r?a.r-b.r:a.c-b.c;});
-  for(var s=0;s<starts.length;s++){
-    var st=starts[s];
-    if(grid[st.r][st.c].num===null) grid[st.r][st.c].num=s+1;
-    WORDS[st.wi].num=s+1;
+/* ── CONSTRUCTION LISTE DE MOTS ───────────────────────────────────── */
+function _buildList(){
+  var list = document.getElementById('word-list');
+  list.innerHTML = '';
+  for(var i=0;i<WORDS.length;i++){
+    var card = document.createElement('div');
+    card.className = 'wcard';
+    card.dataset.i = i;
+    card.innerHTML =
+      '<div class="wdef"><span class="wnum">'+(i+1)+'</span> '+WORDS[i].d+'</div>'+
+      '<div class="winfo"><span class="wlen">'+WORDS[i].w.length+' lettres</span>'+
+      '<span class="wans"></span></div>';
+    card.addEventListener('pointerdown', _tapCard);
+    list.appendChild(card);
   }
 }
 
-/* ── DOM GRILLE ───────────────────────────────────────────────────── */
-function _buildDOM(){
-  var wrap=document.getElementById('grid-wrap');
-  wrap.innerHTML='';
-  var gc=document.getElementById('game-container');
-  var aw2=gc.clientWidth-8, ah=gc.clientHeight-100;
-  cellSz=Math.floor(Math.min(aw2/SZ,ah/SZ));
-  cellSz=Math.max(16,Math.min(30,cellSz));
-  var gpx=cellSz*SZ;
-  wrap.style.width=gpx+'px'; wrap.style.height=gpx+'px';
-
-  els=[];
-  for(var r=0;r<SZ;r++){els[r]=[];for(var c=0;c<SZ;c++){
-    var d=document.createElement('div');
-    d.className='gc'+(grid[r][c].ch===null?' empty':'');
-    d.style.cssText='left:'+c*cellSz+'px;top:'+r*cellSz+'px;width:'+cellSz+'px;height:'+cellSz+'px;font-size:'+Math.floor(cellSz*.52)+'px;line-height:'+cellSz+'px';
-    if(grid[r][c].num!==null){
-      var nm=document.createElement('span');
-      nm.className='nm'; nm.textContent=grid[r][c].num;
-      nm.style.fontSize=Math.floor(cellSz*.28)+'px';
-      d.appendChild(nm);
-    }
-    d.dataset.r=r; d.dataset.c=c;
-    if(grid[r][c].ch!==null) d.addEventListener('pointerdown',_tapCell);
-    wrap.appendChild(d);
-    els[r][c]=d;
-  }}
-}
-
-/* ── CLAVIER ──────────────────────────────────────────────────────── */
+/* ── CONSTRUCTION CLAVIER AZERTY ──────────────────────────────────── */
 function _buildKB(){
-  var rows=['AZERTYUIOP','QSDFGHJKLM','WXCVBN'];
-  var ids=['kr1','kr2','kr3'];
+  var kb = document.getElementById('kb');
+  kb.innerHTML = '';
+  var rows = ['AZERTYUIOP','QSDFGHJKLM','WXCVBN'];
   for(var ri=0;ri<3;ri++){
-    var row=document.getElementById(ids[ri]); row.innerHTML='';
-    if(ri===2){var bk=_mkKey('⬅','BACK','wide');row.appendChild(bk);}
-    for(var ci=0;ci<rows[ri].length;ci++){row.appendChild(_mkKey(rows[ri][ci],rows[ri][ci],''));}
-    if(ri===2){row.appendChild(_mkKey('✓','OK','wide'));}
+    var row = document.createElement('div');
+    row.className = 'kr';
+    if(ri===2){
+      var bk = _mkKey('⬅','BACK','wide action-back');
+      row.appendChild(bk);
+    }
+    for(var ci=0;ci<rows[ri].length;ci++){
+      row.appendChild(_mkKey(rows[ri][ci], rows[ri][ci], ''));
+    }
+    if(ri===2){
+      row.appendChild(_mkKey('OK','OK','wide action-ok'));
+    }
+    kb.appendChild(row);
   }
 }
-function _mkKey(txt,key,cls){
-  var b=document.createElement('button');
-  b.className='kk'+(cls?' '+cls:'');b.textContent=txt;b.dataset.k=key;
-  b.addEventListener('pointerdown',_tapKey);return b;
+
+function _mkKey(txt, key, cls){
+  var b = document.createElement('button');
+  b.className = 'kk'+(cls?' '+cls:'');
+  b.textContent = txt;
+  b.dataset.k = key;
+  b.addEventListener('pointerdown', _tapKey);
+  return b;
 }
 
 /* ── INTERACTIONS ─────────────────────────────────────────────────── */
-function _tapCell(e){
-  if(!GPS0_running())return;
-  var r=+e.currentTarget.dataset.r, c=+e.currentTarget.dataset.c;
-  var g=grid[r][c]; if(!g.wi.length)return;
-  // pick first non-found word at this cell
-  for(var i=0;i<g.wi.length;i++){if(!ws[g.wi[i]].found){_selectWord(g.wi[i]);return;}}
+function _tapCard(e){
+  if(!GPS0_running()) return;
+  var idx = +e.currentTarget.dataset.i;
+  if(WORDS[idx].found) return;
+  _selectWord(idx);
 }
 
-function _selectWord(wi){
-  _clearSel();
-  aw=wi; buf='';
-  var s=ws[wi];
-  for(var i=0;i<s.cells.length;i++){
-    var cc=s.cells[i];
-    if(!s.found) els[cc.r][cc.c].classList.add('sel');
-  }
-  // Show definition
-  var db=document.getElementById('def-bar');
-  db.innerHTML='<b>'+WORDS[wi].num+(s.dir==='H'?' →':' ↓')+'</b> '+WORDS[wi].d+' <small>('+WORDS[wi].w.length+' lettres)</small>';
-  db.classList.add('show');
+function _selectWord(idx){
+  // Deselect previous
+  var cards = document.querySelectorAll('.wcard');
+  for(var i=0;i<cards.length;i++) cards[i].classList.remove('sel');
+  aw = idx; buf = '';
+  cards[idx].classList.add('sel');
+  // Scroll card into view
+  cards[idx].scrollIntoView({behavior:'smooth', block:'nearest'});
+  // Show input area + keyboard
+  document.getElementById('input-area').classList.add('show');
   document.getElementById('kb').classList.add('show');
   _renderInput();
 }
 
-function _clearSel(){
-  for(var r=0;r<SZ;r++)for(var c=0;c<SZ;c++){els[r][c].classList.remove('sel','wrong');}
-}
-
 function _tapKey(e){
-  if(!GPS0_running()||aw<0)return;
-  var k=e.currentTarget.dataset.k;
-  if(k==='BACK'){if(buf.length>0){buf=buf.slice(0,-1);_renderInput();}return;}
-  if(k==='OK'){_validate();return;}
-  if(buf.length<WORDS[aw].w.length){buf+=k;_renderInput();if(buf.length===WORDS[aw].w.length)setTimeout(_validate,180);}
+  if(!GPS0_running() || aw<0) return;
+  var k = e.currentTarget.dataset.k;
+  if(k==='BACK'){
+    if(buf.length>0){ buf=buf.slice(0,-1); _renderInput(); }
+    return;
+  }
+  if(k==='OK'){ _validate(); return; }
+  if(buf.length < WORDS[aw].w.length){
+    buf += k;
+    _renderInput();
+    if(buf.length === WORDS[aw].w.length) setTimeout(_validate, 200);
+  }
 }
 
-/* ── AFFICHAGE LETTRES ───────────────────────────────────────────── */
+/* ── AFFICHAGE CASES DE LETTRES ───────────────────────────────────── */
 function _renderInput(){
-  if(aw<0)return;
-  var s=ws[aw];
-  for(var i=0;i<s.cells.length;i++){
-    var cc=s.cells[i], el=els[cc.r][cc.c], g=grid[cc.r][cc.c];
-    // si la lettre vient d'un mot trouvé en croisement, ne pas toucher
-    var cross=false;
-    for(var j=0;j<g.wi.length;j++){if(g.wi[j]!==aw&&ws[g.wi[j]].found){cross=true;break;}}
-    if(cross)continue;
-
-    // rebuild content
-    el.textContent='';
-    if(g.num!==null){var nm=document.createElement('span');nm.className='nm';nm.textContent=g.num;nm.style.fontSize=Math.floor(cellSz*.28)+'px';el.appendChild(nm);}
-    var ch=i<buf.length?buf[i]:'';
-    if(ch){el.appendChild(document.createTextNode(ch));el.classList.add('filled');}
-    else{el.classList.remove('filled');}
+  if(aw<0) return;
+  var word = WORDS[aw].w;
+  var box = document.getElementById('letter-boxes');
+  box.innerHTML = '';
+  for(var i=0;i<word.length;i++){
+    var d = document.createElement('div');
+    d.className = 'lbox'+(i<buf.length?' filled':'');
+    d.textContent = i<buf.length ? buf[i] : '';
+    box.appendChild(d);
   }
 }
 
 /* ── VALIDATION ──────────────────────────────────────────────────── */
 function _validate(){
-  if(aw<0)return;
-  var s=ws[aw], word=WORDS[aw].w;
-  // Build full answer, using crossing letters where available
-  var ans='';
-  for(var i=0;i<s.cells.length;i++){
-    var cc=s.cells[i], g=grid[cc.r][cc.c], cross=false;
-    for(var j=0;j<g.wi.length;j++){if(g.wi[j]!==aw&&ws[g.wi[j]].found){ans+=g.ch;cross=true;break;}}
-    if(!cross) ans+=(i<buf.length?buf[i]:'_');
-  }
+  if(aw<0) return;
+  var word = WORDS[aw].w;
+  if(buf.length < word.length) return; // pas assez de lettres
 
-  if(ans===word){
+  var cards = document.querySelectorAll('.wcard');
+  var boxes = document.querySelectorAll('.lbox');
+
+  if(buf === word){
     // ✅ CORRECT
-    s.found=true; nFound++;
-    for(var i2=0;i2<s.cells.length;i2++){
-      var cc2=s.cells[i2], el2=els[cc2.r][cc2.c], g2=grid[cc2.r][cc2.c];
-      el2.classList.remove('sel','filled'); el2.classList.add('found');
-      el2.textContent='';
-      if(g2.num!==null){var nm2=document.createElement('span');nm2.className='nm';nm2.textContent=g2.num;nm2.style.fontSize=Math.floor(cellSz*.28)+'px';el2.appendChild(nm2);}
-      el2.appendChild(document.createTextNode(g2.ch));
-      el2.style.animation='flash .5s ease '+(i2*70)+'ms';
+    WORDS[aw].found = true;
+    nFound++;
+
+    // Color boxes green
+    for(var i=0;i<boxes.length;i++){
+      boxes[i].classList.remove('filled');
+      boxes[i].classList.add('correct');
     }
+
+    // Update card
+    cards[aw].classList.remove('sel');
+    cards[aw].classList.add('found');
+    var ansEl = cards[aw].querySelector('.wans');
+    ansEl.textContent = '✅ '+word;
+    ansEl.style.display = 'inline';
+
+    // Star explosion!
+    var rect = cards[aw].getBoundingClientRect();
+    _spawnStarExplosion(rect.left + rect.width/2, rect.top + rect.height/2);
+
     addDust(2);
     if(navigator.vibrate) navigator.vibrate([8,4,15]);
 
     // All 10 found?
-    if(nFound>=10){
+    if(nFound >= 10){
       addDust(30); // 20 from words + 30 bonus = 50 total
-      window.GPS0_rewardOverride=50;
-      setTimeout(function(){endGame(true);},900);
+      window.GPS0_rewardOverride = 50;
+      setTimeout(function(){ endGame(true); }, 1200);
     }
 
-    aw=-1; buf=''; _clearSel();
-    document.getElementById('def-bar').classList.remove('show');
-    document.getElementById('kb').classList.remove('show');
+    // Hide input after short delay
+    var savedAw = aw;
+    aw = -1; buf = '';
+    setTimeout(function(){
+      document.getElementById('input-area').classList.remove('show');
+      document.getElementById('kb').classList.remove('show');
+      // Auto-select next unfound word
+      for(var j=savedAw+1;j<WORDS.length;j++){
+        if(!WORDS[j].found){ _selectWord(j); return; }
+      }
+      for(var j2=0;j2<savedAw;j2++){
+        if(!WORDS[j2].found){ _selectWord(j2); return; }
+      }
+    }, 600);
   } else {
     // ❌ WRONG
-    for(var i3=0;i3<s.cells.length;i3++){els[s.cells[i3].r][s.cells[i3].c].classList.add('wrong');}
+    // Show which letters are wrong
+    for(var i2=0;i2<boxes.length;i2++){
+      if(buf[i2] === word[i2]) boxes[i2].classList.add('correct');
+      else boxes[i2].classList.add('wrong-letter');
+    }
+    cards[aw].classList.add('wrong');
     if(navigator.vibrate) navigator.vibrate([40,20,80]);
-    var savedAw=aw;
-    buf='';
+
+    var savedAw2 = aw;
+    buf = '';
     setTimeout(function(){
-      if(aw===savedAw) _renderInput();
-      for(var i4=0;i4<ws[savedAw].cells.length;i4++){els[ws[savedAw].cells[i4].r][ws[savedAw].cells[i4].c].classList.remove('wrong');}
-    },500);
+      if(aw === savedAw2) _renderInput();
+      cards[savedAw2].classList.remove('wrong');
+    }, 700);
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   ANIMATION ÉTOILES EXPLOSIVES (canvas overlay)
+   ══════════════════════════════════════════════════════════════════════ */
+var STAR_COLORS = ['#FFD700','#FFFFFF','#66CCFF','#FF88CC','#80FF80','#FFA500'];
+
+function _spawnStarExplosion(cx, cy){
+  for(var i=0;i<28;i++){
+    var angle = Math.random()*Math.PI*2;
+    var speed = 2 + Math.random()*5;
+    var sz = 4 + Math.random()*8;
+    fxParts.push({
+      x: cx, y: cy,
+      vx: Math.cos(angle)*speed,
+      vy: Math.sin(angle)*speed,
+      sz: sz,
+      rot: Math.random()*Math.PI*2,
+      rotV: (Math.random()-0.5)*0.3,
+      life: 1,
+      decay: 0.012 + Math.random()*0.015,
+      color: STAR_COLORS[Math.floor(Math.random()*STAR_COLORS.length)]
+    });
+  }
+  if(!fxRaf) fxRaf = requestAnimationFrame(_fxLoop);
+}
+
+function _drawStar(ctx, cx, cy, r, rot, color, alpha){
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(rot);
+  ctx.globalAlpha = alpha;
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  for(var i=0;i<5;i++){
+    var a = (i*4*Math.PI/5) - Math.PI/2;
+    var method = i===0 ? 'moveTo' : 'lineTo';
+    ctx[method](Math.cos(a)*r, Math.sin(a)*r);
+  }
+  ctx.closePath();
+  ctx.fill();
+  // Glow
+  ctx.shadowColor = color;
+  ctx.shadowBlur = r*2;
+  ctx.fill();
+  ctx.restore();
+}
+
+function _fxLoop(){
+  fxCv.width = window.innerWidth;
+  fxCv.height = window.innerHeight;
+  fxCtx.clearRect(0, 0, fxCv.width, fxCv.height);
+
+  for(var i=fxParts.length-1;i>=0;i--){
+    var p = fxParts[i];
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vy += 0.08; // gravity
+    p.vx *= 0.99;
+    p.rot += p.rotV;
+    p.life -= p.decay;
+    if(p.life <= 0){ fxParts.splice(i, 1); continue; }
+    _drawStar(fxCtx, p.x, p.y, p.sz*p.life, p.rot, p.color, p.life);
+  }
+
+  if(fxParts.length > 0){
+    fxRaf = requestAnimationFrame(_fxLoop);
+  } else {
+    fxRaf = 0;
   }
 }
 
 /* ── LIFECYCLE ───────────────────────────────────────────────────── */
 function gameReset(){
-  aw=-1; buf=''; nFound=0;
-  _genGrid(); _buildDOM(); _buildKB(); _drawStars();
-  document.getElementById('def-bar').classList.remove('show');
+  aw = -1; buf = ''; nFound = 0;
+  fxParts = []; fxRaf = 0;
+  for(var i=0;i<WORDS.length;i++) WORDS[i].found = false;
+  fxCv = document.getElementById('fx-cv');
+  fxCtx = fxCv.getContext('2d');
+  _buildList();
+  _buildKB();
+  _drawStars();
+  document.getElementById('input-area').classList.remove('show');
   document.getElementById('kb').classList.remove('show');
 }
-window.gameReset=gameReset;
+window.gameReset = gameReset;
 function gameStart(){ gameReset(); }
-window.gameStart=gameStart;
+window.gameStart = gameStart;
 </script>
 </body>
 </html>
