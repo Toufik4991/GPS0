@@ -1,4 +1,4 @@
 ﻿'use strict';
 window.GPS0_MiniJeu = {
-  demarrer(niveau) { console.log('[GPS0] Mini-jeu', niveau, 'lance via iframe app.js'); }
+  demarrer(niveau) { /* lancé via iframe dans app.js */ }
 };

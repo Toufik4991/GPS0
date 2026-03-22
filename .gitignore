@@ -14,3 +14,8 @@ run_*.bat
 *_result.txt
 status.txt
 log_result.txt
+
+# Fichiers orphelins
+*.gitkeep
+assets/backgrounds/bg-n1.svg
+assets/backgrounds/bg-n2.svg
