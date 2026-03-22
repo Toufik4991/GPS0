@@ -7,6 +7,20 @@
 
 ---
 
+## Changements v3.31.0 (Niveau 4 — Cristaux Mémoire)
+- **niveau4.html** : FULL REBUILD — Simon Says 3×3 lunaire (remplace givre/grappin cassés)
+- **Grille** : 3×3 de 9 cristaux diamant, chaque couleur unique (rose/cyan/violet/or/orange/bleu-ciel/vert/rouge/bleu)
+- **Mécanique Simon Says** : Séquence démarre à 2 cristaux (round 1), +1 par round
+- **Affichage séquence** : 520ms/cristal round 1, ×0.87 par round (plancher 240ms), gap noir 110ms
+- **Saisie** : tap sur le cristal (Manhattan distance pour hit detection sur losange)
+- **Bouclier** : 1 erreur tolérée par round — 1ère erreur = flash rouge + replay séquence (shield consommé) · 2ème erreur = loseLife()
+- **Win** : Atteindre Round 10 → endGame(true) · Timer 5min (GPS0_TIMER_SEC=300) comme sécurité
+- **Round clear** : Tous les 9 cristaux clignotent ensemble 750ms avant de passer au round suivant
+- **Décor** : Caverne sombre (fond #040214→#0c062a) · 32 poussières violettes/cyan flottantes · Stalagmites + stalactites aux bords avec lueur pulsante violette
+- **HUD** : #score-hud affiche "Round X/10" (pas de poussière) · Timer violet (#CC88FF)
+- **Canvas labels** : "◉ Mémorise..." · "▸ À toi !" · "✓ Round X réussi !" · Compteur "X/N" · Icône bouclier ⛨
+- Service Worker gps0-v46 → gps0-v47 / APP_VERSION 3.31.0
+
 ## Changements v3.30.0 (Niveau 3 — Rebond Lunaire)
 - **niveau3.html** : FULL REBUILD — Doodle Jump lunaire (remplace lianes cassées)
 - **Mécanique** : Rebond automatique sur chaque plateforme (vy = -14.5), caméra suit vers le haut uniquement

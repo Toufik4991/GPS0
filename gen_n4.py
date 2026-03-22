@@ -1,4 +1,8 @@
-<!doctype html>
+# -*- coding: utf-8 -*-
+"""Génère minijeux/niveau4.html — Niveau 4 Cristaux Mémoire (Simon Says 3x3)"""
+import os
+
+HTML = """<!doctype html>
 <html lang="fr">
 <head>
 <meta charset="utf-8">
@@ -28,10 +32,10 @@ body{display:flex;flex-direction:column;height:100dvh}
 <script src="shared.js"></script>
 <script>
 window.NIVEAU = 4;
-window.TUTO_TEXT = "Niveau 4 — Mémorise la séquence · Reproduis dans l'ordre<br><small>3 vies · 1 erreur/round tolérée (⛨ bouclier) · Atteins le Round 10 !</small>";
+window.TUTO_TEXT = "Niveau 4 \u2014 M\u00e9morise la s\u00e9quence \u00b7 Reproduis dans l'ordre<br><small>3 vies \u00b7 1 erreur/round tol\u00e9r\u00e9e (\u26e8 bouclier) \u00b7 Atteins le Round 10 !</small>";
 window.GPS0_TIMER_SEC = 300;
 
-// ── COULEURS CRISTAUX (9 uniques) ───────────────────────────────────────────────────────────────────────
+// \u2500\u2500 COULEURS CRISTAUX (9 uniques) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 const CC = [
   {l:"#FF66AA",d:"#5a1e3a",g:"rgba(255,102,170,0.62)"},
   {l:"#66FFDD",d:"#0e4e42",g:"rgba(102,255,221,0.62)"},
@@ -44,14 +48,14 @@ const CC = [
   {l:"#5588FF",d:"#0e1e6a",g:"rgba(85,136,255,0.62)"},
 ];
 
-// ── CONSTANTES ────────────────────────────────────────────────────────────────────────────────────
+// \u2500\u2500 CONSTANTES \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 const SHOW_MS_START = 520; // ms par cristal au round 1
 const SHOW_MS_MIN   = 240; // plancher
 const SHOW_DARK_MS  = 110; // pause noire entre cristaux
 const SHOW_ACCEL    = 0.87; // accélération par round
 const SEQ_START_LEN = 2;    // longueur séquence au round 1
 
-// ── ÉTAT ───────────────────────────────────────────────────────────────────────────────────────
+// \u2500\u2500 ÉTAT \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 // phase : "showing_lit" | "showing_dark" | "input" |
 //         "flash_ok" | "flash_err" | "round_clear" | "done"
 let round, sequence, inputIdx, shieldUsed;
@@ -87,7 +91,7 @@ function gameStart() {
     if (!GPS0_running()) return;
     const dt = Math.min(ts - (lastTs || ts), 60);
     lastTs = ts; bgT++;
-    _update(dt, cv.width, cv.height); // pass W/H to bgParts
+    _update(dt, cv.width, cv.height);
     ctx.clearRect(0, 0, cv.width, cv.height);
     _drawBg(ctx, cv.width, cv.height);
     _drawCrystals(ctx, cv.width, cv.height);
@@ -97,7 +101,7 @@ function gameStart() {
 }
 window.gameStart = gameStart;
 
-// ── LOGIQUE ─────────────────────────────────────────────────────────────────────────────────────────
+// \u2500\u2500 LOGIQUE \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 function _startRound() {
   // Ajoute SEQ_START_LEN cristaux pour round 1, +1 pour chaque round suivant
   if (sequence.length === 0) {
@@ -124,9 +128,9 @@ function _updateHUD() {
   if (el) el.textContent = "Round " + round + "/10";
 }
 
-function _update(dt, W, H) {
+function _update(dt) {
   // Particules de fond
-  bgParts.forEach(p => { p.y += p.vy; if (p.y < -5) { p.y = H + 5; p.x = Math.random() * W; } });
+  bgParts.forEach(p => { p.y += p.vy; if (p.y < -5) { p.y = 9999; p.x = Math.random() * 9999; } });
 
   if (phase === "showing_lit") {
     showTimer += dt;
@@ -185,7 +189,7 @@ function _onTap(e) {
   }
 }
 
-// ── HELPERS ──────────────────────────────────────────────────────────────────────────────────────────
+// \u2500\u2500 HELPERS \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 function _buildRects(W, H) {
   const margin = 18;
   const avail  = Math.min(W - margin * 2, H * 0.70);
@@ -215,9 +219,16 @@ function _initBg(W, H) {
     r: 0.8 + Math.random() * 1.6,
     col: Math.random() < 0.5 ? "#aa88ff" : "#66ddff"
   });
+  // Corriger l'accès W/H dans _update (utiliser closure)
+  const _fixBg = () => bgParts.forEach(p => {
+    if (p.y > 9999) { p.y = document.getElementById("cv").height + 5; p.x = Math.random() * document.getElementById("cv").width; }
+  });
+  // On réinitialise les positions correctement
+  const cv2 = document.getElementById("cv");
+  bgParts.forEach(p => { p.x = Math.random() * W; p.y = Math.random() * H; });
 }
 
-// ── DESSIN FOND ───────────────────────────────────────────────────────────────────────────────────
+// \u2500\u2500 DESSIN FOND \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 function _drawBg(ctx, W, H) {
   // Sol sombre violet
   const bg = ctx.createLinearGradient(0, 0, 0, H);
@@ -232,8 +243,11 @@ function _drawBg(ctx, W, H) {
   cg.addColorStop(1, "rgba(80,30,150,0)");
   ctx.fillStyle = cg; ctx.fillRect(0, 0, W, H);
 
-  // Poussière magique flottante (mise à jour faite dans _update)
+  // Poussière magique flottante
+  const cv = document.getElementById("cv");
   bgParts.forEach(p => {
+    p.y += p.vy;
+    if (p.y < -5) { p.y = H + 5; p.x = Math.random() * W; }
     const a = 0.10 + 0.20 * Math.sin(bgT * 0.022 + p.x * 0.012);
     ctx.globalAlpha = a; ctx.fillStyle = p.col;
     ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill();
@@ -283,7 +297,7 @@ function _drawStalacts(ctx, W, H) {
   });
 }
 
-// ── DESSIN CRISTAUX ─────────────────────────────────────────────────────────────────────────────────
+// \u2500\u2500 DESSIN CRISTAUX \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 function _drawCrystals(ctx, W, H) {
   if (!crystalRects) return;
 
@@ -334,19 +348,19 @@ function _drawCrystals(ctx, W, H) {
   }
 }
 
-// ── LABELS HUD CANVAS ─────────────────────────────────────────────────────────────────────────────
+// \u2500\u2500 LABELS HUD CANVAS \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 function _drawLabels(ctx, W, H) {
   ctx.textAlign = "center";
 
   // Label de phase
   let label = "", labelCol = "rgba(180,140,255,0.88)";
   if (phase === "showing_lit" || phase === "showing_dark") {
-    label = "● Mémorise...";
+    label = "\u25cf M\u00e9morise...";
   } else if (phase === "input" || phase === "flash_ok" || phase === "flash_err") {
-    label = "▸ À toi !";
+    label = "\u25b8 \u00c0 toi !";
     labelCol = "rgba(120,220,255,0.92)";
   } else if (phase === "round_clear") {
-    label = "✓ Round " + round + " réussi !";
+    label = "\u2713 Round " + round + " r\u00e9ussi !";
     labelCol = "rgba(255,215,60,0.95)";
   }
   if (label) {
@@ -366,7 +380,7 @@ function _drawLabels(ctx, W, H) {
   // Bouclier (indicateur 1 erreur/round)
   ctx.globalAlpha = shieldUsed ? 0.20 : 0.90;
   ctx.font = "24px system-ui";
-  ctx.fillText("⛨", W * 0.5, H * 0.968);
+  ctx.fillText("\u26e8", W * 0.5, H * 0.968);
   if (!shieldUsed) {
     ctx.globalAlpha = 0.55;
     ctx.fillStyle = "rgba(180,140,255,1)";
@@ -378,3 +392,9 @@ function _drawLabels(ctx, W, H) {
 </script>
 </body>
 </html>
+"""
+
+out = os.path.join(os.path.dirname(__file__), "minijeux", "niveau4.html")
+with open(out, "w", encoding="utf-8") as f:
+    f.write(HTML)
+print(f"[OK] {out} ({len(HTML)} chars)")
