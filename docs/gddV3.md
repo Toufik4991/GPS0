@@ -1,9 +1,19 @@
 # 🌙 GPS0 — Game Design Document v3.0
 
-**Version :** 3.39.0 - Bug 21 : Audio/Visuel + Parcours + Multijoueur + Écran Final + Optimisation
+**Version :** 3.40.0 - Bug 22 : Refonte N5 + N7 + Fix N9
 **Date :** 22/03/2026
 **Auteur :** Toufik49
 **Statut :** Opérationnel — Jeux 1-9 en cours de reconstruction
+
+---
+
+## Changements v3.40.0 (Bug 22 — Refonte N5 + N7 + Fix N9)
+
+- **N5 "1, 2, 3 Soleil !" recodé de zéro** : Soleil SVG avec face avant (colère 😡) et face dos (paisible 😌), flip horizontal animé (cos(π)), 4 phases (count→turning→stop→unturning), tap pour avancer quand le soleil a le dos tourné, pénalité -15% si tap au mauvais moment, barre de progression 0-100%, 18 poussières collectables sur le chemin d'étoiles, difficulté progressive (phases plus rapides avec la progression), récompense 50 poussières si < 90s sinon 30
+- **N7 "Mots Croisés Cosmiques" recodé de zéro** : Grille 13×13, 10 mots spatiaux sans accents (ETOILE, COMETE, ORBITE, NEBULEUSE, CRATERE, GALAXIE, SATELLITE, FUSEE, APESANTEUR, COSMOS), placement H+V avec 8 croisements vérifiés, clavier AZERTY custom intégré (pas de redimensionnement page mobile), définitions spatiales, 2 poussières par mot trouvé + bonus 30 si les 10 trouvés (total 50), timer 2min30, lettres des croisements apparaissent quand un mot est trouvé
+- **N9 Fix boss timing** : Fenêtres de vulnérabilité élargies (Phase 0: 150f/120, Phase 1: 130f/105, Phase 2: 100f/80), indicateur "TAPE ! 👊" agrandi (font ×1.44), phases accélérées par les bons taps (`adjustedDur = PHASE_DUR / (1 + goodHits * 0.12)`), poussières sans limite (rewardOverride = totalDustEarned, cap 50 retiré de shared.js pour les overrides)
+- **shared.js** : Suppression du `Math.min(50)` sur `GPS0_rewardOverride` pour permettre les récompenses dynamiques N9
+- Service Worker gps0-v55 → gps0-v56 / APP_VERSION 3.40.0
 
 ---
 
@@ -474,9 +484,9 @@ MONDE RÉEL                         MINI-JEUX CSS/HTML
 📍 Zone GPS 2 (fixe)   →   débloque   🎮 Niveau 2 (Slimes + trous)
 📍 Zone GPS 3 (fixe)   →   débloque   🎮 Niveau 3 (Multi-slimes)
 📍 Zone GPS 4 (fixe)   →   débloque   🎮 Niveau 4 (Double saut)
-📍 Zone GPS 5 (fixe)   →   débloque   🎮 Niveau 5 (Plateformes)
+📍 Zone GPS 5 (fixe)   →   débloque   🎮 Niveau 5 (1-2-3 Soleil !)
 📍 Zone GPS 6 (fixe)   →   débloque   🎮 Niveau 6 (Lasers tempo)
-📍 Zone GPS 7 (fixe)   →   débloque   🎮 Niveau 7 (Mix avancé)
+📍 Zone GPS 7 (fixe)   →   débloque   🎮 Niveau 7 (Mots Croisés Cosmiques)
 📍 Zone GPS 8 (fixe)   →   débloque   🎮 Niveau 8 (Challenge)
 📍 Zone GPS 9 (fixe)   →   débloque   🎮 Niveau 9 (Final difficile)
 

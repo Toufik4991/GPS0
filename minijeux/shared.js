@@ -179,7 +179,7 @@
     let finalDust;
     // Récompense personnalisée (ex: efficacité N1 ou boss N9)
     if (window.GPS0_rewardOverride !== undefined) {
-      finalDust = Math.min(50, Math.max(1, Math.round(window.GPS0_rewardOverride)));
+      finalDust = Math.max(1, Math.round(window.GPS0_rewardOverride));
     } else {
       // Formule chrono : gain = floor((tempsJoué / tempsTotal) * 50)
       const tempsJoue = timerTotal - timerSec;

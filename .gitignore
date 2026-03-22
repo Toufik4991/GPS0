@@ -1,0 +1,6 @@
+# Fichiers temporaires de build/backup
+minijeux/*_backup.html
+minijeux/*_new.html
+minijeux/*_clean.html
+*.bak.html
+fix_n5_*.txt

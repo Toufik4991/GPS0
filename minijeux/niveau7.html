@@ -1,370 +1,350 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
-<title>GPS0 N7</title>
+<title>GPS0 — Niveau 7</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;overflow:hidden;background:#000;font-family:system-ui,sans-serif;color:#fff;touch-action:none;user-select:none}
+html,body{height:100%;overflow:hidden;background:#0a0a1a;font-family:system-ui,sans-serif;color:#fff;touch-action:none;user-select:none}
+body{display:flex;flex-direction:column;height:100dvh}
 #hud{position:relative;z-index:20;display:flex;align-items:center;gap:10px;padding:6px 52px 6px 10px;background:rgba(0,0,0,.78);backdrop-filter:blur(6px);flex-shrink:0}
 #lives{font-size:1.1rem;letter-spacing:2px;min-width:54px}
 #timer{flex:1;text-align:center;font-size:.95rem;font-weight:bold;color:#66ccff}
 #score-hud{font-size:.9rem;color:#FFD700;font-weight:bold;min-width:52px;text-align:right}
-#game-container{position:relative;z-index:1;flex:1;overflow:hidden;display:flex;flex-direction:column}
-canvas{display:block;width:100%;height:100%}
-body{display:flex;flex-direction:column;height:100dvh}
+
+#game-container{flex:1;overflow:hidden;display:flex;flex-direction:column;align-items:center;padding:4px 4px 2px;position:relative;z-index:1}
+
+/* ── ÉTOILES DE FOND ─────────────────────────────────────────────── */
+#stars-bg{position:fixed;inset:0;z-index:0;pointer-events:none}
+
+/* ── GRILLE ──────────────────────────────────────────────────────── */
+#grid-wrap{position:relative;margin:0 auto;flex-shrink:0}
+.gc{position:absolute;border:1px solid rgba(70,160,255,.22);background:rgba(8,14,38,.88);display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;transition:background .25s,color .25s,border-color .25s;border-radius:2px}
+.gc.empty{border-color:transparent;background:transparent;pointer-events:none}
+.gc.filled{color:#d8efff;text-shadow:0 0 5px rgba(100,200,255,.45)}
+.gc.found{background:rgba(40,180,80,.5);color:#fff;border-color:rgba(80,255,130,.45);text-shadow:0 0 7px rgba(80,255,130,.5)}
+.gc.sel{background:rgba(55,125,255,.38);border-color:rgba(100,175,255,.65);box-shadow:0 0 7px rgba(80,160,255,.45)}
+.gc.wrong{background:rgba(255,35,35,.45);border-color:#f44;animation:shake .4s}
+.gc .nm{position:absolute;top:1px;left:2px;font-weight:700;color:rgba(190,215,255,.72);pointer-events:none}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-3px)}50%{transform:translateX(3px)}75%{transform:translateX(-2px)}}
+@keyframes flash{0%{box-shadow:0 0 0 transparent}50%{box-shadow:0 0 16px rgba(80,255,130,.75)}100%{box-shadow:0 0 0 transparent}}
+
+/* ── BARRE DÉFINITION ────────────────────────────────────────────── */
+#def-bar{width:100%;max-width:440px;min-height:40px;padding:5px 10px;margin:3px auto;background:rgba(8,18,50,.88);border:1px solid rgba(70,160,255,.28);border-radius:10px;text-align:center;font-size:.8rem;color:#a8d8ff;line-height:1.35;display:none}
+#def-bar.show{display:block}
+#def-bar b{color:#ffd700}
+
+/* ── CLAVIER ─────────────────────────────────────────────────────── */
+#kb{display:none;width:100%;max-width:440px;margin:2px auto 0;padding:0 2px}
+#kb.show{display:flex;flex-direction:column;gap:3px}
+.kr{display:flex;justify-content:center;gap:2px}
+.kk{min-width:26px;height:36px;border:none;border-radius:5px;background:rgba(35,55,115,.72);color:#d8eeff;font-size:.82rem;font-weight:bold;cursor:pointer;display:flex;align-items:center;justify-content:center;border:1px solid rgba(70,150,255,.18);transition:background .12s}
+.kk:active{background:rgba(75,125,255,.55)}
+.kk.wide{min-width:44px;font-size:.72rem}
 </style>
 </head>
 <body>
+<canvas id="stars-bg"></canvas>
 <div id="hud">
   <span id="lives">&#10084;&#10084;&#10084;</span>
   <span id="timer">2:30</span>
   <span id="score-hud">0 &#10024;</span>
 </div>
 <div id="game-container">
-  <canvas id="cv"></canvas>
+  <div id="grid-wrap"></div>
+  <div id="def-bar"></div>
+  <div id="kb">
+    <div class="kr" id="kr1"></div>
+    <div class="kr" id="kr2"></div>
+    <div class="kr" id="kr3"></div>
+  </div>
 </div>
+
 <script src="shared.js"></script>
 <script>
+/* ══════════════════════════════════════════════════════════════════════
+   NIVEAU 7 — MOTS CROISÉS COSMIQUES
+   Grille 13×13, 10 mots, clavier custom, 2 pous./mot + bonus 30
+   ══════════════════════════════════════════════════════════════════════ */
 window.NIVEAU = 7;
 window.GPS0_TIMER_SEC = 150;
-window.GPS0_onTimerExpired = function () { endGame(true); };
-window.TUTO_TEXT = "❄️ Hold = monte · Relâche = tombe · Passe dans les espaces !<br><small>3 vies · Vitesse croissante · Cristaux bonus ✨</small>";
+window.GPS0_onTimerExpired = function(){ endGame(true); };
+window.TUTO_TEXT = "🔤 Mots Croisés Cosmiques !<br>Trouve les 10 mots spatiaux 🚀<br><small>Tape un numéro → lis la définition → écris le mot !</small>";
 
-const GRAV = 0.38, THRUST = -0.80, MAX_VY = 8.5;
-const FLOOR_GFX = 55, CEIL_GFX = 45;
-const LASER_W = 12, LASER_DELAY = 70, GAP_RATIO = 0.56;
-const CRYSTAL_SPAWN_FRAMES = [1500, 3000, 4800, 6500, 8000];
-const PLAYER_X = 100;
+var SZ = 13; // grid size
 
-let player, lasers, crystals, sand, fxParticles;
-let frame, bgT, invTimer, currentSpeed, laserTimer;
-let bgScrollA, bgScrollB, holding, rafId;
+/* ── 10 MOTS ──────────────────────────────────────────────────────── */
+var WORDS = [
+  {w:'ETOILE',    d:'Boule de gaz brillante dans le ciel nocturne'},
+  {w:'COMETE',    d:'Astre chevelu avec une longue queue lumineuse'},
+  {w:'ORBITE',    d:"Trajectoire d'un objet autour d'un autre dans l'espace"},
+  {w:'NEBULEUSE', d:'Immense nuage de gaz et de poussière cosmique'},
+  {w:'CRATERE',   d:"Trou formé par l'impact d'une météorite"},
+  {w:'GALAXIE',   d:"Ensemble de milliards d'étoiles, comme la Voie Lactée"},
+  {w:'SATELLITE', d:"Objet qui tourne autour d'une planète, naturel ou artificiel"},
+  {w:'FUSEE',     d:"Véhicule propulsé pour voyager dans l'espace"},
+  {w:'APESANTEUR',d:"État où l'on flotte, sans gravité"},
+  {w:'COSMOS',    d:"Autre nom pour désigner l'Univers tout entier"}
+];
 
-function _getTargetSpeed() {
-  if (frame < 3600) return 2.45;
-  if (frame < 7200) return 3.64;
-  return 4.90;
+/* ── PLACEMENT VÉRIFIÉ (8 croisements) ────────────────────────────
+   Grille 13×13, coordonnées 0-based.
+
+   HORIZONTAUX :
+     ETOILE     row 3  cols 1-6     E T O I L E
+     FUSEE      row 4  cols 4-8     F U S E E
+     CRATERE    row 5  cols 4-10    C R A T E R E
+     COMETE     row 7  cols 2-7     C O M E T E
+     NEBULEUSE  row 9  cols 3-11    N E B U L E U S E
+     COSMOS     row 12 cols 0-5     C O S M O S
+
+   VERTICAUX :
+     SATELLITE  col 1  rows 0-8     S A T E L L I T E
+     APESANTEUR col 6  rows 1-10    A P E S A N T E U R
+     ORBITE     col 10 rows 0-5     O R B I T E
+     GALAXIE    col 11 rows 3-9     G A L A X I E
+
+   CROISEMENTS :
+     (3,1)  ETOILE[0]=E   SATELLITE[3]=E  ✓
+     (3,6)  ETOILE[5]=E   APESANTEUR[2]=E ✓
+     (4,6)  FUSEE[2]=S    APESANTEUR[3]=S ✓
+     (5,6)  CRATERE[2]=A  APESANTEUR[4]=A ✓
+     (5,10) CRATERE[6]=E  ORBITE[5]=E     ✓
+     (7,6)  COMETE[4]=T   APESANTEUR[6]=T ✓
+     (9,6)  NEBULEUSE[3]=U APESANTEUR[8]=U ✓
+     (9,11) NEBULEUSE[8]=E GALAXIE[6]=E   ✓
+   ────────────────────────────────────────────────────────────────── */
+var PL = [
+  // [wordIdx, row, col, 'H'|'V']
+  [0,  3,  1, 'H'],  // ETOILE
+  [1,  7,  2, 'H'],  // COMETE
+  [2,  0, 10, 'V'],  // ORBITE
+  [3,  9,  3, 'H'],  // NEBULEUSE
+  [4,  5,  4, 'H'],  // CRATERE
+  [5,  3, 11, 'V'],  // GALAXIE
+  [6,  0,  1, 'V'],  // SATELLITE
+  [7,  4,  4, 'H'],  // FUSEE
+  [8,  1,  6, 'V'],  // APESANTEUR
+  [9, 12,  0, 'H']   // COSMOS
+];
+
+/* ── ÉTAT ──────────────────────────────────────────────────────────── */
+var grid;      // grid[r][c] = {ch:null, wi:[], num:null}
+var ws;        // [{found, cells:[{r,c}], dir, row, col}]  per word
+var els;       // DOM cell elements [r][c]
+var aw = -1;   // active word index
+var buf = '';   // input buffer
+var nFound = 0;
+var cellSz;
+
+/* ── ÉTOILES DE FOND ──────────────────────────────────────────────── */
+function _drawStars(){
+  var cv = document.getElementById('stars-bg');
+  cv.width = window.innerWidth; cv.height = window.innerHeight;
+  var x = cv.getContext('2d');
+  for(var i=0;i<90;i++){
+    var sx=Math.random()*cv.width, sy=Math.random()*cv.height;
+    var r=Math.random()*1.5+.3, a=Math.random()*.6+.3;
+    x.fillStyle='rgba(180,210,255,'+a+')';
+    x.beginPath(); x.arc(sx,sy,r,0,6.283); x.fill();
+  }
 }
-function _getLaserInterval() {
-  if (frame < 3600) return 380;
-  if (frame < 7200) return 280;
-  return 210;
+
+/* ── GÉNÉRATION GRILLE ─────────────────────────────────────────────── */
+function _genGrid(){
+  grid=[]; ws=[];
+  var r,c;
+  for(r=0;r<SZ;r++){grid[r]=[];for(c=0;c<SZ;c++) grid[r][c]={ch:null,wi:[],num:null};}
+
+  for(var p=0;p<PL.length;p++){
+    var pl=PL[p], wi=pl[0], row=pl[1], col=pl[2], dir=pl[3];
+    var word=WORDS[wi].w, cells=[];
+    for(var i=0;i<word.length;i++){
+      var rr=dir==='H'?row:row+i, cc=dir==='H'?col+i:col;
+      var g=grid[rr][cc];
+      g.ch=word[i]; g.wi.push(wi);
+      cells.push({r:rr,c:cc});
+    }
+    ws[wi]={found:false,cells:cells,dir:dir,row:row,col:col};
+  }
+
+  // Assign numbers in reading order (top→bottom, left→right)
+  var starts=[];
+  for(var wi2=0;wi2<WORDS.length;wi2++){
+    var fc=ws[wi2].cells[0];
+    starts.push({wi:wi2,r:fc.r,c:fc.c});
+  }
+  starts.sort(function(a,b){return a.r!==b.r?a.r-b.r:a.c-b.c;});
+  for(var s=0;s<starts.length;s++){
+    var st=starts[s];
+    if(grid[st.r][st.c].num===null) grid[st.r][st.c].num=s+1;
+    WORDS[st.wi].num=s+1;
+  }
 }
 
-function gameReset() {
-  cancelAnimationFrame(rafId);
-  player = { y: 0, vy: 0, r: 14 };
-  lasers = []; crystals = []; sand = []; fxParticles = [];
-  frame = 0; bgT = 0; invTimer = 0; currentSpeed = 2.45;
-  laserTimer = 120; bgScrollA = 0; bgScrollB = 0; holding = false;
+/* ── DOM GRILLE ───────────────────────────────────────────────────── */
+function _buildDOM(){
+  var wrap=document.getElementById('grid-wrap');
+  wrap.innerHTML='';
+  var gc=document.getElementById('game-container');
+  var aw2=gc.clientWidth-8, ah=gc.clientHeight-100;
+  cellSz=Math.floor(Math.min(aw2/SZ,ah/SZ));
+  cellSz=Math.max(16,Math.min(30,cellSz));
+  var gpx=cellSz*SZ;
+  wrap.style.width=gpx+'px'; wrap.style.height=gpx+'px';
+
+  els=[];
+  for(var r=0;r<SZ;r++){els[r]=[];for(var c=0;c<SZ;c++){
+    var d=document.createElement('div');
+    d.className='gc'+(grid[r][c].ch===null?' empty':'');
+    d.style.cssText='left:'+c*cellSz+'px;top:'+r*cellSz+'px;width:'+cellSz+'px;height:'+cellSz+'px;font-size:'+Math.floor(cellSz*.52)+'px;line-height:'+cellSz+'px';
+    if(grid[r][c].num!==null){
+      var nm=document.createElement('span');
+      nm.className='nm'; nm.textContent=grid[r][c].num;
+      nm.style.fontSize=Math.floor(cellSz*.28)+'px';
+      d.appendChild(nm);
+    }
+    d.dataset.r=r; d.dataset.c=c;
+    if(grid[r][c].ch!==null) d.addEventListener('pointerdown',_tapCell);
+    wrap.appendChild(d);
+    els[r][c]=d;
+  }}
 }
-window.gameReset = gameReset;
 
-function _initSand(W, ceilY, floorY) {
-  sand = [];
-  const ph = floorY - ceilY;
-  for (let i = 0; i < 38; i++) sand.push({
-    x: Math.random() * W,
-    y: ceilY + Math.random() * ph,
-    vy: (Math.random() - .5) * .55,
-    size: .8 + Math.random() * 2.2,
-    alpha: .12 + Math.random() * .28,
-    spd: .45 + Math.random() * .9
-  });
+/* ── CLAVIER ──────────────────────────────────────────────────────── */
+function _buildKB(){
+  var rows=['AZERTYUIOP','QSDFGHJKLM','WXCVBN'];
+  var ids=['kr1','kr2','kr3'];
+  for(var ri=0;ri<3;ri++){
+    var row=document.getElementById(ids[ri]); row.innerHTML='';
+    if(ri===2){var bk=_mkKey('⬅','BACK','wide');row.appendChild(bk);}
+    for(var ci=0;ci<rows[ri].length;ci++){row.appendChild(_mkKey(rows[ri][ci],rows[ri][ci],''));}
+    if(ri===2){row.appendChild(_mkKey('✓','OK','wide'));}
+  }
+}
+function _mkKey(txt,key,cls){
+  var b=document.createElement('button');
+  b.className='kk'+(cls?' '+cls:'');b.textContent=txt;b.dataset.k=key;
+  b.addEventListener('pointerdown',_tapKey);return b;
 }
 
-function gameStart() {
-  const cv = document.getElementById('cv');
-  GPS0_resizeCanvas(cv);
-  gameReset();
-  player.y = cv.height / 2;
-  const floorY0 = cv.height - FLOOR_GFX, ceilY0 = CEIL_GFX;
-  _initSand(cv.width, ceilY0, floorY0);
+/* ── INTERACTIONS ─────────────────────────────────────────────────── */
+function _tapCell(e){
+  if(!GPS0_running())return;
+  var r=+e.currentTarget.dataset.r, c=+e.currentTarget.dataset.c;
+  var g=grid[r][c]; if(!g.wi.length)return;
+  // pick first non-found word at this cell
+  for(var i=0;i<g.wi.length;i++){if(!ws[g.wi[i]].found){_selectWord(g.wi[i]);return;}}
+}
 
-  // Controles
-  cv.addEventListener('touchstart', e => { e.preventDefault(); holding = true; }, { passive: false });
-  cv.addEventListener('touchend', () => { holding = false; }, { passive: true });
-  cv.addEventListener('touchcancel', () => { holding = false; }, { passive: true });
-  document.addEventListener('keydown', e => { if (e.code === 'Space' || e.key === 'ArrowUp') { e.preventDefault(); holding = true; } });
-  document.addEventListener('keyup', e => { if (e.code === 'Space' || e.key === 'ArrowUp') holding = false; });
+function _selectWord(wi){
+  _clearSel();
+  aw=wi; buf='';
+  var s=ws[wi];
+  for(var i=0;i<s.cells.length;i++){
+    var cc=s.cells[i];
+    if(!s.found) els[cc.r][cc.c].classList.add('sel');
+  }
+  // Show definition
+  var db=document.getElementById('def-bar');
+  db.innerHTML='<b>'+WORDS[wi].num+(s.dir==='H'?' →':' ↓')+'</b> '+WORDS[wi].d+' <small>('+WORDS[wi].w.length+' lettres)</small>';
+  db.classList.add('show');
+  document.getElementById('kb').classList.add('show');
+  _renderInput();
+}
 
-  const ctx = cv.getContext('2d');
-  const loop = () => {
-    rafId = requestAnimationFrame(loop);
-    if (!GPS0_running()) return;
-    const W = cv.width, H = cv.height;
-    const floorY = H - FLOOR_GFX, ceilY = CEIL_GFX;
-    const playableH = floorY - ceilY;
-    frame++; bgT++;
+function _clearSel(){
+  for(var r=0;r<SZ;r++)for(var c=0;c<SZ;c++){els[r][c].classList.remove('sel','wrong');}
+}
 
-    // Speed lerp
-    currentSpeed += (_getTargetSpeed() - currentSpeed) * .008;
+function _tapKey(e){
+  if(!GPS0_running()||aw<0)return;
+  var k=e.currentTarget.dataset.k;
+  if(k==='BACK'){if(buf.length>0){buf=buf.slice(0,-1);_renderInput();}return;}
+  if(k==='OK'){_validate();return;}
+  if(buf.length<WORDS[aw].w.length){buf+=k;_renderInput();if(buf.length===WORDS[aw].w.length)setTimeout(_validate,180);}
+}
 
-    // Physique
-    if (holding) player.vy += THRUST;
-    player.vy += GRAV;
-    player.vy = Math.max(-MAX_VY, Math.min(MAX_VY, player.vy));
-    player.y += player.vy;
+/* ── AFFICHAGE LETTRES ───────────────────────────────────────────── */
+function _renderInput(){
+  if(aw<0)return;
+  var s=ws[aw];
+  for(var i=0;i<s.cells.length;i++){
+    var cc=s.cells[i], el=els[cc.r][cc.c], g=grid[cc.r][cc.c];
+    // si la lettre vient d'un mot trouvé en croisement, ne pas toucher
+    var cross=false;
+    for(var j=0;j<g.wi.length;j++){if(g.wi[j]!==aw&&ws[g.wi[j]].found){cross=true;break;}}
+    if(cross)continue;
 
-    // Sol / plafond rebond
-    if (player.y > floorY - player.r) { player.y = floorY - player.r; player.vy = -Math.abs(player.vy) * .42; }
-    if (player.y < ceilY + player.r) { player.y = ceilY + player.r; player.vy = Math.abs(player.vy) * .42; }
+    // rebuild content
+    el.textContent='';
+    if(g.num!==null){var nm=document.createElement('span');nm.className='nm';nm.textContent=g.num;nm.style.fontSize=Math.floor(cellSz*.28)+'px';el.appendChild(nm);}
+    var ch=i<buf.length?buf[i]:'';
+    if(ch){el.appendChild(document.createTextNode(ch));el.classList.add('filled');}
+    else{el.classList.remove('filled');}
+  }
+}
 
-    if (invTimer > 0) invTimer--;
-    const visible = invTimer === 0 || Math.floor(bgT / 6) % 2 === 0;
+/* ── VALIDATION ──────────────────────────────────────────────────── */
+function _validate(){
+  if(aw<0)return;
+  var s=ws[aw], word=WORDS[aw].w;
+  // Build full answer, using crossing letters where available
+  var ans='';
+  for(var i=0;i<s.cells.length;i++){
+    var cc=s.cells[i], g=grid[cc.r][cc.c], cross=false;
+    for(var j=0;j<g.wi.length;j++){if(g.wi[j]!==aw&&ws[g.wi[j]].found){ans+=g.ch;cross=true;break;}}
+    if(!cross) ans+=(i<buf.length?buf[i]:'_');
+  }
 
-    // Spawn lasers
-    laserTimer--;
-    if (laserTimer <= 0) {
-      laserTimer = _getLaserInterval();
-      const gapH = playableH * GAP_RATIO;
-      const gapY = ceilY + (playableH - gapH) * (.1 + Math.random() * .8);
-      lasers.push({ x: W + 20, gapY, gapH, delay: LASER_DELAY });
+  if(ans===word){
+    // ✅ CORRECT
+    s.found=true; nFound++;
+    for(var i2=0;i2<s.cells.length;i2++){
+      var cc2=s.cells[i2], el2=els[cc2.r][cc2.c], g2=grid[cc2.r][cc2.c];
+      el2.classList.remove('sel','filled'); el2.classList.add('found');
+      el2.textContent='';
+      if(g2.num!==null){var nm2=document.createElement('span');nm2.className='nm';nm2.textContent=g2.num;nm2.style.fontSize=Math.floor(cellSz*.28)+'px';el2.appendChild(nm2);}
+      el2.appendChild(document.createTextNode(g2.ch));
+      el2.style.animation='flash .5s ease '+(i2*70)+'ms';
+    }
+    addDust(2);
+    if(navigator.vibrate) navigator.vibrate([8,4,15]);
+
+    // All 10 found?
+    if(nFound>=10){
+      addDust(30); // 20 from words + 30 bonus = 50 total
+      window.GPS0_rewardOverride=50;
+      setTimeout(function(){endGame(true);},900);
     }
 
-    // Spawn cristaux bonus
-    CRYSTAL_SPAWN_FRAMES.forEach(sf => {
-      if (frame === sf) {
-        const cy = ceilY + playableH * (.2 + Math.random() * .6);
-        crystals.push({ x: W + 40, y: cy, col: false });
-      }
-    });
-
-    // Update lasers
-    lasers.forEach(l => {
-      if (l.delay > 0) { l.delay--; return; }
-      l.x -= currentSpeed;
-      if (invTimer === 0) {
-        const lx = l.x;
-        if (lx - LASER_W/2 < PLAYER_X + player.r && lx + LASER_W/2 > PLAYER_X - player.r) {
-          const inGap = (player.y - player.r) > l.gapY && (player.y + player.r) < (l.gapY + l.gapH);
-          if (!inGap) {
-            invTimer = 90;
-            _spawnFx(PLAYER_X, player.y, '#ff5500', 12);
-            loseLife();
-            navigator.vibrate && navigator.vibrate([30, 10, 60]);
-          }
-        }
-      }
-    });
-    lasers = lasers.filter(l => l.x > -20);
-
-    // Update cristaux
-    crystals.forEach(c => {
-      if (c.col) return;
-      c.x -= currentSpeed;
-      if (Math.hypot(PLAYER_X - c.x, player.y - c.y) < player.r + 14) {
-        c.col = true; addDust(1);
-        _spawnFx(c.x, c.y, '#cc88ff', 8);
-        navigator.vibrate && navigator.vibrate([8, 4, 15]);
-      }
-    });
-    crystals = crystals.filter(c => c.x > -20 && !c.col);
-
-    // Sand drift
-    sand.forEach(s => {
-      s.x -= currentSpeed * s.spd * .42;
-      s.y += s.vy;
-      if (s.x < -4) { s.x = W + 4; s.y = ceilY + Math.random() * playableH; }
-      if (s.y < ceilY + 2 || s.y > floorY - 2) s.vy *= -1;
-    });
-
-    // BG scroll
-    bgScrollA += currentSpeed * .28;
-    bgScrollB += currentSpeed * .55;
-
-    // FX
-    fxParticles = fxParticles.filter(p => p.life > 0);
-    fxParticles.forEach(p => { p.x += p.vx; p.y += p.vy; p.vy += .06; p.life--; });
-
-    // ========= DESSIN =========
-    // Ciel espace → glacier
-    const sky = ctx.createLinearGradient(0, 0, 0, floorY);
-    sky.addColorStop(0, '#000814');
-    sky.addColorStop(0.14, '#020c1e');
-    sky.addColorStop(.38, '#0a2a4e');
-    sky.addColorStop(.82, '#0d5888');
-    sky.addColorStop(1, '#1a82b0');
-    ctx.fillStyle = sky; ctx.fillRect(0, 0, W, floorY);
-    // Nébuleuse colorée arrière-plan
-    const neb1 = ctx.createRadialGradient(W*.22, floorY*.18, 4, W*.22, floorY*.18, W*.32);
-    neb1.addColorStop(0, 'rgba(160,50,255,.07)'); neb1.addColorStop(1, 'rgba(160,50,255,0)');
-    ctx.fillStyle = neb1; ctx.fillRect(0, 0, W, floorY);
-    const neb2 = ctx.createRadialGradient(W*.80, floorY*.12, 4, W*.80, floorY*.12, W*.26);
-    neb2.addColorStop(0, 'rgba(50,110,255,.06)'); neb2.addColorStop(1, 'rgba(50,110,255,0)');
-    ctx.fillStyle = neb2; ctx.fillRect(0, 0, W, floorY);
-
-    // Lune givre decorative
-    const pg = ctx.createRadialGradient(W*.72, H*.2, 4, W*.72, H*.2, 46);
-    pg.addColorStop(0, 'rgba(200,235,255,.62)'); pg.addColorStop(1, 'rgba(80,140,200,0)');
-    ctx.fillStyle = pg; ctx.beginPath(); ctx.arc(W*.72, H*.2, 46, 0, Math.PI*2); ctx.fill();
-    ctx.strokeStyle = 'rgba(160,220,255,.28)'; ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.arc(W*.72, H*.2, 46, 0, Math.PI*2); ctx.stroke();
-
-    // Etoiles spatiales (fond)
-    for (let i = 0; i < 36; i++) {
-      const sx = ((i * 139 + bgScrollA * .04) % W + W) % W;
-      const sy = (i * 47 + 18) % (floorY * .52);
-      const a = 0.30 + 0.50 * Math.sin(bgT * .025 + i * 0.81);
-      const starCol = i%5===0 ? `rgba(255,210,160,${a.toFixed(2)})` : i%5===1 ? `rgba(190,210,255,${a.toFixed(2)})` : `rgba(200,235,255,${a.toFixed(2)})`;
-      ctx.fillStyle = starCol;
-      ctx.beginPath(); ctx.arc(sx, sy, .45 + (i%4)*.40, 0, Math.PI*2); ctx.fill();
-    }
-
-    // Glacier couche fond lente
-    ctx.fillStyle = 'rgba(80,140,190,.52)';
-    ctx.beginPath(); ctx.moveTo(-2, floorY);
-    for (let x = 0; x <= W + 52; x += 9) {
-      const dy = Math.sin((x + bgScrollA) * .012) * 26 + Math.sin((x + bgScrollA) * .007) * 13;
-      ctx.lineTo(x, floorY - 18 - dy);
-    }
-    ctx.lineTo(W + 2, floorY); ctx.closePath(); ctx.fill();
-
-    // Glacier couche avant rapide
-    ctx.fillStyle = 'rgba(140,210,240,.62)';
-    ctx.beginPath(); ctx.moveTo(-2, floorY);
-    for (let x = 0; x <= W + 52; x += 7) {
-      const dy = Math.sin((x + bgScrollB) * .019) * 15 + Math.cos((x + bgScrollB) * .011) * 8;
-      ctx.lineTo(x, floorY - 9 - dy);
-    }
-    ctx.lineTo(W + 2, floorY); ctx.closePath(); ctx.fill();
-
-    // Sol glacier
-    const floorGrad = ctx.createLinearGradient(0, floorY, 0, H);
-    floorGrad.addColorStop(0, '#88ddff'); floorGrad.addColorStop(1, '#3a8aaa');
-    ctx.fillStyle = floorGrad; ctx.fillRect(0, floorY, W, H - floorY);
-    // Cratères lunaires semi-transparents sous la neige
-    const cDefs = [{ox:.12,r:.056},{ox:.38,r:.040},{ox:.64,r:.050},{ox:.84,r:.032},{ox:.50,r:.026}];
-    cDefs.forEach(c => {
-      const cx2 = c.ox * W; const cr2 = c.r * W;
-      const cg2 = ctx.createRadialGradient(cx2, floorY + cr2*.22, 2, cx2, floorY + cr2*.22, cr2);
-      cg2.addColorStop(0, 'rgba(30,70,110,.55)'); cg2.addColorStop(0.55, 'rgba(50,100,140,.22)'); cg2.addColorStop(1, 'rgba(88,160,200,0)');
-      ctx.fillStyle = cg2;
-      ctx.beginPath(); ctx.ellipse(cx2, floorY, cr2, cr2*.40, 0, 0, Math.PI*2); ctx.fill();
-      ctx.strokeStyle = 'rgba(120,200,240,.30)'; ctx.lineWidth = 1.2;
-      ctx.beginPath(); ctx.ellipse(cx2, floorY, cr2, cr2*.40, 0, Math.PI, Math.PI*2); ctx.stroke();
-    });
-
-    // Plafond glace
-    const ceilGrad = ctx.createLinearGradient(0, 0, 0, ceilY);
-    ceilGrad.addColorStop(0, '#020c1e'); ceilGrad.addColorStop(1, '#0a3a64');
-    ctx.fillStyle = ceilGrad; ctx.fillRect(0, 0, W, ceilY);
-    // Stalactites de glace
-    ctx.fillStyle = 'rgba(160,230,255,.72)';
-    for (let i = 0; i < 7; i++) {
-      const stx = ((i * 87 + bgScrollB * .62) % (W + 50) + W + 50) % (W + 50) - 25;
-      const sth = 7 + (i % 3) * 5;
-      ctx.beginPath(); ctx.moveTo(stx - 6, ceilY); ctx.lineTo(stx, ceilY - sth); ctx.lineTo(stx + 6, ceilY); ctx.closePath(); ctx.fill();
-      ctx.strokeStyle = 'rgba(220,245,255,.45)'; ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.moveTo(stx - 6, ceilY); ctx.lineTo(stx, ceilY - sth); ctx.lineTo(stx + 6, ceilY); ctx.closePath(); ctx.stroke();
-    }
-
-    // Particules sable
-    sand.forEach(s => {
-      ctx.globalAlpha = s.alpha;
-      ctx.fillStyle = '#aaddff';
-      ctx.beginPath(); ctx.arc(s.x, s.y, s.size, 0, Math.PI*2); ctx.fill();
-    });
-    ctx.globalAlpha = 1;
-
-    // Warnings lasers (blink pendant delay)
-    lasers.filter(l => l.delay > 0).forEach(l => {
-      const blink = Math.floor(bgT / 7) % 2;
-      if (!blink) return;
-      ctx.fillStyle = 'rgba(255,48,48,.78)';
-      ctx.fillRect(W - 18, ceilY, 18, l.gapY - ceilY);
-      ctx.fillRect(W - 18, l.gapY + l.gapH, 18, floorY - (l.gapY + l.gapH));
-      ctx.fillStyle = 'rgba(255,255,60,.92)';
-      ctx.font = 'bold 15px system-ui'; ctx.textAlign = 'right';
-      ctx.fillText('\u25ba', W - 2, l.gapY + l.gapH / 2 + 5);
-    });
-
-    // Lasers actifs
-    lasers.filter(l => l.delay <= 0).forEach(l => {
-      const lx = l.x;
-      const pulse = .7 + .3 * Math.sin(bgT * .18);
-      // Glow lateral
-      const lg = ctx.createRadialGradient(lx, H / 2, 0, lx, H / 2, 30);
-      lg.addColorStop(0, `rgba(255,60,0,${(.28 * pulse).toFixed(2)})`); lg.addColorStop(1, 'rgba(255,60,0,0)');
-      ctx.fillStyle = lg; ctx.fillRect(lx - 30, ceilY, 60, playableH);
-      // Barre haute
-      ctx.fillStyle = `rgba(255,${Math.floor(85 + 35 * pulse)},0,.94)`;
-      ctx.fillRect(lx - LASER_W / 2, ceilY, LASER_W, l.gapY - ceilY);
-      // Barre basse
-      ctx.fillRect(lx - LASER_W / 2, l.gapY + l.gapH, LASER_W, floorY - (l.gapY + l.gapH));
-      // Ligne brillante centrale
-      ctx.strokeStyle = `rgba(255,225,185,${(.58 + .38 * pulse).toFixed(2)})`;
-      ctx.lineWidth = 1.8;
-      ctx.beginPath(); ctx.moveTo(lx, ceilY); ctx.lineTo(lx, l.gapY - 2); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(lx, l.gapY + l.gapH + 2); ctx.lineTo(lx, floorY); ctx.stroke();
-    });
-
-    // Cristaux bonus
-    crystals.forEach(c => {
-      ctx.save(); ctx.translate(c.x, c.y); ctx.rotate(bgT * .03);
-      const hg = ctx.createRadialGradient(0, 0, 2, 0, 0, 16);
-      hg.addColorStop(0, 'rgba(200,136,255,.55)'); hg.addColorStop(1, 'rgba(200,136,255,0)');
-      ctx.fillStyle = hg; ctx.beginPath(); ctx.arc(0, 0, 16, 0, Math.PI*2); ctx.fill();
-      ctx.fillStyle = '#cc88ff';
-      ctx.beginPath(); ctx.moveTo(0,-9); ctx.lineTo(5,0); ctx.lineTo(0,9); ctx.lineTo(-5,0); ctx.closePath(); ctx.fill();
-      ctx.strokeStyle = 'rgba(220,180,255,.6)'; ctx.lineWidth = 1.2; ctx.stroke();
-      ctx.restore();
-    });
-
-    // FX particules
-    fxParticles.forEach(p => {
-      ctx.globalAlpha = p.life / 24; ctx.fillStyle = p.col;
-      ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, Math.PI*2); ctx.fill();
-    });
-    ctx.globalAlpha = 1;
-
-    // Joueur + jetpack
-    if (visible) {
-      if (holding) {
-        // Flamme jetpack
-        const flen = 18 + Math.random() * 12;
-        const fg = ctx.createLinearGradient(PLAYER_X, player.y + player.r, PLAYER_X, player.y + player.r + flen);
-        fg.addColorStop(0, 'rgba(80,180,255,.9)'); fg.addColorStop(1, 'rgba(80,180,255,0)');
-        ctx.fillStyle = fg;
-        ctx.beginPath(); ctx.ellipse(PLAYER_X, player.y + player.r + flen/2, 7, flen/2, 0, 0, Math.PI*2); ctx.fill();
-        // Particules jetpack
-        if (frame % 3 === 0) fxParticles.push({
-          x: PLAYER_X + (Math.random() - .5) * 8, y: player.y + player.r + 4,
-          vx: (Math.random() - .5) * 1.5, vy: 1.8 + Math.random(), life: 12, col: '#55aaff'
-        });
-      }
-      drawCosmonaut(ctx, PLAYER_X, player.y, Math.max(12, player.r * 0.975), 0);
-    }
-
-    _drawHUD(ctx, W, H);
-  };
-  loop();
-}
-window.gameStart = gameStart;
-
-function _spawnFx(x, y, col, n) {
-  for (let i = 0; i < n; i++) fxParticles.push({
-    x: x + (Math.random() - .5) * 6, y: y + (Math.random() - .5) * 6,
-    vx: (Math.random() - .5) * 3, vy: -2 + Math.random() * 1.5, life: 24, col
-  });
+    aw=-1; buf=''; _clearSel();
+    document.getElementById('def-bar').classList.remove('show');
+    document.getElementById('kb').classList.remove('show');
+  } else {
+    // ❌ WRONG
+    for(var i3=0;i3<s.cells.length;i3++){els[s.cells[i3].r][s.cells[i3].c].classList.add('wrong');}
+    if(navigator.vibrate) navigator.vibrate([40,20,80]);
+    var savedAw=aw;
+    buf='';
+    setTimeout(function(){
+      if(aw===savedAw) _renderInput();
+      for(var i4=0;i4<ws[savedAw].cells.length;i4++){els[ws[savedAw].cells[i4].r][ws[savedAw].cells[i4].c].classList.remove('wrong');}
+    },500);
+  }
 }
 
-function _drawHUD(ctx, W, H) {
-  const phase = frame < 3600 ? 1 : frame < 7200 ? 2 : 3;
-  const cols = ['#aaffcc', '#ffcc44', '#ff6644'];
-  ctx.fillStyle = 'rgba(0,0,0,.52)';
-  ctx.beginPath(); ctx.roundRect(W - 98, H - 130, 92, 48, 8); ctx.fill();
-  ctx.fillStyle = cols[phase - 1]; ctx.font = 'bold 13px system-ui'; ctx.textAlign = 'center';
-  ctx.fillText('Phase ' + phase + '/3', W - 52, H - 108);
-  ctx.fillStyle = 'rgba(255,185,80,.58)'; ctx.font = '10px system-ui';
-  ctx.fillText('\u00d7' + currentSpeed.toFixed(1) + ' vitesse', W - 52, H - 94);
-  // Mini cristaux collectes
-  const colCount = CRYSTAL_SPAWN_FRAMES.filter(sf => frame > sf).length - crystals.length;
-  ctx.fillStyle = '#cc88ff'; ctx.font = '10px system-ui';
-  ctx.fillText('\u2726 ' + Math.max(0, colCount) + '/5', W - 52, H - 80);
+/* ── LIFECYCLE ───────────────────────────────────────────────────── */
+function gameReset(){
+  aw=-1; buf=''; nFound=0;
+  _genGrid(); _buildDOM(); _buildKB(); _drawStars();
+  document.getElementById('def-bar').classList.remove('show');
+  document.getElementById('kb').classList.remove('show');
 }
+window.gameReset=gameReset;
+function gameStart(){}
+window.gameStart=gameStart;
 </script>
 </body>
 </html>

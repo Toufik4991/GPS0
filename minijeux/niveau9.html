@@ -84,7 +84,6 @@ body{display:flex;flex-direction:column;height:100dvh}
 <script>
 window.NIVEAU = 9;
 window.GPS0_TIMER_SEC = 150;
-window.GPS0_rewardOverride = 50;
 window.GPS0_onTimerExpired = function () { loseLife(); };
 window.TUTO_TEXT = "👾 Affronte le Gardien Cosmique ! · Glisse pour esquiver · Tape l'œil quand il brille 👁<br><small>3 vies · 3 phases × 45s · Survive au laser !</small>";
 
@@ -95,7 +94,7 @@ const INV_FRAMES = 120;
 let phase, phaseTick, boss, player, projectiles, bombs;
 let laserAngle, laserActive, laserTimer, laserWarn;
 let invTimer, hitFlash, bgT, frame, vulnerable, vulnTimer;
-let bossHp;
+let bossHp, goodHits, totalDustEarned;
 let particles, stars, shootingStars, victoryAnim, victoryTick, rafId;
 let touchStartX, touchMoved;
 
@@ -131,6 +130,7 @@ function gameReset() {
   laserAngle = -Math.PI / 2; laserActive = false; laserTimer = 0; laserWarn = 0;
   invTimer = 0; hitFlash = 0; bgT = 0; frame = 0;
   vulnerable = false; vulnTimer = 0; bossHp = 3;
+  goodHits = 0; totalDustEarned = 0;
   victoryAnim = false; victoryTick = 0;
   touchStartX = null; touchMoved = false;
 }
@@ -179,12 +179,14 @@ function gameStart() {
     frame++; bgT++; phaseTick++;
     player.drawX += (player.x - player.drawX) * 0.18;
 
-    if (!victoryAnim && phaseTick >= PHASE_DUR) {
+    const adjustedDur = Math.floor(PHASE_DUR / (1 + goodHits * 0.12));
+    if (!victoryAnim && phaseTick >= adjustedDur) {
       phaseTick = 0; phase++;
       bossHp = 3;
       if (phase >= 3) {
         victoryAnim = true;
         _boom(bx, by, 36);
+        window.GPS0_rewardOverride = totalDustEarned;
         endGame(true);
         return;
       }
@@ -214,7 +216,7 @@ function gameStart() {
           projectiles.push({ x: bx, y: by, vx: Math.cos(ang) * 3.0, vy: Math.sin(ang) * 3.0, life: 135 });
         }
       }
-      if (frame % 200 === 0) { vulnerable = true; vulnTimer = 163; }
+      if (frame % 150 === 0) { vulnerable = true; vulnTimer = 120; }
 
     } else if (phase === 1) {
       laserTimer++;
@@ -228,7 +230,7 @@ function gameStart() {
         const ang = Math.atan2(py - by, px - bx) + (Math.random() - 0.5) * 0.85;
         projectiles.push({ x: bx, y: by, vx: Math.cos(ang) * 4.0, vy: Math.sin(ang) * 4.0, life: 115 });
       }
-      if (frame % 175 === 0) { vulnerable = true; vulnTimer = 145; }
+      if (frame % 130 === 0) { vulnerable = true; vulnTimer = 105; }
 
     } else if (phase === 2) {
       laserTimer++;
@@ -248,7 +250,7 @@ function gameStart() {
       if (boss.dashTimer % 110 === 0) boss.dashTarget = 0.22 + Math.random() * 0.56;
       boss.x += (boss.dashTarget - boss.x) * 0.042 + boss.wobble;
       boss.x = Math.max(0.18, Math.min(0.82, boss.x));
-      if (frame % 128 === 0) { vulnerable = true; vulnTimer = 120; }
+      if (frame % 100 === 0) { vulnerable = true; vulnTimer = 80; }
     }
 
     projectiles = projectiles.filter(p => p.life > 0);
@@ -600,8 +602,8 @@ function _drawBoss(ctx, bx, by, bR, boss, bgT, coronaHue, vulnerable) {
     // TAP label
     const tapA = (0.78 + 0.22 * Math.sin(bgT * 0.30)).toFixed(2);
     ctx.fillStyle = `rgba(255,255,100,${tapA})`;
-    ctx.font = `bold ${Math.floor(bR*0.36)}px system-ui`; ctx.textAlign = 'center';
-    ctx.fillText('TAP !', bx, by + bR + 32);
+    ctx.font = `bold ${Math.floor(bR*0.52)}px system-ui`; ctx.textAlign = 'center';
+    ctx.fillText('TAPE ! \uD83D\uDC4A', bx, by + bR + 36);
   } else {
     // Yeux méchants
     const eyY = by - bR*0.17;
@@ -749,6 +751,8 @@ function _hitBoss(cv) {
   _spawnFx(bx, by, '#ffdd44', 16);
   _spawnFx(bx, by, '#ff8800', 12);
   addDust(6);
+  totalDustEarned += 6;
+  goodHits++;
   navigator.vibrate && navigator.vibrate([15, 5, 30, 5, 55]);
 }
 

@@ -29,341 +29,469 @@ body{display:flex;flex-direction:column;height:100dvh}
 <script>
 window.NIVEAU = 5;
 window.GPS0_TIMER_SEC = 150;
-window.GPS0_onTimerExpired = function () { endGame(true); };
-window.TUTO_TEXT = "☀️ 1-2-3 Soleil ! Avance quand le soleil regarde ailleurs 🔆<br><small>Reste IMMOBILE quand il te regarde ! Atteins-le pour gagner !</small>";
+window.GPS0_onTimerExpired = function () { endGame(false); };
+window.TUTO_TEXT = "☀️ 1, 2, 3... SOLEIL !<br>TAP vite pour avancer quand le soleil a le DOS tourné 🔆<br><small>ARRÊTE de taper quand il se retourne ! 😡 Atteins 100% pour gagner !</small>";
 
-/* ── CONSTANTES ─────────────────────────────────────────────────────────── */
-const SUN_R    = 46;
-const COSMO_R  = 18;
-const STEP_PX  = 22;
-const STARDUST_N = 48;
-const PHASE_GO_MIN   = 1800;
-const PHASE_GO_MAX   = 3800;
-const PHASE_TURN_MS  = 600;
-const PHASE_STOP_MIN = 1400;
-const PHASE_STOP_MAX = 3000;
+/* ══════════════════════════════════════════════════════════════════════════
+   NIVEAU 5 — 1, 2, 3 SOLEIL ! (version cosmique)
+   ══════════════════════════════════════════════════════════════════════════ */
 
-/* ── ETAT ───────────────────────────────────────────────────────────────── */
+const SUN_R       = 48;
+const COSMO_R     = 20;
+const STEP_BASE   = 0.028;
+const PENALTY     = 0.15;
+const STAR_COUNT  = 55;
+const DUST_COUNT  = 18;
+const COUNT_MIN   = 1200;
+const COUNT_MAX   = 4000;
+const TURN_MS     = 500;
+const STOP_MIN    = 2000;
+const STOP_MAX    = 4000;
+
 let cv, ctx, W, H;
-let sunX, sunY, pathTop, pathBot;
-let playerY;
-let phase;
-let phaseTimer;
-let bgT;
-let particles, stardust;
-let tapped;
-let lastT, rafId;
-let stopFlash;
+let progress, phase, phaseTimer, countStep, countStepTimer;
+let bgT, stars, dustParts, fxParts;
+let sunFlipProg, stopFlash, difficultyMul;
+let rafId, lastT;
 
-/* ── RESET ──────────────────────────────────────────────────────────────── */
 function gameReset() {
   cancelAnimationFrame(rafId);
-  playerY    = 0;
-  phase      = 'go';
-  phaseTimer = _rnd(PHASE_GO_MIN, PHASE_GO_MAX);
-  bgT        = 0;
-  particles  = [];
-  tapped     = false;
-  stopFlash  = 0;
-  _initStardust();
+  progress = 0; phase = 'count';
+  phaseTimer = _rnd(COUNT_MIN, COUNT_MAX);
+  countStep = 0; countStepTimer = 0;
+  bgT = 0; sunFlipProg = 0; stopFlash = 0; difficultyMul = 1;
+  fxParts = []; _initStars(); _initDust();
 }
 window.gameReset = gameReset;
 
-/* ── DEMARRAGE ──────────────────────────────────────────────────────────── */
 function gameStart() {
-  cv  = document.getElementById('cv');
+  cv = document.getElementById('cv');
   ctx = cv.getContext('2d');
-  GPS0_resizeCanvas(cv);
-  if (!cv.width || !cv.height) {
-    const hud = document.getElementById('hud');
-    cv.width  = window.innerWidth;
-    cv.height = window.innerHeight - (hud ? hud.offsetHeight : 44);
-  }
-  _calcLayout();
+  GPS0_resizeCanvas(cv); _fixSize();
   cv.addEventListener('pointerdown', _onTap);
-  cv.addEventListener('touchstart', e => e.preventDefault(), { passive: false });
+  cv.addEventListener('touchstart', function(e){ e.preventDefault(); }, { passive: false });
   lastT = performance.now();
   rafId = requestAnimationFrame(_loop);
 }
 window.gameStart = gameStart;
+window.onResize = function () { GPS0_resizeCanvas(cv); _fixSize(); };
 
-window.onResize = function () {
-  GPS0_resizeCanvas(cv);
-  _calcLayout();
-};
-
-function _calcLayout() {
+function _fixSize() {
   W = cv.width; H = cv.height;
-  sunX    = W / 2;
-  sunY    = SUN_R + 30;
-  pathTop = sunY + SUN_R + COSMO_R + 22;
-  pathBot = H - COSMO_R - 32;
-}
-
-/* ── HELPERS ────────────────────────────────────────────────────────────── */
-function _rnd(a, b) { return a + Math.random() * (b - a); }
-function _playerPY() { return pathBot - playerY * (pathBot - pathTop); }
-
-/* ── STARDUST ────────────────────────────────────────────────────────────── */
-function _initStardust() {
-  stardust = [];
-  for (let i = 0; i < STARDUST_N; i++) {
-    const p = (i + 0.5) / STARDUST_N;
-    const jitter = _rnd(-1, 1) * (W ? W * 0.18 : 40);
-    stardust.push({ t: p, ox: jitter, r: 3.5 + Math.random() * 3.5,
-      ph: Math.random() * Math.PI * 2, collected: false });
+  if (!W || !H) {
+    var hud = document.getElementById('hud');
+    W = cv.width = window.innerWidth;
+    H = cv.height = window.innerHeight - (hud ? hud.offsetHeight : 44);
   }
 }
 
-/* ── CONTROLES ──────────────────────────────────────────────────────────── */
+function _rnd(a, b) { return a + Math.random() * (b - a); }
+function _sunX() { return W / 2; }
+function _sunY() { return SUN_R + 36; }
+function _pathTop() { return _sunY() + SUN_R + COSMO_R + 18; }
+function _pathBot() { return H - COSMO_R - 50; }
+function _playerY() { return _pathBot() - progress * (_pathBot() - _pathTop()); }
+
+/* ── ÉTOILES FOND ──────────────────────────────────────────────────────── */
+function _initStars() {
+  stars = [];
+  for (var i = 0; i < STAR_COUNT; i++) {
+    stars.push({
+      x: Math.random(), y: Math.random(),
+      r: 0.6 + Math.random() * 2,
+      a: 0.3 + Math.random() * 0.6,
+      ph: Math.random() * Math.PI * 2,
+      spd: 0.015 + Math.random() * 0.04
+    });
+  }
+}
+
+/* ── POUSSIÈRES COLLECTABLES ───────────────────────────────────────────── */
+function _initDust() {
+  dustParts = [];
+  for (var i = 0; i < DUST_COUNT; i++) {
+    var t = (i + 0.5) / DUST_COUNT;
+    dustParts.push({
+      t: t,
+      ox: (Math.random() - 0.5) * 0.36,
+      r: 3.5 + Math.random() * 3,
+      ph: Math.random() * Math.PI * 2,
+      collected: false
+    });
+  }
+}
+
+/* ── TAP ───────────────────────────────────────────────────────────────── */
 function _onTap(e) {
   e.preventDefault();
   if (!GPS0_running()) return;
+
   if (phase === 'stop' || phase === 'turning') {
     stopFlash = 1;
+    progress = Math.max(0, progress - PENALTY);
     loseLife();
     if (navigator.vibrate) navigator.vibrate([80, 40, 160]);
     return;
   }
-  tapped = true;
-  playerY = Math.min(1, playerY + STEP_PX / (pathBot - pathTop));
+
+  var step = STEP_BASE * (1 + (1 - progress) * 0.15);
+  progress = Math.min(1, progress + step);
   if (navigator.vibrate) navigator.vibrate(5);
-  if (playerY >= 1) { endGame(true); }
+
+  var py = _playerY();
+  for (var i = 0; i < 3; i++) {
+    fxParts.push({
+      x: _sunX() + (Math.random() - 0.5) * 12,
+      y: py + COSMO_R * 0.5,
+      vx: (Math.random() - 0.5) * 2,
+      vy: 0.8 + Math.random() * 1.5,
+      r: 2 + Math.random() * 2,
+      col: 'hsl(' + (40 + Math.random() * 30) + ',100%,80%)',
+      al: 0.8
+    });
+  }
+
+  if (progress >= 1) {
+    var elapsed = (window.GPS0_TIMER_SEC || 150) - (window.GPS0_timerSec ? window.GPS0_timerSec() : 0);
+    window.GPS0_rewardOverride = elapsed < 90 ? 50 : 30;
+    endGame(true);
+  }
 }
 
-/* ── BOUCLE ─────────────────────────────────────────────────────────────── */
+/* ── BOUCLE ────────────────────────────────────────────────────────────── */
 function _loop(now) {
   rafId = requestAnimationFrame(_loop);
   if (!GPS0_running()) return;
-  const dtMs = Math.min(now - lastT, 80);
+  var dt = Math.min(now - lastT, 80);
   lastT = now;
-  bgT  += dtMs / 16.67;
-  W = cv.width || window.innerWidth;
-  H = cv.height || (window.innerHeight - 44);
-  sunX = W / 2; sunY = SUN_R + 30;
-  pathTop = sunY + SUN_R + COSMO_R + 22;
-  pathBot = H - COSMO_R - 32;
-  _updatePhase(dtMs);
-  _collectStardust();
-  _updateParticles(dtMs / 16.67);
+  bgT += dt / 16.67;
+  _fixSize();
+  _updateDifficulty();
+  _updatePhase(dt);
+  _updateSunFlip(dt);
+  _collectDust();
+  _updateFx(dt / 16.67);
   _draw();
-  tapped = false;
 }
 
-/* ── PHASE ───────────────────────────────────────────────────────────────── */
-function _updatePhase(dtMs) {
-  phaseTimer -= dtMs;
-  if (phaseTimer > 0) return;
-  if (phase === 'go')      { phase = 'turning'; phaseTimer = PHASE_TURN_MS; }
-  else if (phase === 'turning') { phase = 'stop'; phaseTimer = _rnd(PHASE_STOP_MIN, PHASE_STOP_MAX); }
-  else                     { phase = 'go';  phaseTimer = _rnd(PHASE_GO_MIN, PHASE_GO_MAX); }
+function _updateDifficulty() {
+  difficultyMul = 1 + progress * 0.8;
 }
 
-/* ── STARDUST COLLECT ────────────────────────────────────────────────────── */
-function _collectStardust() {
-  const py = _playerPY();
-  for (const s of stardust) {
-    if (s.collected) continue;
-    const sy = pathBot - s.t * (pathBot - pathTop);
-    const sx = sunX + s.ox;
-    const dx = sunX - sx, dy = py - sy;
-    if (dx * dx + dy * dy < (COSMO_R + s.r) * (COSMO_R + s.r)) {
-      s.collected = true;
-      addDust(1);
-      for (let i = 0; i < 7; i++) {
-        const a = Math.random() * Math.PI * 2, sp = 1.5 + Math.random() * 3;
-        particles.push({ x: sx, y: sy, vx: Math.cos(a)*sp, vy: Math.sin(a)*sp,
-          r: 2 + Math.random() * 2.5, col: `hsl(${40 + Math.random()*40},100%,80%)`, al: 1 });
+/* ── MACHINE À ÉTATS ───────────────────────────────────────────────────── */
+function _updatePhase(dt) {
+  phaseTimer -= dt * difficultyMul;
+  if (phaseTimer > 0) {
+    if (phase === 'count') {
+      var stepDur = (COUNT_MAX / difficultyMul) / 4;
+      countStepTimer += dt;
+      if (countStepTimer > stepDur && countStep < 3) { countStep++; countStepTimer = 0; }
+    }
+    return;
+  }
+  if (phase === 'count')         { countStep = 4; phase = 'turning'; phaseTimer = TURN_MS; }
+  else if (phase === 'turning')  { phase = 'stop'; phaseTimer = Math.max(1500, _rnd(STOP_MIN, STOP_MAX) / difficultyMul); }
+  else if (phase === 'stop')     { phase = 'unturning'; phaseTimer = TURN_MS; }
+  else                           { phase = 'count'; countStep = 0; countStepTimer = 0; phaseTimer = Math.max(800, _rnd(COUNT_MIN, COUNT_MAX) / difficultyMul); }
+}
+
+/* ── FLIP SOLEIL ───────────────────────────────────────────────────────── */
+function _updateSunFlip(dt) {
+  var speed = dt / TURN_MS;
+  if (phase === 'turning' || phase === 'stop') sunFlipProg = Math.min(1, sunFlipProg + speed * 2.5);
+  else sunFlipProg = Math.max(0, sunFlipProg - speed * 2.5);
+}
+
+/* ── COLLECTE POUSSIÈRES ───────────────────────────────────────────────── */
+function _collectDust() {
+  var py = _playerY(), sx = _sunX();
+  for (var i = 0; i < dustParts.length; i++) {
+    var d = dustParts[i];
+    if (d.collected) continue;
+    var dy = _pathBot() - d.t * (_pathBot() - _pathTop());
+    var dx2 = sx + d.ox * W;
+    if (Math.hypot(sx - dx2, py - dy) < COSMO_R + d.r + 8) {
+      d.collected = true; addDust(1);
+      for (var j = 0; j < 6; j++) {
+        var a = Math.random() * Math.PI * 2, sp = 1.5 + Math.random() * 3;
+        fxParts.push({ x: dx2, y: dy, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
+          r: 2 + Math.random() * 2.5, col: 'hsl(' + (40 + Math.random() * 40) + ',100%,80%)', al: 1 });
       }
     }
   }
 }
 
-/* ── PARTICULES ──────────────────────────────────────────────────────────── */
-function _updateParticles(dt) {
-  for (let i = particles.length - 1; i >= 0; i--) {
-    const p = particles[i];
+/* ── FX PARTICULES ─────────────────────────────────────────────────────── */
+function _updateFx(dt) {
+  for (var i = fxParts.length - 1; i >= 0; i--) {
+    var p = fxParts[i];
     p.x += p.vx * dt; p.y += p.vy * dt;
-    p.vx *= 0.93; p.vy *= 0.93;
-    p.al -= 0.028 * dt;
-    if (p.al <= 0) particles.splice(i, 1);
+    p.vx *= 0.94; p.vy *= 0.94;
+    p.al -= 0.025 * dt;
+    if (p.al <= 0) fxParts.splice(i, 1);
   }
 }
 
-/* ── DRAW ─────────────────────────────────────────────────────────────── */
+/* ══════════════════════════════════════════════════════════════════════════
+   DESSIN
+   ══════════════════════════════════════════════════════════════════════════ */
 function _draw() {
   ctx.clearRect(0, 0, W, H);
 
-  // Fond dégradé chaud
-  const bg = ctx.createLinearGradient(0, 0, 0, H);
-  bg.addColorStop(0, '#1a0e00'); bg.addColorStop(0.35, '#2e1800');
-  bg.addColorStop(0.78, '#180f00'); bg.addColorStop(1, '#0d0800');
+  /* Fond spatial */
+  var bg = ctx.createLinearGradient(0, 0, 0, H);
+  bg.addColorStop(0, '#0a0015'); bg.addColorStop(0.3, '#1a0e2e');
+  bg.addColorStop(0.7, '#0f0a1a'); bg.addColorStop(1, '#060010');
   ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
 
-  // Halo ambiance soleil
-  const hA = phase === 'stop' ? 0.18 : phase === 'turning' ? 0.24 + 0.08 * Math.sin(bgT * 0.55) : 0.11;
-  const hl = ctx.createRadialGradient(sunX, sunY, SUN_R, sunX, sunY, H * 0.80);
-  hl.addColorStop(0, `rgba(255,200,40,${hA.toFixed(2)})`);
-  hl.addColorStop(0.45, `rgba(255,110,10,${(hA * 0.32).toFixed(2)})`);
-  hl.addColorStop(1, 'rgba(255,60,0,0)');
+  var neb = ctx.createRadialGradient(W * 0.3, H * 0.2, 10, W * 0.3, H * 0.2, W * 0.4);
+  neb.addColorStop(0, 'rgba(120,40,180,0.06)'); neb.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = neb; ctx.fillRect(0, 0, W, H);
+
+  /* Étoiles */
+  for (var i = 0; i < stars.length; i++) {
+    var s = stars[i];
+    var alpha = s.a * (0.5 + 0.5 * Math.sin(bgT * s.spd + s.ph));
+    ctx.save(); ctx.globalAlpha = alpha; ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.arc(s.x * W, s.y * H, s.r, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  }
+
+  /* Halo ambiance */
+  var haloA = phase === 'stop' ? 0.20 : phase === 'turning' ? 0.15 : 0.08;
+  var haloCol = phase === 'stop' ? 'rgba(255,80,20,' : 'rgba(255,200,40,';
+  var hl = ctx.createRadialGradient(_sunX(), _sunY(), SUN_R, _sunX(), _sunY(), H * 0.7);
+  hl.addColorStop(0, haloCol + haloA + ')');
+  hl.addColorStop(0.5, haloCol + (haloA * 0.3) + ')');
+  hl.addColorStop(1, 'rgba(0,0,0,0)');
   ctx.fillStyle = hl; ctx.fillRect(0, 0, W, H);
 
-  // Chemin pointillé
-  ctx.save(); ctx.globalAlpha = 0.26; ctx.strokeStyle = '#ffee99';
-  ctx.lineWidth = 2.5; ctx.setLineDash([6, 11]);
-  ctx.beginPath(); ctx.moveTo(sunX, pathTop); ctx.lineTo(sunX, pathBot); ctx.stroke();
-  ctx.setLineDash([]); ctx.restore();
+  /* Chemin d'étoiles */
+  _drawPath();
 
-  // Stardust
-  for (const s of stardust) {
-    if (s.collected) continue;
-    const sy = pathBot - s.t * (pathBot - pathTop);
-    const sx = sunX + s.ox;
-    const pulse = 0.60 + 0.40 * Math.sin(bgT * 0.09 + s.ph);
-    ctx.save(); ctx.globalAlpha = 0.44 * pulse;
-    ctx.fillStyle = `hsl(${45 + Math.sin(s.ph) * 20},100%,78%)`;
-    ctx.beginPath(); ctx.arc(sx, sy, s.r * pulse, 0, Math.PI * 2); ctx.fill();
+  /* Poussières collectables */
+  for (var i = 0; i < dustParts.length; i++) {
+    var d = dustParts[i];
+    if (d.collected) continue;
+    var dy = _pathBot() - d.t * (_pathBot() - _pathTop());
+    var dx = _sunX() + d.ox * W;
+    var pulse = 0.55 + 0.45 * Math.sin(bgT * 0.08 + d.ph);
+    ctx.save(); ctx.globalAlpha = 0.5 * pulse;
+    ctx.fillStyle = 'hsl(' + (45 + Math.sin(d.ph) * 20) + ',100%,78%)';
+    ctx.beginPath(); ctx.arc(dx, dy, d.r * pulse, 0, Math.PI * 2); ctx.fill();
     ctx.restore();
   }
 
-  // Flash stop
+  /* Flash stop rouge */
   if (stopFlash > 0) {
-    ctx.save(); ctx.globalAlpha = stopFlash * 0.44;
+    ctx.save(); ctx.globalAlpha = stopFlash * 0.4;
     ctx.fillStyle = '#ff0000'; ctx.fillRect(0, 0, W, H);
     ctx.restore();
-    stopFlash = Math.max(0, stopFlash - 0.06);
+    stopFlash = Math.max(0, stopFlash - 0.04);
   }
 
-  // Particules
-  for (const p of particles) {
+  /* FX */
+  for (var i = 0; i < fxParts.length; i++) {
+    var p = fxParts[i];
     if (p.al <= 0) continue;
     ctx.save(); ctx.globalAlpha = p.al; ctx.fillStyle = p.col;
     ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill();
     ctx.restore();
   }
 
-  // Cosmonaute joueur
-  const posY = _playerPY();
-  drawCosmonaut(ctx, sunX, posY, COSMO_R, 0, (phase === 'go') ? 'fly' : 'idle');
+  /* Cosmonaute */
+  var posY = _playerY();
+  drawCosmonaut(ctx, _sunX(), posY, COSMO_R, 0, (phase === 'count' || phase === 'unturning') ? 'run' : 'idle');
 
-  // Flèche progression
-  if (phase === 'go' && playerY > 0) {
-    const ay = posY - COSMO_R - 14;
-    ctx.save(); ctx.globalAlpha = 0.62 + 0.28 * Math.sin(bgT * 0.14); ctx.fillStyle = '#ffdd44';
-    ctx.beginPath(); ctx.moveTo(sunX, ay - 7); ctx.lineTo(sunX - 7, ay + 2); ctx.lineTo(sunX + 7, ay + 2);
-    ctx.closePath(); ctx.fill(); ctx.restore();
-  }
-
-  // SOLEIL MALÉFIQUE
+  /* Soleil */
   _drawSun();
+
+  /* Jauge + Labels */
+  _drawProgressBar();
   _drawPhaseLabel();
 }
 
-/* ── SOLEIL ────────────────────────────────────────────────────────────── */
-function _drawSun() {
-  const t = bgT;
-  // Rayons
-  for (let i = 0; i < 12; i++) {
-    const a = (i / 12) * Math.PI * 2 + t * 0.018;
-    const rIn = SUN_R + 6;
-    const rOut = SUN_R + 28 + 10 * Math.sin(t * 0.06 + i);
-    ctx.save();
-    ctx.globalAlpha = (phase === 'stop') ? 0.78 : (phase === 'turning') ? 0.52 + 0.24 * Math.sin(t * 0.45) : 0.32;
-    ctx.strokeStyle = (phase === 'stop') ? '#ff7700' : '#ffdd44';
-    ctx.lineWidth = 4; ctx.lineCap = 'round';
-    ctx.beginPath();
-    ctx.moveTo(sunX + Math.cos(a) * rIn, sunY + Math.sin(a) * rIn);
-    ctx.lineTo(sunX + Math.cos(a) * rOut, sunY + Math.sin(a) * rOut);
-    ctx.stroke(); ctx.restore();
-  }
-  // Halo
-  const haloR = SUN_R + 22 + 5 * Math.sin(t * 0.08);
-  const hg = ctx.createRadialGradient(sunX, sunY, SUN_R * 0.6, sunX, sunY, haloR);
-  if (phase === 'stop') {
-    hg.addColorStop(0, 'rgba(255,70,0,.72)'); hg.addColorStop(0.5, 'rgba(255,130,0,.30)'); hg.addColorStop(1, 'rgba(255,90,0,0)');
-  } else if (phase === 'turning') {
-    const ia = 0.52 + 0.30 * Math.abs(Math.sin(t * 0.36));
-    hg.addColorStop(0, `rgba(255,180,0,${ia.toFixed(2)})`); hg.addColorStop(0.5, `rgba(255,200,40,${(ia*.4).toFixed(2)})`); hg.addColorStop(1, 'rgba(255,200,0,0)');
-  } else {
-    hg.addColorStop(0, 'rgba(255,240,120,.52)'); hg.addColorStop(0.5, 'rgba(255,220,80,.20)'); hg.addColorStop(1, 'rgba(255,200,0,0)');
-  }
-  ctx.fillStyle = hg; ctx.beginPath(); ctx.arc(sunX, sunY, haloR, 0, Math.PI * 2); ctx.fill();
-
-  // Corps soleil
-  const sunCol = phase === 'stop' ? '#ff5500' : phase === 'turning' ? '#ffaa00' : '#ffdd22';
-  const bodyG = ctx.createRadialGradient(sunX - SUN_R * 0.3, sunY - SUN_R * 0.3, 4, sunX, sunY, SUN_R);
-  bodyG.addColorStop(0, '#fff5a0'); bodyG.addColorStop(0.4, sunCol); bodyG.addColorStop(1, phase === 'stop' ? '#cc3300' : '#e68800');
-  ctx.fillStyle = bodyG; ctx.beginPath(); ctx.arc(sunX, sunY, SUN_R, 0, Math.PI * 2); ctx.fill();
-
-  // Visage
-  if (phase === 'go') {
-    // Yeux fermés souriants
-    ctx.save(); ctx.strokeStyle = '#6B3A00'; ctx.lineWidth = 3; ctx.lineCap = 'round';
-    const eyY0 = sunY - SUN_R * 0.12;
-    for (const ex of [sunX - SUN_R * 0.38, sunX + SUN_R * 0.38]) {
-      ctx.beginPath(); ctx.arc(ex, eyY0, SUN_R * 0.18, Math.PI * 0.1, Math.PI * 0.9); ctx.stroke();
-    }
-    ctx.beginPath(); ctx.arc(sunX, sunY + SUN_R * 0.10, SUN_R * 0.32, Math.PI * 0.1, Math.PI * 0.9); ctx.stroke();
-    ctx.restore();
-
-  } else if (phase === 'turning') {
-    const warn = Math.abs(Math.sin(t * 0.45));
-    const eyY1 = sunY - SUN_R * 0.15;
-    ctx.save(); ctx.strokeStyle = '#4a2000'; ctx.lineWidth = 3;
-    for (const ex of [sunX - SUN_R * 0.36, sunX + SUN_R * 0.36]) {
-      ctx.fillStyle = '#fff';
-      ctx.beginPath(); ctx.ellipse(ex, eyY1, SUN_R * 0.16, SUN_R * 0.13, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-      ctx.fillStyle = `rgba(80,20,0,${(0.6 + 0.4 * warn).toFixed(2)})`;
-      ctx.beginPath(); ctx.arc(ex + 2 * Math.cos(t * 0.38), eyY1 + 2 * Math.sin(t * 0.28), SUN_R * 0.07, 0, Math.PI * 2); ctx.fill();
-    }
-    ctx.lineWidth = 3.5;
-    ctx.beginPath(); ctx.moveTo(sunX - SUN_R * 0.54, eyY1 - SUN_R * 0.22); ctx.lineTo(sunX - SUN_R * 0.20, eyY1 - SUN_R * 0.10); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(sunX + SUN_R * 0.54, eyY1 - SUN_R * 0.22); ctx.lineTo(sunX + SUN_R * 0.20, eyY1 - SUN_R * 0.10); ctx.stroke();
-    ctx.restore();
-
-  } else {
-    // STOP — yeux méchants
-    const eyY2 = sunY - SUN_R * 0.18;
-    ctx.save();
-    for (const ex of [sunX - SUN_R * 0.36, sunX + SUN_R * 0.36]) {
-      ctx.fillStyle = '#fff'; ctx.strokeStyle = '#330000'; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.ellipse(ex, eyY2, SUN_R * 0.18, SUN_R * 0.22, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-      ctx.fillStyle = '#cc0000'; ctx.beginPath(); ctx.arc(ex, eyY2 + SUN_R * 0.04, SUN_R * 0.11, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = '#1a0000'; ctx.beginPath(); ctx.arc(ex, eyY2 + SUN_R * 0.04, SUN_R * 0.055, 0, Math.PI * 2); ctx.fill();
-    }
-    ctx.strokeStyle = '#330000'; ctx.lineWidth = 4; ctx.lineCap = 'round';
-    ctx.beginPath(); ctx.moveTo(sunX - SUN_R * 0.58, eyY2 - SUN_R * 0.32); ctx.lineTo(sunX - SUN_R * 0.16, eyY2 - SUN_R * 0.08); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(sunX + SUN_R * 0.58, eyY2 - SUN_R * 0.32); ctx.lineTo(sunX + SUN_R * 0.16, eyY2 - SUN_R * 0.08); ctx.stroke();
-    // Bouche rictus + dents
-    const mY = sunY + SUN_R * 0.32;
-    ctx.strokeStyle = '#1a0000'; ctx.lineWidth = 3.5;
-    ctx.beginPath(); ctx.arc(sunX, mY, SUN_R * 0.30, Math.PI * 1.1, Math.PI * 1.9); ctx.stroke();
-    ctx.fillStyle = '#ffffcc';
-    const tW = SUN_R * 0.085, tH = SUN_R * 0.10;
-    for (let ti = 0; ti < 4; ti++) {
-      ctx.beginPath(); ctx.roundRect(sunX - SUN_R * 0.19 + ti * tW * 1.22, mY - tH * 0.5, tW, tH, 2); ctx.fill();
-    }
+/* ── CHEMIN D'ÉTOILES ──────────────────────────────────────────────────── */
+function _drawPath() {
+  var sx = _sunX(), top = _pathTop(), bot = _pathBot();
+  for (var i = 0; i <= 28; i++) {
+    var t = i / 28;
+    var y = bot - t * (bot - top);
+    var pulse = 0.3 + 0.4 * Math.sin(bgT * 0.06 + t * 8);
+    ctx.save(); ctx.globalAlpha = pulse; ctx.fillStyle = '#ffee88';
+    _drawStar4(ctx, sx, y, 3 + Math.sin(bgT * 0.04 + t * 5) * 1.5);
     ctx.restore();
   }
 }
 
-/* ── LABEL PHASE ─────────────────────────────────────────────────────────── */
-function _drawPhaseLabel() {
-  ctx.textAlign = 'center';
-  if (phase === 'go') {
-    ctx.save(); ctx.globalAlpha = 0.60 + 0.28 * Math.sin(bgT * 0.12);
-    ctx.fillStyle = '#88ff55'; ctx.font = `bold ${Math.floor(W * 0.07)}px system-ui`;
-    ctx.fillText('AVANCE !', W / 2, H - 14); ctx.restore();
-  } else if (phase === 'stop') {
-    ctx.save(); ctx.globalAlpha = 0.72 + 0.28 * Math.abs(Math.sin(bgT * 0.22));
-    ctx.fillStyle = '#ff3300'; ctx.font = `bold ${Math.floor(W * 0.09)}px system-ui`;
-    ctx.shadowColor = '#ff0000'; ctx.shadowBlur = 18;
-    ctx.fillText('STOP !', W / 2, H - 14); ctx.restore();
+function _drawStar4(ctx, x, y, r) {
+  ctx.beginPath();
+  for (var i = 0; i < 8; i++) {
+    var a = (i / 8) * Math.PI * 2 - Math.PI / 2;
+    var d = i % 2 === 0 ? r : r * 0.4;
+    var px = x + Math.cos(a) * d, py = y + Math.sin(a) * d;
+    i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+  }
+  ctx.closePath(); ctx.fill();
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   SOLEIL — Face arrière (dos, calme) ↔ Face avant (méchant 😡)
+   Flip horizontal fluide via sunFlipProg (0=dos, 1=face)
+   ══════════════════════════════════════════════════════════════════════════ */
+function _drawSun() {
+  var sx = _sunX(), sy = _sunY(), t = bgT;
+
+  /* Rayons */
+  for (var i = 0; i < 12; i++) {
+    var a = (i / 12) * Math.PI * 2 + t * 0.015;
+    var rIn = SUN_R + 4, rOut = SUN_R + 22 + 8 * Math.sin(t * 0.05 + i);
+    ctx.save();
+    ctx.globalAlpha = phase === 'stop' ? 0.75 : 0.30;
+    ctx.strokeStyle = phase === 'stop' ? '#ff6600' : '#ffdd44';
+    ctx.lineWidth = 3.5; ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(sx + Math.cos(a) * rIn, sy + Math.sin(a) * rIn);
+    ctx.lineTo(sx + Math.cos(a) * rOut, sy + Math.sin(a) * rOut);
+    ctx.stroke(); ctx.restore();
+  }
+
+  /* Halo rapproché */
+  var hR = SUN_R + 18 + 4 * Math.sin(t * 0.07);
+  var hg = ctx.createRadialGradient(sx, sy, SUN_R * 0.5, sx, sy, hR);
+  if (phase === 'stop') {
+    hg.addColorStop(0, 'rgba(255,70,0,.65)'); hg.addColorStop(1, 'rgba(255,70,0,0)');
   } else {
-    ctx.save(); ctx.globalAlpha = 0.82 + 0.18 * Math.abs(Math.sin(bgT * 0.38));
-    ctx.fillStyle = '#ffcc00'; ctx.font = `bold ${Math.floor(W * 0.075)}px system-ui`;
-    ctx.shadowColor = '#ffaa00'; ctx.shadowBlur = 12;
-    ctx.fillText('⚠️ ATTENTION…', W / 2, H - 14); ctx.restore();
+    hg.addColorStop(0, 'rgba(255,220,80,.45)'); hg.addColorStop(1, 'rgba(255,200,0,0)');
+  }
+  ctx.fillStyle = hg; ctx.beginPath(); ctx.arc(sx, sy, hR, 0, Math.PI * 2); ctx.fill();
+
+  /* Corps soleil avec flip */
+  ctx.save();
+  ctx.translate(sx, sy);
+  var scaleX = Math.cos(sunFlipProg * Math.PI);
+  ctx.scale(Math.abs(scaleX) < 0.05 ? 0.05 : scaleX, 1);
+
+  var isFace = sunFlipProg > 0.5;
+  var sunCol = isFace ? (phase === 'stop' ? '#ff5500' : '#ffaa00') : '#ffdd22';
+  var bodyG = ctx.createRadialGradient(-SUN_R * 0.3, -SUN_R * 0.3, 4, 0, 0, SUN_R);
+  bodyG.addColorStop(0, '#fff8c0'); bodyG.addColorStop(0.4, sunCol);
+  bodyG.addColorStop(1, isFace ? '#cc3300' : '#e6a800');
+  ctx.fillStyle = bodyG;
+  ctx.beginPath(); ctx.arc(0, 0, SUN_R, 0, Math.PI * 2); ctx.fill();
+
+  ctx.strokeStyle = isFace ? 'rgba(200,50,0,0.4)' : 'rgba(200,180,60,0.3)';
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(0, 0, SUN_R, 0, Math.PI * 2); ctx.stroke();
+
+  /* Visage FACE (méchant) */
+  if (sunFlipProg > 0.55) {
+    var faceAlpha = Math.min(1, (sunFlipProg - 0.55) / 0.25);
+    ctx.save(); ctx.scale(-1, 1); ctx.globalAlpha = faceAlpha;
+
+    var eyY = -SUN_R * 0.18;
+    var exArr = [-SUN_R * 0.34, SUN_R * 0.34];
+    for (var ei = 0; ei < 2; ei++) {
+      var ex = exArr[ei];
+      ctx.fillStyle = '#fff'; ctx.strokeStyle = '#4a0000'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.ellipse(ex, eyY, SUN_R * 0.17, SUN_R * 0.21, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#cc0000';
+      ctx.beginPath(); ctx.arc(ex, eyY + SUN_R * 0.03, SUN_R * 0.10, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#1a0000';
+      ctx.beginPath(); ctx.arc(ex, eyY + SUN_R * 0.03, SUN_R * 0.05, 0, Math.PI * 2); ctx.fill();
+    }
+
+    ctx.strokeStyle = '#4a1000'; ctx.lineWidth = 3.5; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(-SUN_R * 0.56, eyY - SUN_R * 0.30); ctx.lineTo(-SUN_R * 0.16, eyY - SUN_R * 0.08); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(SUN_R * 0.56, eyY - SUN_R * 0.30); ctx.lineTo(SUN_R * 0.16, eyY - SUN_R * 0.08); ctx.stroke();
+
+    var mY = SUN_R * 0.30;
+    ctx.strokeStyle = '#3a0000'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(0, mY, SUN_R * 0.28, Math.PI * 1.1, Math.PI * 1.9); ctx.stroke();
+    ctx.fillStyle = '#ffffcc';
+    var tW = SUN_R * 0.08, tH = SUN_R * 0.09;
+    for (var ti = 0; ti < 4; ti++) {
+      ctx.beginPath(); ctx.roundRect(-SUN_R * 0.18 + ti * tW * 1.2, mY - tH * 0.4, tW, tH, 2); ctx.fill();
+    }
+    ctx.restore();
+
+  } else if (sunFlipProg < 0.45) {
+    /* Visage DOS (calme, yeux fermés) */
+    var backAlpha = Math.min(1, (0.45 - sunFlipProg) / 0.25);
+    ctx.save(); ctx.globalAlpha = backAlpha * 0.5;
+    ctx.strokeStyle = '#b08800'; ctx.lineWidth = 2.5; ctx.lineCap = 'round';
+    var eyBY = -SUN_R * 0.05;
+    var bexArr = [-SUN_R * 0.30, SUN_R * 0.30];
+    for (var bei = 0; bei < 2; bei++) {
+      ctx.beginPath(); ctx.arc(bexArr[bei], eyBY, SUN_R * 0.14, Math.PI * 0.15, Math.PI * 0.85); ctx.stroke();
+    }
+    ctx.beginPath(); ctx.arc(0, SUN_R * 0.15, SUN_R * 0.22, Math.PI * 0.15, Math.PI * 0.85); ctx.stroke();
+    ctx.restore();
+  }
+
+  ctx.restore();
+}
+
+/* ── JAUGE DE PROGRESSION ──────────────────────────────────────────────── */
+function _drawProgressBar() {
+  var barW = W * 0.65, barH = 14;
+  var barX = (W - barW) / 2, barY = H - 50;
+  ctx.fillStyle = 'rgba(0,0,0,0.55)';
+  ctx.beginPath(); ctx.roundRect(barX - 2, barY - 2, barW + 4, barH + 4, 8); ctx.fill();
+  var fillW = barW * progress;
+  var col = progress < 0.5 ? '#44aaff' : progress < 0.85 ? '#44ff88' : '#FFD700';
+  var gFill = ctx.createLinearGradient(barX, 0, barX + barW, 0);
+  gFill.addColorStop(0, col); gFill.addColorStop(1, '#fff');
+  ctx.fillStyle = gFill;
+  ctx.beginPath(); ctx.roundRect(barX, barY, fillW, barH, 6); ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.roundRect(barX, barY, barW, barH, 6); ctx.stroke();
+  ctx.fillStyle = '#fff'; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
+  ctx.fillText(Math.floor(progress * 100) + '%', W / 2, barY + barH + 16);
+}
+
+/* ── LABELS PHASE ──────────────────────────────────────────────────────── */
+function _drawPhaseLabel() {
+  var cx = W / 2, y = H * 0.42;
+  ctx.textAlign = 'center';
+
+  if (phase === 'count' || phase === 'unturning') {
+    var labels = ['', '1...', '1... 2...', '1... 2... 3...'];
+    var txt = countStep >= 4 ? '' : (labels[countStep] || '');
+    if (txt) {
+      ctx.save(); ctx.globalAlpha = 0.7 + 0.3 * Math.sin(bgT * 0.1);
+      ctx.fillStyle = '#ffee88';
+      ctx.font = 'bold ' + Math.floor(W * 0.08) + 'px system-ui';
+      ctx.shadowColor = '#ffcc00'; ctx.shadowBlur = 15;
+      ctx.fillText(txt, cx, y); ctx.restore();
+    }
+    ctx.save(); ctx.globalAlpha = 0.55 + 0.35 * Math.sin(bgT * 0.12);
+    ctx.fillStyle = '#88ff55';
+    ctx.font = 'bold ' + Math.floor(W * 0.065) + 'px system-ui';
+    ctx.fillText('AVANCE ! 👆', cx, _pathBot() + COSMO_R + 26);
+    ctx.restore();
+
+  } else if (phase === 'turning') {
+    ctx.save();
+    var pulse = 0.7 + 0.3 * Math.abs(Math.sin(bgT * 0.3));
+    ctx.globalAlpha = pulse; ctx.fillStyle = '#ff4400';
+    ctx.font = 'bold ' + Math.floor(W * 0.10) + 'px system-ui';
+    ctx.shadowColor = '#ff0000'; ctx.shadowBlur = 25;
+    ctx.fillText('SOLEIL ! ☀️', cx, y); ctx.restore();
+
+  } else if (phase === 'stop') {
+    ctx.save(); ctx.globalAlpha = 0.75 + 0.25 * Math.abs(Math.sin(bgT * 0.22));
+    ctx.fillStyle = '#ff2200';
+    ctx.font = 'bold ' + Math.floor(W * 0.09) + 'px system-ui';
+    ctx.shadowColor = '#ff0000'; ctx.shadowBlur = 20;
+    ctx.fillText('🛑 STOP !', cx, _pathBot() + COSMO_R + 26);
+    ctx.restore();
+
+    ctx.save(); ctx.globalAlpha = 0.6 + 0.4 * Math.sin(bgT * 0.18);
+    ctx.fillStyle = '#ff6600';
+    ctx.font = 'bold ' + Math.floor(W * 0.07) + 'px system-ui';
+    ctx.shadowColor = '#ff4400'; ctx.shadowBlur = 12;
+    ctx.fillText('😡', cx, y); ctx.restore();
   }
 }
 </script>
