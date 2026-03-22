@@ -1,9 +1,20 @@
 # 🌙 GPS0 — Game Design Document v3.0
 
-**Version :** 3.48.0 - Bug 28 : Hublot fusée + N5 timing + N7 poussières
+**Version :** 3.49.0 - Bug 29 : Fix hublot fusée centré sur astéroïde
 **Date :** 22/03/2026
 **Auteur :** Toufik49
 **Statut :** Opérationnel — Jeux 1-9 en cours de reconstruction
+
+---
+
+## Changements v3.49.0 (Bug 29 — Fix hublot fusée centré sur astéroïde)
+
+- **Recalcul exact du positionnement fusée :**
+  - Hublot dans le SVG fusée : `cx=40, cy=33` (viewBox 80×80) → rendu 131×131px → **65.5px, 54px**
+  - Centre astéroïde : (100, 100) dans le wrapper 200×200
+  - `margin-top:-54px; margin-left:-65.5px` → hublot pile au centre
+  - `transform-origin: 65.5px 54px` → rotation pivote autour du hublot
+  - À tout angle (0°, 90°, 180°, 270°) le hublot reste fixe au centre de l'astéroïde ✅
 
 ---
 
