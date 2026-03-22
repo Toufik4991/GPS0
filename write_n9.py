@@ -1,4 +1,4 @@
-<!doctype html>
+content = r"""<!doctype html>
 <html lang="fr">
 <head>
 <meta charset="utf-8">
@@ -452,4 +452,35 @@ function _drawVictory(ctx, W, H, bx, by) {
 }
 </script>
 </body>
-</html>
+</html>"""
+
+with open(r"c:\Users\Jules\Desktop\GPS0\minijeux\niveau9.html", "w", encoding="utf-8") as f:
+    f.write(content)
+
+import os
+size = os.path.getsize(r"c:\Users\Jules\Desktop\GPS0\minijeux\niveau9.html")
+print(f"OK: {size} bytes")
+
+with open(r"c:\Users\Jules\Desktop\GPS0\minijeux\niveau9.html", encoding="utf-8") as f:
+    txt = f.read()
+
+checks = {
+    "gameStart":         "gameStart" in txt,
+    "3phases":           "PHASE_DUR" in txt,
+    "GPS0_TIMER_135":    "GPS0_TIMER_SEC = 135" in txt,
+    "projectiles":       "projectiles.push" in txt,
+    "laser":             "laserAngle" in txt,
+    "bombes_p3":         "bombs.push" in txt,
+    "vulnerable_tap":    "_hitBoss" in txt,
+    "loseLife":          "loseLife()" in txt,
+    "inv_2s":            "INV_FRAMES = 120" in txt,
+    "laser_collision":   "_ptToSegDist" in txt,
+    "dodge_lateral":     "DODGE_RANGE" in txt,
+    "endGame":           "endGame(true)" in txt,
+    "victory_anim":      "_drawVictory" in txt,
+    "corona":            "coronaAngles" in txt,
+    "drawCosmonaut":     "drawCosmonaut" in txt,
+    "phase_bar":         "phaseNames" in txt,
+}
+for k, v in checks.items():
+    print(f"  {'OK' if v else 'MISSING'}: {k}")
