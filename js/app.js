@@ -552,14 +552,14 @@ window.GPS0_App = (() => {
       ov.id = 'countdown-overlay';
       // Cosmonaut info
       const selfieB64 = typeof GPS0_Avatar !== 'undefined' ? GPS0_Avatar.getSelfie() : null;
-      const luneNames = ['',' Séléné',' Phobos',' Titan',' Europe',' Ganymède',' Io',' Callisto',' Encelade',' Boss Final'];
-      const luneEmojis = ['','🌛','🔥','🌿','❄️','👻','🤖','🌪️','💎','☄️'];
+      const luneNames = ['','Niveau 1','Niveau 2','Niveau 3','Niveau 4','Niveau 5','Niveau 6','Niveau 7','Niveau 8','Niveau 9 — Boss Final'];
+      const luneEmojis = ['','🚀','🌋','⬆️','🔮','🧲','🌑','🫧','🛸','☄️'];
       const n = niveau || 1;
       // Draw selfie on canvas
       const cosmoHtml = selfieB64
         ? `<canvas id="cdCountCv" width="72" height="72" class="countdown-cosmo" style="border-radius:50%;border:3px solid rgba(79,195,247,.7)"></canvas>`
         : `<div class="countdown-cosmo" style="background:rgba(79,195,247,.2);border-radius:50%;width:72px;height:72px;border:3px solid rgba(79,195,247,.7);display:flex;align-items:center;justify-content:center;font-size:2.5rem">🚀</div>`;
-      const luneLabel = `<div style="font-size:1.1rem;color:rgba(200,162,200,.9);font-weight:bold;letter-spacing:.05em">${luneEmojis[n]} Lune ${luneNames[n] || n}</div>`;
+      const luneLabel = `<div style="font-size:1.1rem;color:rgba(200,162,200,.9);font-weight:bold;letter-spacing:.05em">${luneEmojis[n]} ${luneNames[n] || ('Niveau '+n)}</div>`;
       ov.innerHTML = cosmoHtml + luneLabel + '<div id="cdNum" class="countdown-num">5</div>';
       ov.style.cssText = 'position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px';
       document.body.appendChild(ov);
