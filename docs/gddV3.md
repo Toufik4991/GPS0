@@ -1,11 +1,22 @@
 # 🌙 GPS0 — Game Design Document v3.0
 
-**Version :** 3.16.0 - Bugs globaux : astéroïde zone-coloré+vitesse, gain chrono progressif, localStorage immédiat
+**Version :** 3.22.0 - Jeu 5 Lune d'Ombre — labyrinthe obscur complet
 **Date :** 22/03/2026
 **Auteur :** Toufik49
-**Statut :** Opérationnel - Bugs 1-2-3 appliqués intégralement
+**Statut :** Opérationnel — Jeux 1-5 reconstruits et validés
 
 ---
+
+## Changements v3.22.0 (Jeu 5 — Lune d'Ombre)
+- **niveau5.html** : Labyrinthe obscur complet (DFS maze 21×21 → 33×33 à frame 4500)
+- **Cône directionnel** : Lumière 110° orientée selon dernière direction + ambiant 42px, lerp fluide
+- **Objets** : 🔦 lampes (+22px lumière, max 145) · ✦ cristaux (+1 dust, max 50)
+- **Entités d'ombre** : 2 fantômes en marche aléatoire, loseLife() au contact, flash rouge + respawn
+- **Sortie** : 🚪 addDust(10) bonus + rebuild maze + flash doré
+- **Runes** : Motifs gravés visibles dans la lumière sur les murs (2 patterns hash-based)
+- **Contrôles** : D-pad persistant + swipe (seuil 28px) + clavier flèches
+- **Chrono** : Standard shared.js (2min30 default)
+- Service Worker gps0-v38 / APP_VERSION 3.22.0
 
 ## Changements v3.16.0 (Bugs globaux 1-2-3)
 

@@ -1,4 +1,4 @@
-<!doctype html>
+content = r"""<!doctype html>
 <html lang="fr">
 <head>
 <meta charset="utf-8">
@@ -323,4 +323,27 @@ function _buildDpad(cv) {
 }
 </script>
 </body>
-</html>
+</html>"""
+
+with open(r"c:\Users\Jules\Desktop\GPS0\minijeux\niveau5.html", "w", encoding="utf-8") as f:
+    f.write(content)
+
+import os
+size = os.path.getsize(r"c:\Users\Jules\Desktop\GPS0\minijeux\niveau5.html")
+print(f"OK: {size} bytes")
+with open(r"c:\Users\Jules\Desktop\GPS0\minijeux\niveau5.html", encoding="utf-8") as f:
+    txt = f.read()
+checks = {
+    "gameStart": "gameStart" in txt,
+    "_genMaze": "_genMaze" in txt,
+    "shadows": "shadows" in txt,
+    "cone/clip": "ctx.clip()" in txt,
+    "swipe": "touchend" in txt,
+    "CRYSTAL_MAX=50": "CRYSTAL_MAX = 50" in txt,
+    "UPGRADE_AT": "UPGRADE_AT" in txt,
+    "_drawRune": "_drawRune" in txt,
+    "addDust(10)": "addDust(10)" in txt,
+    "loseLife": "loseLife" in txt,
+}
+for k, v in checks.items():
+    print(f"  {'OK' if v else 'MISSING'}: {k}")
