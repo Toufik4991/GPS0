@@ -1,11 +1,24 @@
 # 🌙 GPS0 — Game Design Document v3.0
 
-**Version :** 3.23.0 - Jeu 6 Lune de Fer — Agar.io complet
+**Version :** 3.24.0 - Jeu 7 Lune de Tempête — Jetpack Joyride désert alien
 **Date :** 22/03/2026
 **Auteur :** Toufik49
-**Statut :** Opérationnel — Jeux 1-6 reconstruits et validés
+**Statut :** Opérationnel — Jeux 1-7 reconstruits et validés
 
 ---
+
+## Changements v3.24.0 (Jeu 7 — Lune de Tempête)
+- **niveau7.html** : Jetpack Joyride style, auto-runner horizontal
+- **Controle** : Maintien = poussée jetpack (THRUST -0.80) + gravité (GRAV 0.38)
+- **Sol + plafond** : Rebond (vy *= -0.42), pas de mort
+- **Lasers** : 2 barres rouge-orange avec gap 44% hauteur jouable, warning clignotant 70 frames avant
+- **Invincibilité** : 1.5s (90 frames) + flash après loseLife()
+- **3 paliers vitesse** : 3.5 → 5.2 → 7.0 px/frame (lerp fluide)
+- **5 cristaux bonus** : dispersés à frames fixes, +1 dust chacun
+- **Visuel** : Ciel violet/rose/orange alien, planète BG, dunes parallaxe 2 couches, sable, stalactites plafond
+- **Jetpack flames** : ellipse bleue glowing + particules si holding
+- **Timer** : 2min30 standard (chrono shared.js)
+- Service Worker gps0-v40 / APP_VERSION 3.24.0
 
 ## Changements v3.23.0 (Jeu 6 — Lune de Fer)
 - **niveau6.html** : Agar.io spatial — grande map 2400×2400, caméra centrée

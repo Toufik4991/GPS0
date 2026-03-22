@@ -1,4 +1,4 @@
-<!doctype html>
+content = r"""<!doctype html>
 <html lang="fr">
 <head>
 <meta charset="utf-8">
@@ -342,4 +342,34 @@ function _drawHUD(ctx, W, H) {
 }
 </script>
 </body>
-</html>
+</html>"""
+
+with open(r"c:\Users\Jules\Desktop\GPS0\minijeux\niveau7.html", "w", encoding="utf-8") as f:
+    f.write(content)
+
+import os
+size = os.path.getsize(r"c:\Users\Jules\Desktop\GPS0\minijeux\niveau7.html")
+print(f"OK: {size} bytes")
+
+with open(r"c:\Users\Jules\Desktop\GPS0\minijeux\niveau7.html", encoding="utf-8") as f:
+    txt = f.read()
+
+checks = {
+    "gameStart":        "gameStart" in txt,
+    "holding/thrust":   "THRUST" in txt,
+    "gravity":          "GRAV" in txt,
+    "lasers":           "LASER_DELAY" in txt,
+    "gap_ratio":        "GAP_RATIO" in txt,
+    "warning_blink":    "blink" in txt,
+    "loseLife":         "loseLife()" in txt,
+    "addDust":          "addDust(1)" in txt,
+    "5cristaux":        "CRYSTAL_SPAWN_FRAMES" in txt,
+    "rebond_sol":       "floorY - player.r" in txt,
+    "rebond_plafond":   "ceilY + player.r" in txt,
+    "3paliers vitesse": "_getLaserInterval" in txt,
+    "desert_alien":     "bgScrollA" in txt,
+    "drawCosmonaut":    "drawCosmonaut" in txt,
+    "jetpack_flames":   "flen" in txt,
+}
+for k, v in checks.items():
+    print(f"  {'OK' if v else 'MISSING'}: {k}")
