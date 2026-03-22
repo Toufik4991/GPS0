@@ -9,7 +9,7 @@
 html,body{height:100%;overflow:hidden;background:#000;font-family:system-ui,sans-serif;color:#fff;touch-action:none;user-select:none}
 #hud{position:relative;z-index:20;display:flex;align-items:center;gap:10px;padding:6px 52px 6px 10px;background:rgba(0,0,0,.78);backdrop-filter:blur(6px);flex-shrink:0}
 #lives{font-size:1.1rem;letter-spacing:2px;min-width:54px}
-#timer{flex:1;text-align:center;font-size:.95rem;font-weight:bold;color:#88ddff}
+#timer{flex:1;text-align:center;font-size:.95rem;font-weight:bold;color:#c0b8d0}
 #score-hud{font-size:.9rem;color:#FFD700;font-weight:bold;min-width:52px;text-align:right}
 #game-container{position:relative;z-index:1;flex:1;overflow:hidden;display:flex;flex-direction:column}
 canvas{display:block;width:100%;height:100%}
@@ -28,7 +28,9 @@ body{display:flex;flex-direction:column;height:100dvh}
 <script src="shared.js"></script>
 <script>
 window.NIVEAU = 8;
-window.TUTO_TEXT = "Niveau 8 \u2014 Swipe ou D-pad \u00b7 Monte le plus haut possible \u00b7 \u00c9vite les wagons \u00b7 10s sans bouger = vie perdue";
+window.GPS0_TIMER_SEC = 120;
+window.GPS0_onTimerExpired = function () { endGame(true); };
+window.TUTO_TEXT = "Niveau 8 \u2014 Swipe pour avancer \u00b7 \u00c9vite les vaisseaux \u00b7 10s sans bouger = vie perdue";
 
 const COLS = 9, ROW_H = 66, IDLE_LIMIT = 600, FLOOR_PCT = 0.82;
 
@@ -80,7 +82,6 @@ function gameStart() {
   GPS0_resizeCanvas(cv);
   CELL_W = cv.width / COLS;
   gameReset();
-  _buildDpad();
 
   cv.addEventListener('touchstart', e => {
     const t = e.touches[0]; swX = t.clientX; swY = t.clientY;
@@ -168,22 +169,22 @@ function gameStart() {
     // ====== DRAW ======
     ctx.clearRect(0, 0, W, H);
 
-    // Deep space BG
+    // Station spatiale BG
     const bg = ctx.createLinearGradient(0, 0, 0, H);
-    bg.addColorStop(0, '#010915'); bg.addColorStop(1, '#040f2c');
+    bg.addColorStop(0, '#09090f'); bg.addColorStop(1, '#14141e');
     ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
 
-    // Frost nebula BG
-    ctx.fillStyle = 'rgba(70,160,255,.04)';
+    // Panneaux metal BG hint
+    ctx.fillStyle = 'rgba(100,90,130,.04)';
     ctx.beginPath(); ctx.ellipse(W * .35, H * .32, W * .52, H * .38, -.28, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = 'rgba(120,210,255,.03)';
+    ctx.fillStyle = 'rgba(150,130,100,.03)';
     ctx.beginPath(); ctx.ellipse(W * .74, H * .62, W * .4, H * .3, .35, 0, Math.PI * 2); ctx.fill();
 
-    // Stars
+    // Etoiles lointaines
     for (let i = 0; i < 30; i++) {
       const sx = (i * 137 + 11) % W, sy = (i * 79 + 9) % H;
-      ctx.globalAlpha = 0.13 + 0.13 * Math.sin(bgT * 0.022 + i * 0.72);
-      ctx.fillStyle = '#b0d8f8';
+      ctx.globalAlpha = 0.10 + 0.10 * Math.sin(bgT * 0.022 + i * 0.72);
+      ctx.fillStyle = '#d0cce0';
       ctx.beginPath(); ctx.arc(sx, sy, 0.5 + (i % 3) * 0.32, 0, Math.PI * 2); ctx.fill();
     }
     ctx.globalAlpha = 1;
@@ -197,36 +198,37 @@ function gameStart() {
       if (ty > H + ROW_H || ty < -ROW_H * 2) continue;
 
       if (row.safe) {
-        // Safe row: dark blue ice
-        ctx.fillStyle = 'rgba(28,58,118,.74)';
+        // Safe row: corridor metal station
+        ctx.fillStyle = 'rgba(32,30,42,.82)';
         ctx.fillRect(0, ty, W, ROW_H);
-        // Cell grid
-        ctx.strokeStyle = 'rgba(100,190,255,.13)'; ctx.lineWidth = 0.5;
+        // Grid metal
+        ctx.strokeStyle = 'rgba(160,150,180,.16)'; ctx.lineWidth = 0.5;
         for (let c = 0; c < COLS; c++) {
           ctx.strokeRect(c * CELL_W + 0.5, ty + 0.5, CELL_W - 1, ROW_H - 1);
         }
-        // Subtle crystals
-        ctx.globalAlpha = 0.07;
-        ctx.fillStyle = '#88ddff';
+        // Rivets decor
+        ctx.globalAlpha = 0.12;
+        ctx.fillStyle = '#b0a8c0';
         for (let c = 0; c < COLS; c++) {
           const cx = c * CELL_W + CELL_W / 2, cy = ty + ROW_H / 2;
-          ctx.beginPath(); ctx.moveTo(cx, cy-8); ctx.lineTo(cx+5, cy); ctx.lineTo(cx, cy+8); ctx.lineTo(cx-5, cy); ctx.closePath(); ctx.fill();
+          ctx.beginPath(); ctx.arc(cx - CELL_W * 0.36, cy, 2.5, 0, Math.PI * 2); ctx.fill();
+          ctx.beginPath(); ctx.arc(cx + CELL_W * 0.36, cy, 2.5, 0, Math.PI * 2); ctx.fill();
         }
         ctx.globalAlpha = 1;
       } else {
-        // Obstacle row: dark with rail glow
-        ctx.fillStyle = 'rgba(4,10,30,.88)';
+        // Obstacle row: couloir danger rails orange
+        ctx.fillStyle = 'rgba(10,8,12,.92)';
         ctx.fillRect(0, ty, W, ROW_H);
         // Rail glow top
         const rgt = ctx.createLinearGradient(0, ty, 0, ty + 10);
-        rgt.addColorStop(0, 'rgba(55,195,255,.68)'); rgt.addColorStop(1, 'rgba(55,195,255,0)');
+        rgt.addColorStop(0, 'rgba(230,120,40,.72)'); rgt.addColorStop(1, 'rgba(230,120,40,0)');
         ctx.fillStyle = rgt; ctx.fillRect(0, ty, W, 10);
         // Rail glow bottom
         const rgb = ctx.createLinearGradient(0, ty + ROW_H - 10, 0, ty + ROW_H);
-        rgb.addColorStop(0, 'rgba(55,195,255,0)'); rgb.addColorStop(1, 'rgba(55,195,255,.68)');
+        rgb.addColorStop(0, 'rgba(230,120,40,0)'); rgb.addColorStop(1, 'rgba(230,120,40,.72)');
         ctx.fillStyle = rgb; ctx.fillRect(0, ty + ROW_H - 10, W, 10);
-        // Rail lines
-        ctx.strokeStyle = 'rgba(80,215,255,.42)'; ctx.lineWidth = 1.2;
+        // Rail lines danger
+        ctx.strokeStyle = 'rgba(255,160,60,.48)'; ctx.lineWidth = 1.2;
         ctx.beginPath(); ctx.moveTo(0, ty + 3.5); ctx.lineTo(W, ty + 3.5); ctx.stroke();
         ctx.beginPath(); ctx.moveTo(0, ty + ROW_H - 3.5); ctx.lineTo(W, ty + ROW_H - 3.5); ctx.stroke();
 
@@ -238,27 +240,27 @@ function gameStart() {
           for (const ox of [0, COLS, -COLS]) {
             const sx2 = (s.x + ox) * CELL_W;
             if (sx2 + sw / 2 < -12 || sx2 - sw / 2 > W + 12) continue;
-            // Glow aura
+            // Glow aura orange danger
             const sg = ctx.createRadialGradient(sx2, shipCY, 3, sx2, shipCY, sw * 0.72);
-            sg.addColorStop(0, 'rgba(55,200,255,.22)'); sg.addColorStop(1, 'rgba(55,200,255,0)');
+            sg.addColorStop(0, 'rgba(255,140,40,.22)'); sg.addColorStop(1, 'rgba(255,140,40,0)');
             ctx.fillStyle = sg;
             ctx.beginPath(); ctx.ellipse(sx2, shipCY, sw * 0.72, sh * 0.78, 0, 0, Math.PI * 2); ctx.fill();
-            // Chrome body
+            // Corps acier
             const wg = ctx.createLinearGradient(sx2 - sw / 2, shipCY - sh / 2, sx2 - sw / 2, shipCY + sh / 2);
-            wg.addColorStop(0, '#bdd8ee'); wg.addColorStop(0.28, '#3d5a74'); wg.addColorStop(0.72, '#253848'); wg.addColorStop(1, '#8aaec8');
+            wg.addColorStop(0, '#c8c0b4'); wg.addColorStop(0.28, '#4a4240'); wg.addColorStop(0.72, '#2e2828'); wg.addColorStop(1, '#908070');
             ctx.fillStyle = wg;
             ctx.beginPath(); ctx.roundRect(sx2 - sw / 2, shipCY - sh / 2, sw, sh, 7); ctx.fill();
-            // Top neon line
-            ctx.strokeStyle = 'rgba(110,232,255,.88)'; ctx.lineWidth = 1.8;
+            // Top neon orange
+            ctx.strokeStyle = 'rgba(255,180,60,.88)'; ctx.lineWidth = 1.8;
             ctx.beginPath(); ctx.moveTo(sx2 - sw / 2 + 7, shipCY - sh / 2); ctx.lineTo(sx2 + sw / 2 - 7, shipCY - sh / 2); ctx.stroke();
-            // Bottom neon line dimmer
-            ctx.strokeStyle = 'rgba(55,145,210,.52)'; ctx.lineWidth = 1;
+            // Bottom neon orange dimmer
+            ctx.strokeStyle = 'rgba(160,90,30,.52)'; ctx.lineWidth = 1;
             ctx.beginPath(); ctx.moveTo(sx2 - sw / 2 + 7, shipCY + sh / 2); ctx.lineTo(sx2 + sw / 2 - 7, shipCY + sh / 2); ctx.stroke();
-            // Portholes
+            // Hublots orange
             const wCount = Math.max(1, Math.floor(sw / (CELL_W * 0.56)));
             for (let wi = 0; wi < wCount; wi++) {
               const wx2 = sx2 - sw * 0.32 + wi * sw * 0.32;
-              ctx.fillStyle = 'rgba(145,228,255,' + (0.4 + 0.28 * Math.sin(bgT * 0.06 + r + wi)).toFixed(2) + ')';
+              ctx.fillStyle = 'rgba(255,160,60,' + (0.4 + 0.28 * Math.sin(bgT * 0.06 + r + wi)).toFixed(2) + ')';
               ctx.beginPath(); ctx.roundRect(wx2 - 5, shipCY - 4.5, 10, 8, 3); ctx.fill();
             }
           }
@@ -297,7 +299,7 @@ function gameStart() {
     const visible = invTimer === 0 || Math.floor(bgT / 6) % 2 === 0;
     if (visible) {
       const pig = ctx.createRadialGradient(ppx, ppy, 4, ppx, ppy, 26);
-      pig.addColorStop(0, 'rgba(100,215,255,.44)'); pig.addColorStop(1, 'rgba(60,165,255,0)');
+      pig.addColorStop(0, 'rgba(200,180,255,.44)'); pig.addColorStop(1, 'rgba(140,120,200,0)');
       ctx.fillStyle = pig; ctx.beginPath(); ctx.arc(ppx, ppy, 26, 0, Math.PI * 2); ctx.fill();
       drawCosmonaut(ctx, ppx, ppy, 16, 0);
     }
@@ -305,11 +307,11 @@ function gameStart() {
     // HUD distance / record
     ctx.fillStyle = 'rgba(0,0,0,.52)';
     ctx.beginPath(); ctx.roundRect(W - 92, H - 130, 86, 50, 8); ctx.fill();
-    ctx.fillStyle = '#88d8ff'; ctx.font = 'bold 13px system-ui'; ctx.textAlign = 'center';
+    ctx.fillStyle = '#c8c0d8'; ctx.font = 'bold 13px system-ui'; ctx.textAlign = 'center';
     ctx.fillText('Rang ' + maxRow, W - 49, H - 108);
-    ctx.fillStyle = 'rgba(136,216,255,.5)'; ctx.font = '10px system-ui';
+    ctx.fillStyle = 'rgba(180,170,200,.5)'; ctx.font = '10px system-ui';
     ctx.fillText('record', W - 49, H - 96);
-    ctx.fillStyle = '#aaeeff'; ctx.font = '10px system-ui';
+    ctx.fillStyle = '#d0c8e0'; ctx.font = '10px system-ui';
     ctx.fillText('actuel ' + player.row, W - 49, H - 84);
   };
   loop();
@@ -333,24 +335,7 @@ function _spawnFx(x, y, col, n) {
   });
 }
 
-function _buildDpad() {
-  const gc = document.getElementById('game-container');
-  if (dpadEl && gc.contains(dpadEl)) gc.removeChild(dpadEl);
-  dpadEl = document.createElement('div');
-  dpadEl.style.cssText = 'position:absolute;bottom:12px;left:50%;transform:translateX(-50%);z-index:50;display:grid;grid-template-columns:repeat(3,60px);grid-template-rows:repeat(3,60px);gap:3px';
-  const acts = [[null,()=>_tryMove(0,1),null],[()=>_tryMove(-1,0),null,()=>_tryMove(1,0)],[null,()=>_tryMove(0,-1),null]];
-  const lbls = [['',' \u2191',''],['\u2190','','\u2192'],['','\u2193','']];
-  lbls.forEach((row, ri) => row.forEach((lbl, ci) => {
-    const btn = document.createElement('div');
-    if (!lbl.trim()) { btn.style.cssText = 'width:60px;height:60px'; dpadEl.appendChild(btn); return; }
-    btn.textContent = lbl.trim();
-    btn.style.cssText = 'width:60px;height:60px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;background:rgba(60,180,255,.14);border-radius:10px;border:1px solid rgba(60,180,255,.3);cursor:pointer;touch-action:none';
-    const fn = acts[ri][ci];
-    btn.addEventListener('pointerdown', e => { e.preventDefault(); fn && fn(); });
-    dpadEl.appendChild(btn);
-  }));
-  gc.appendChild(dpadEl);
-}
+// D-pad supprime (swipe + clavier uniquement)
 </script>
 </body>
 </html>

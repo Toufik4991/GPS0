@@ -1,11 +1,24 @@
 # 🌙 GPS0 — Game Design Document v3.0
 
-**Version :** 3.34.0 - Niveau 7 Jetpack Stellaire — Décor givre + endGame(true)
+**Version :** 3.35.0 - Niveau 8 Traversée Cosmique — Station spatiale + D-pad supprimé
 **Date :** 22/03/2026
 **Auteur :** Toufik49
 **Statut :** Opérationnel — Jeux 1-9 en cours de reconstruction
 
 ---
+
+## Changements v3.35.0 (Niveau 8 — Traversée Cosmique)
+- **niveau8.html** : PATCH — Crossy Road spatial conservé, 4 fixes ciblés
+- **D-pad HTML supprimé** : `_buildDpad()` et sa fonction entièrement retirés · swipe + clavier uniquement
+- **Timer** : 2:00 (120s) + `GPS0_onTimerExpired → endGame(true)` · récompense chrono standard
+- **Idle 10s → loseLife()** : conservé intact (IDLE_LIMIT=600 frames)
+- **Décor station spatiale** : fond gris #09090f/#14141e · panneaux métal · étoiles #d0cce0
+- **Safe rows** : corridor métal (rgba(32,30,42)) + grid grise + rivets en décor
+- **Obstacle rows** : rails orange danger (rgba(230,120,40)) au lieu de bleu
+- **Vaisseaux** : glow orange #ff8c28 · corps acier chaud (#c8c0b4/#4a4240) · hublots orange
+- **Player** : halo violet (#c8b4ff) au lieu de bleu cyan
+- **HUD** : couleurs métal (#c8c0d8/#d0c8e0)
+- Service Worker gps0-v50 → gps0-v51 / APP_VERSION 3.35.0
 
 ## Changements v3.34.0 (Niveau 7 — Jetpack Stellaire Givre)
 - **niveau7.html** : PATCH — Jetpack Joyride conservé, décor transformé en givre
