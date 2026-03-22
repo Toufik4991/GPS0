@@ -16,17 +16,10 @@ canvas{display:block;width:100%;height:100%}
 body{display:flex;flex-direction:column;height:100dvh}
 #boss-wrap{position:absolute;left:50%;top:1%;transform:translateX(-50%);width:min(58vw,240px);pointer-events:none;z-index:5}
 #boss-svg{width:100%;height:auto;overflow:visible}
-@keyframes bPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.04) translateY(-2px)}}
-@keyframes tentWig{0%,100%{transform-box:fill-box;transform-origin:50% 0;transform:rotate(-7deg)}50%{transform-box:fill-box;transform-origin:50% 0;transform:rotate(7deg)}}
-.boss-body{animation:bPulse 2.8s ease-in-out infinite}
-.boss-tent{animation:tentWig 2.4s ease-in-out infinite}
-.boss-tent:nth-child(2){animation-delay:-.55s;animation-duration:2.9s}
-.boss-tent:nth-child(3){animation-delay:-1.1s;animation-duration:2.1s}
-.boss-tent:nth-child(4){animation-delay:-1.7s;animation-duration:2.6s}
-.boss-tent:nth-child(5){animation-delay:-.9s;animation-duration:2.0s}
-.boss-tent:nth-child(6){animation-delay:-2.1s;animation-duration:2.5s}
-.boss-tent:nth-child(7){animation-delay:-.3s;animation-duration:2.8s}
-.boss-tent:nth-child(8){animation-delay:-1.4s;animation-duration:2.2s}
+@keyframes bPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06) translateY(-3px)}}
+@keyframes sunRay{0%{transform-origin:50% 50%;transform:rotate(0deg)}100%{transform-origin:50% 50%;transform:rotate(360deg)}}
+.boss-halo{animation:bPulse 2.4s ease-in-out infinite}
+.sun-rays{animation:sunRay 18s linear infinite}
 </style>
 </head>
 <body>
@@ -39,45 +32,36 @@ body{display:flex;flex-direction:column;height:100dvh}
 <div id="boss-wrap">
 <svg id="boss-svg" viewBox="0 0 256 220" xmlns="http://www.w3.org/2000/svg">
 <defs>
-  <radialGradient id="bBodyG" cx="42%" cy="36%" r="62%">
-    <stop offset="0%"   stop-color="#7c3acc" id="bbg0"/>
-    <stop offset="55%"  stop-color="#380d66" id="bbg1"/>
-    <stop offset="100%" stop-color="#140528" id="bbg2"/>
+  <radialGradient id="bSunG" cx="50%" cy="50%" r="50%">
+    <stop offset="0%"   stop-color="#fff8a0" id="bsg0"/>
+    <stop offset="38%"  stop-color="#ffcc00" id="bsg1"/>
+    <stop offset="72%"  stop-color="#ff8800" id="bsg2"/>
+    <stop offset="100%" stop-color="rgba(200,50,0,0)"/>
   </radialGradient>
-  <radialGradient id="bEyeG" cx="44%" cy="40%" r="58%">
-    <stop offset="0%"   stop-color="#ffffff"/>
-    <stop offset="20%"  stop-color="#00eeff" id="beye0"/>
-    <stop offset="60%"  stop-color="#0040bb" id="beye1"/>
-    <stop offset="100%" stop-color="#001133"/>
-  </radialGradient>
-  <radialGradient id="bGlowG" cx="50%" cy="50%" r="50%">
-    <stop offset="0%"   stop-color="#00eeff" stop-opacity="0.55"/>
-    <stop offset="100%" stop-color="#00eeff" stop-opacity="0"/>
-  </radialGradient>
-  <filter id="bGlow" x="-35%" y="-35%" width="170%" height="170%">
-    <feGaussianBlur stdDeviation="7" result="blur"/>
-    <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-  </filter>
-  <filter id="bGlowS" x="-20%" y="-20%" width="140%" height="140%">
-    <feGaussianBlur stdDeviation="3.5" result="blur"/>
-    <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-  </filter>
-  <filter id="tentGlow" x="-50%" y="-30%" width="200%" height="160%">
-    <feGaussianBlur stdDeviation="4" result="blur"/>
+  <filter id="sunGlow" x="-55%" y="-55%" width="210%" height="210%">
+    <feGaussianBlur stdDeviation="14" result="blur"/>
     <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
   </filter>
 </defs>
-<ellipse cx="128" cy="110" rx="120" ry="100" fill="url(#bBodyG)" opacity="0.20" filter="url(#bGlow)"/>
-<g id="boss-tents">
-  <path class="boss-tent" d="M 80,152 Q 38,196 20,240" stroke="#8833cc" stroke-width="8.5" fill="none" stroke-linecap="round" filter="url(#tentGlow)" opacity="0.88"/>
-  <path class="boss-tent" d="M 100,160 Q 58,206 40,250" stroke="#6622aa" stroke-width="6.5" fill="none" stroke-linecap="round" filter="url(#tentGlow)" opacity="0.78"/>
-  <path class="boss-tent" d="M 128,163 Q 105,218 92,258" stroke="#aa44dd" stroke-width="7.5" fill="none" stroke-linecap="round" filter="url(#tentGlow)" opacity="0.82"/>
-  <path class="boss-tent" d="M 155,160 Q 170,212 170,255" stroke="#7733bb" stroke-width="6.5" fill="none" stroke-linecap="round" filter="url(#tentGlow)" opacity="0.78"/>
-  <path class="boss-tent" d="M 176,152 Q 218,196 236,240" stroke="#8833cc" stroke-width="8.5" fill="none" stroke-linecap="round" filter="url(#tentGlow)" opacity="0.88"/>
-  <path class="boss-tent" d="M 63,128 Q 16,150 0,188" stroke="#5522aa" stroke-width="5.5" fill="none" stroke-linecap="round" filter="url(#tentGlow)" opacity="0.68"/>
-  <path class="boss-tent" d="M 193,128 Q 240,150 256,188" stroke="#5522aa" stroke-width="5.5" fill="none" stroke-linecap="round" filter="url(#tentGlow)" opacity="0.68"/>
-  <path class="boss-tent" d="M 111,162 Q 72,224 55,264" stroke="#9944dd" stroke-width="5" fill="none" stroke-linecap="round" filter="url(#tentGlow)" opacity="0.62"/>
+<!-- Sun outer glow halo -->
+<circle cx="128" cy="110" r="112" fill="url(#bSunG)" opacity="0.25" filter="url(#sunGlow)" class="boss-halo"/>
+<!-- Decorative rays (CSS rotation) -->
+<g class="sun-rays" opacity="0.18">
+  <line x1="128" y1="5"  x2="128" y2="32" stroke="#ffdd44" stroke-width="3" stroke-linecap="round"/>
+  <line x1="128" y1="5"  x2="128" y2="32" stroke="#ffdd44" stroke-width="3" stroke-linecap="round" transform="rotate(30 128 110)"/>
+  <line x1="128" y1="5"  x2="128" y2="32" stroke="#ffdd44" stroke-width="3" stroke-linecap="round" transform="rotate(60 128 110)"/>
+  <line x1="128" y1="5"  x2="128" y2="32" stroke="#ffdd44" stroke-width="3" stroke-linecap="round" transform="rotate(90 128 110)"/>
+  <line x1="128" y1="5"  x2="128" y2="32" stroke="#ffdd44" stroke-width="3" stroke-linecap="round" transform="rotate(120 128 110)"/>
+  <line x1="128" y1="5"  x2="128" y2="32" stroke="#ffdd44" stroke-width="3" stroke-linecap="round" transform="rotate(150 128 110)"/>
+  <line x1="128" y1="5"  x2="128" y2="32" stroke="#ffdd44" stroke-width="3" stroke-linecap="round" transform="rotate(180 128 110)"/>
+  <line x1="128" y1="5"  x2="128" y2="32" stroke="#ffdd44" stroke-width="3" stroke-linecap="round" transform="rotate(210 128 110)"/>
+  <line x1="128" y1="5"  x2="128" y2="32" stroke="#ffdd44" stroke-width="3" stroke-linecap="round" transform="rotate(240 128 110)"/>
+  <line x1="128" y1="5"  x2="128" y2="32" stroke="#ffdd44" stroke-width="3" stroke-linecap="round" transform="rotate(270 128 110)"/>
+  <line x1="128" y1="5"  x2="128" y2="32" stroke="#ffdd44" stroke-width="3" stroke-linecap="round" transform="rotate(300 128 110)"/>
+  <line x1="128" y1="5"  x2="128" y2="32" stroke="#ffdd44" stroke-width="3" stroke-linecap="round" transform="rotate(330 128 110)"/>
 </g>
+</svg>
+</div>
 <g class="boss-body">
   <ellipse cx="128" cy="108" rx="106" ry="80" fill="url(#bBodyG)" filter="url(#bGlow)"/>
   <ellipse cx="105" cy="88" rx="38" ry="28" fill="#aa44cc" opacity="0.13"/>
@@ -111,6 +95,7 @@ const INV_FRAMES = 120;
 let phase, phaseTick, boss, player, projectiles, bombs;
 let laserAngle, laserActive, laserTimer, laserWarn;
 let invTimer, hitFlash, bgT, frame, vulnerable, vulnTimer;
+let bossHp;
 let particles, stars, shootingStars, victoryAnim, victoryTick, rafId;
 let touchStartX, touchMoved;
 
@@ -145,7 +130,7 @@ function gameReset() {
   stars = []; shootingStars = [];
   laserAngle = -Math.PI / 2; laserActive = false; laserTimer = 0; laserWarn = 0;
   invTimer = 0; hitFlash = 0; bgT = 0; frame = 0;
-  vulnerable = false; vulnTimer = 0;
+  vulnerable = false; vulnTimer = 0; bossHp = 3;
   victoryAnim = false; victoryTick = 0;
   touchStartX = null; touchMoved = false;
 }
@@ -196,6 +181,7 @@ function gameStart() {
 
     if (!victoryAnim && phaseTick >= PHASE_DUR) {
       phaseTick = 0; phase++;
+      bossHp = 3;
       if (phase >= 3) {
         victoryAnim = true;
         _boom(bx, by, 36);
@@ -228,7 +214,7 @@ function gameStart() {
           projectiles.push({ x: bx, y: by, vx: Math.cos(ang) * 3.0, vy: Math.sin(ang) * 3.0, life: 135 });
         }
       }
-      if (frame % 200 === 0) { vulnerable = true; vulnTimer = 65; }
+      if (frame % 200 === 0) { vulnerable = true; vulnTimer = 163; }
 
     } else if (phase === 1) {
       laserTimer++;
@@ -242,7 +228,7 @@ function gameStart() {
         const ang = Math.atan2(py - by, px - bx) + (Math.random() - 0.5) * 0.85;
         projectiles.push({ x: bx, y: by, vx: Math.cos(ang) * 4.0, vy: Math.sin(ang) * 4.0, life: 115 });
       }
-      if (frame % 175 === 0) { vulnerable = true; vulnTimer = 58; }
+      if (frame % 175 === 0) { vulnerable = true; vulnTimer = 145; }
 
     } else if (phase === 2) {
       laserTimer++;
@@ -262,7 +248,7 @@ function gameStart() {
       if (boss.dashTimer % 110 === 0) boss.dashTarget = 0.22 + Math.random() * 0.56;
       boss.x += (boss.dashTarget - boss.x) * 0.042 + boss.wobble;
       boss.x = Math.max(0.18, Math.min(0.82, boss.x));
-      if (frame % 128 === 0) { vulnerable = true; vulnTimer = 48; }
+      if (frame % 128 === 0) { vulnerable = true; vulnTimer = 120; }
     }
 
     projectiles = projectiles.filter(p => p.life > 0);
@@ -434,29 +420,25 @@ function _drawNebula(ctx, W, H, phase, bgT) {
 }
 
 function _updateBossSVG(ph, bgT, vuln, player) {
-  const pc = [
-    ['#7c3acc','#380d66','#140528'],
-    ['#aa2255','#560022','#1e0010'],
-    ['#cc1133','#660011','#220008']
-  ];
-  const p = Math.min(ph, 2);
-  const c = vuln ? ['#ff8800','#cc3300','#440800'] : pc[p];
-  const s0=document.getElementById('bbg0'), s1=document.getElementById('bbg1'), s2=document.getElementById('bbg2');
-  if(s0)s0.setAttribute('stop-color',c[0]);
-  if(s1)s1.setAttribute('stop-color',c[1]);
-  if(s2)s2.setAttribute('stop-color',c[2]);
-  const pupil=document.getElementById('boss-pupil');
-  if(pupil&&player)pupil.setAttribute('cx',128+(player.x-0.5)*36);
-  const rr=document.getElementById('boss-red-ring');
-  if(rr)rr.setAttribute('opacity',p>=2?(0.28+0.22*Math.sin(bgT*0.08)).toFixed(2):'0');
-  const eg=document.getElementById('boss-eye-glow');
-  if(eg)eg.setAttribute('opacity',(vuln?(0.80+0.20*Math.sin(bgT*0.20)):(0.28+0.12*Math.sin(bgT*0.06))).toFixed(2));
-  const e0=document.getElementById('beye0'),e1=document.getElementById('beye1');
-  const ec=[['#00eeff','#0040bb'],['#ee66ff','#6600bb'],['#ff4444','#aa0022']];
-  if(e0)e0.setAttribute('stop-color',vuln?'#ffaa00':ec[p][0]);
-  if(e1)e1.setAttribute('stop-color',vuln?'#ff4400':ec[p][1]);
-  const tc=vuln?'#ff8800':['#8833cc','#aa2266','#cc1133'][p];
-  document.querySelectorAll('.boss-tent').forEach(t=>t.setAttribute('stroke',tc));
+  const s0 = document.getElementById('bsg0');
+  const s1 = document.getElementById('bsg1');
+  const s2 = document.getElementById('bsg2');
+  if (!s0) return;
+  if (vuln) {
+    s0.setAttribute('stop-color', '#ffffff');
+    s1.setAttribute('stop-color', '#ffffbb');
+    s2.setAttribute('stop-color', '#ffee44');
+  } else {
+    const cols = [
+      ['#fff8a0','#ffcc00','#ff8800'],
+      ['#ffddaa','#ff9900','#ff3300'],
+      ['#ffbb88','#ff5500','#cc1100']
+    ];
+    const c = cols[Math.min(ph, 2)];
+    s0.setAttribute('stop-color', c[0]);
+    s1.setAttribute('stop-color', c[1]);
+    s2.setAttribute('stop-color', c[2]);
+  }
 }
 
 function _drawMoon(ctx, W, H, phase, bgT, vulnerable, bossT) {
@@ -586,35 +568,72 @@ function _drawCorona(ctx, bx, by, bR, boss, bgT, coronaHue, vulnerable) {
 }
 
 function _drawBoss(ctx, bx, by, bR, boss, bgT, coronaHue, vulnerable) {
+  // Corps solaire
+  const bodyG = ctx.createRadialGradient(bx - bR*0.28, by - bR*0.28, bR*0.06, bx, by, bR);
+  bodyG.addColorStop(0, '#fff8a0');
+  bodyG.addColorStop(0.32, '#ffcc00');
+  bodyG.addColorStop(0.70, vulnerable ? '#ff9900' : (phase === 2 ? '#ff4400' : '#ff8800'));
+  bodyG.addColorStop(1,    vulnerable ? '#ee6600' : (phase === 2 ? '#cc1100' : '#cc4400'));
+  ctx.fillStyle = bodyG;
+  ctx.beginPath(); ctx.arc(bx, by, bR, 0, Math.PI*2); ctx.fill();
+
   if (vulnerable) {
-    const vg = ctx.createRadialGradient(bx, by, 0, bx, by, bR*1.18);
-    vg.addColorStop(0, 'rgba(255,240,110,.98)');
-    vg.addColorStop(0.3, 'rgba(255,148,18,.88)');
-    vg.addColorStop(0.68, 'rgba(220,60,0,.62)');
-    vg.addColorStop(1, 'rgba(100,0,0,0)');
-    ctx.fillStyle = vg; ctx.beginPath(); ctx.arc(bx, by, bR*1.18, 0, Math.PI*2); ctx.fill();
-    const pulse = 0.92 + 0.08 * Math.sin(bgT * 0.35);
-    ctx.strokeStyle = `rgba(255,210,55,${pulse.toFixed(2)})`;
-    ctx.lineWidth = 3.5;
-    ctx.beginPath(); ctx.arc(bx, by, bR*pulse, 0, Math.PI*2); ctx.stroke();
-    const tapA = (0.6 + 0.4 * Math.sin(bgT * 0.28)).toFixed(2);
-    ctx.fillStyle = `rgba(255,255,255,${tapA})`;
-    ctx.font = `bold ${Math.floor(bR*0.3)}px system-ui`; ctx.textAlign = 'center';
-    ctx.fillText('TAP !', bx, by + bR + 30);
+    // Halo flash
+    const pulse = 0.85 + 0.15 * Math.sin(bgT * 0.40);
+    const vg = ctx.createRadialGradient(bx, by, 0, bx, by, bR*1.25);
+    vg.addColorStop(0, 'rgba(255,255,220,.88)');
+    vg.addColorStop(0.45, 'rgba(255,240,100,.44)');
+    vg.addColorStop(1, 'rgba(255,100,0,0)');
+    ctx.fillStyle = vg; ctx.beginPath(); ctx.arc(bx, by, bR*1.25, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = `rgba(255,230,50,${pulse.toFixed(2)})`;
+    ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(bx, by, bR*pulse, 0, Math.PI*2); ctx.stroke();
+    // Yeux ouverts brillants
+    const eyY = by - bR*0.16;
+    for (const ex of [bx - bR*0.36, bx + bR*0.36]) {
+      ctx.fillStyle = '#fff';
+      ctx.beginPath(); ctx.ellipse(ex, eyY, bR*0.19, bR*0.23, 0, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#ffdd44';
+      ctx.beginPath(); ctx.arc(ex, eyY, bR*0.12, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#000';
+      ctx.beginPath(); ctx.arc(ex, eyY, bR*0.055, 0, Math.PI*2); ctx.fill();
+    }
+    // TAP label
+    const tapA = (0.78 + 0.22 * Math.sin(bgT * 0.30)).toFixed(2);
+    ctx.fillStyle = `rgba(255,255,100,${tapA})`;
+    ctx.font = `bold ${Math.floor(bR*0.36)}px system-ui`; ctx.textAlign = 'center';
+    ctx.fillText('TAP !', bx, by + bR + 32);
   } else {
-    ctx.fillStyle = '#000';
-    ctx.beginPath(); ctx.arc(bx, by, bR, 0, Math.PI*2); ctx.fill();
-    ctx.strokeStyle = `hsl(${coronaHue},100%,68%)`;
-    ctx.lineWidth = 3; ctx.globalAlpha = 0.75;
-    ctx.beginPath(); ctx.arc(bx, by, bR, 0, Math.PI*2); ctx.stroke();
-    ctx.globalAlpha = 1;
-    const er = bR * (0.22 + 0.042 * Math.sin(boss.t * 2.5));
-    const eyeG = ctx.createRadialGradient(bx, by, 1.5, bx, by, er);
-    eyeG.addColorStop(0, '#fff');
-    eyeG.addColorStop(0.28, `hsl(${coronaHue},100%,65%)`);
-    eyeG.addColorStop(0.72, `hsl(${coronaHue-8},100%,38%)`);
-    eyeG.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.fillStyle = eyeG; ctx.beginPath(); ctx.arc(bx, by, er, 0, Math.PI*2); ctx.fill();
+    // Yeux méchants
+    const eyY = by - bR*0.17;
+    for (const ex of [bx - bR*0.36, bx + bR*0.36]) {
+      ctx.fillStyle = '#fff';
+      ctx.strokeStyle = '#5a0000'; ctx.lineWidth = bR*0.04;
+      ctx.beginPath(); ctx.ellipse(ex, eyY, bR*0.18, bR*0.22, 0, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#cc0000';
+      ctx.beginPath(); ctx.arc(ex, eyY + bR*0.04, bR*0.11, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#1a0000';
+      ctx.beginPath(); ctx.arc(ex, eyY + bR*0.04, bR*0.055, 0, Math.PI*2); ctx.fill();
+    }
+    // Sourcils en colère
+    ctx.strokeStyle = '#5a1000'; ctx.lineWidth = bR*0.072; ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(bx - bR*0.58, eyY - bR*0.32);
+    ctx.lineTo(bx - bR*0.18, eyY - bR*0.08);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(bx + bR*0.58, eyY - bR*0.32);
+    ctx.lineTo(bx + bR*0.18, eyY - bR*0.08);
+    ctx.stroke();
+    // Sourire mauvais
+    const mY = by + bR*0.30;
+    ctx.strokeStyle = '#5a1000'; ctx.lineWidth = bR*0.065;
+    ctx.beginPath(); ctx.arc(bx, mY, bR*0.32, Math.PI*1.1, Math.PI*1.9); ctx.stroke();
+    // Dents
+    ctx.fillStyle = '#ffffcc';
+    for (let ti = 0; ti < 4; ti++) {
+      const tx = bx - bR*0.21 + ti * bR*0.14;
+      ctx.beginPath(); ctx.roundRect(tx, mY - bR*0.10, bR*0.104, bR*0.13, 2); ctx.fill();
+    }
   }
 }
 
@@ -701,14 +720,34 @@ function _drawPhaseHUD(ctx, W, H) {
       ctx.fillText(names[i], x + segW/2, barY + 10);
     }
   }
+
+  // HP bar du boss (3 coeurs par phase)
+  const hpY = barY + segH + 6;
+  const hpTotalW = 82, hpX = (W - hpTotalW) / 2;
+  ctx.fillStyle = 'rgba(0,0,0,0.52)';
+  ctx.beginPath(); ctx.roundRect(hpX - 4, hpY - 2, hpTotalW + 8, 18, 6); ctx.fill();
+  const maxHp = 3;
+  const hpIco = ['\u2665','\u2665','\u2665'];
+  for (let h = 0; h < maxHp; h++) {
+    const hx = hpX + h * (hpTotalW / maxHp) + (hpTotalW / maxHp) / 2;
+    const filled = h < bossHp;
+    ctx.fillStyle = filled ? '#ff4444' : 'rgba(255,255,255,0.15)';
+    ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText(hpIco[h], hx, hpY + 12);
+  }
   ctx.restore();
 }
 
 function _hitBoss(cv) {
   if (!vulnerable || !GPS0_running()) return;
   vulnerable = false; vulnTimer = 0;
+  bossHp = Math.max(0, bossHp - 1);
   const W = cv.width, H = cv.height;
-  _boom(boss.x * W, H * 0.24, 20);
+  const bx = boss.x * W, by = H * 0.24;
+  _boom(bx, by, 22);
+  // Punch particles: sunfire burst
+  _spawnFx(bx, by, '#ffdd44', 16);
+  _spawnFx(bx, by, '#ff8800', 12);
   addDust(6);
   navigator.vibrate && navigator.vibrate([15, 5, 30, 5, 55]);
 }

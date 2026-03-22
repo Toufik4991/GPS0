@@ -1,9 +1,25 @@
 # 🌙 GPS0 — Game Design Document v3.0
 
-**Version :** 3.37.0 - Bug 19 : 10 corrections all levels
-**Date :** 22/03/2026
+**Version :** 3.38.0 - Bug 20 : 10 corrections visuelles/gameplay N1-N9
+**Date :** 23/03/2026
 **Auteur :** Toufik49
 **Statut :** Opérationnel — Jeux 1-9 en cours de reconstruction
+
+---
+
+## Changements v3.38.0 (Bug 20 — 10 corrections N1-N9)
+
+- **css/main.css halo boussole** : Luminosité ×2 — triple couche box-shadow, opacity .78→1
+- **index.html debug** : Modal debug affiche uniquement "Niveau X + état" (suppression `.diff-desc`)
+- **N1 missile** : Vitesse -50% (`_hitMeteor` speed coefficient) + flash blanc + rotation accrue
+- **N3 plateformes** : +50% plateformes (gap 105+diff×65 → 70+diff×43)
+- **N4 cosmonaute** : Animation rebond sur l'avatar lors du tap Simon (`cosmoAnim` state)
+- **N5 REFONTE COMPLÈTE** : Jeu "1-2-3 Soleil" — soleil maléfique face animée (yeux fermés=GO, mi-ouverts=TURNING, grands ouverts méchants=STOP), cosmonaute monte un chemin vertical, stardust collectibles, `loseLife()` si tap pendant STOP
+- **N6** : `GPS0_MAX_LIVES=1` (1 seule vie) + overlay LOOSER avec animation pulse
+- **N7** : Cosmonaute ×1.25 taille + fond spatial dégradé + 36 étoiles colorées + 5 cratères lunaires
+- **N8** : Vitesse -30% (coefficients 1.05/3.75 → 0.56/1.98) + 3 types de vaisseaux aliens redessinés (UFO vert, triangle violet, croiseur rouge)
+- **N9 boss soleil maléfique** : SVG soleil animé (halo bPulse + rayons sunRay 18s) · `_drawBoss()` : corps solaire dégradé + 2 yeux rouges maléfiques + sourcils colère + sourire avec 4 dents · mode vulnérable : flash doré + "TAP !" · barre de vie (3 ❤ par phase, `bossHp`) · fenêtres de vulnérabilité ×2.5 (65→163, 58→145, 48→120)
+- Service Worker gps0-v53 → gps0-v54 / APP_VERSION 3.38.0
 
 ---
 

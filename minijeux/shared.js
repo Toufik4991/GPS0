@@ -131,7 +131,8 @@
 
   function _updateLives() {
     if (!livesEl) return;
-    livesEl.textContent = '❤'.repeat(Math.max(0, lives)) + '♡'.repeat(Math.max(0, 3 - lives));
+    const maxL = window.GPS0_MAX_LIVES || 3;
+    livesEl.textContent = '❤'.repeat(Math.max(0, lives)) + '♡'.repeat(Math.max(0, maxL - lives));
   }
   function _updateTimer() {
     if (!timerEl) return;
@@ -174,6 +175,7 @@
     if (gameover) return;
     gameover = true; running = false;
     clearInterval(timerInterval);
+    if (!success && window.GPS0_onGameOver) window.GPS0_onGameOver();
     let finalDust;
     // Récompense personnalisée (ex: efficacité N1 ou boss N9)
     if (window.GPS0_rewardOverride !== undefined) {
@@ -311,6 +313,7 @@
       timerSec = window.GPS0_TIMER_SEC;
     }
     timerTotal = timerSec; // mémoriser la durée totale pour le calcul du gain
+    lives = window.GPS0_MAX_LIVES || 3;
     livesEl = _q('lives');
     timerEl = _q('timer');
     scoreEl = _q('score-hud');

@@ -47,7 +47,7 @@ function _shipWidth(r) {
 }
 
 function _rowSpeed(r) {
-  return Math.min(1.05 + r * 0.064, 3.75);
+  return Math.min(0.56 + r * 0.034, 1.98);
 }
 
 function _isSafeRow(r) {
@@ -232,36 +232,116 @@ function gameStart() {
         ctx.beginPath(); ctx.moveTo(0, ty + 3.5); ctx.lineTo(W, ty + 3.5); ctx.stroke();
         ctx.beginPath(); ctx.moveTo(0, ty + ROW_H - 3.5); ctx.lineTo(W, ty + ROW_H - 3.5); ctx.stroke();
 
-        // Ships
+        // Ships (redessinés alien fun)
         const sw = _shipWidth(r) * CELL_W;
         const sh = ROW_H * 0.56;
         const shipCY = ty + ROW_H / 2;
+        const shipType = r % 3; // 0=UFO disc vert, 1=pointu violet, 2=croiseur rouge
+        const hues = [115, 280, 0]; // vert alien, violet, rouge
+        const hue = hues[shipType];
         row.ships.forEach(s => {
           for (const ox of [0, COLS, -COLS]) {
             const sx2 = (s.x + ox) * CELL_W;
             if (sx2 + sw / 2 < -12 || sx2 - sw / 2 > W + 12) continue;
-            // Glow aura orange danger
-            const sg = ctx.createRadialGradient(sx2, shipCY, 3, sx2, shipCY, sw * 0.72);
-            sg.addColorStop(0, 'rgba(255,140,40,.22)'); sg.addColorStop(1, 'rgba(255,140,40,0)');
+            const pulse = 0.62 + 0.38 * Math.sin(bgT * 0.08 + r * 0.7);
+            // Halo lueur moteur
+            const sg = ctx.createRadialGradient(sx2, shipCY, 3, sx2, shipCY, sw * 0.82);
+            sg.addColorStop(0, `hsla(${hue},100%,55%,${(0.22*pulse).toFixed(2)})`);
+            sg.addColorStop(1, `hsla(${hue},100%,45%,0)`);
             ctx.fillStyle = sg;
-            ctx.beginPath(); ctx.ellipse(sx2, shipCY, sw * 0.72, sh * 0.78, 0, 0, Math.PI * 2); ctx.fill();
-            // Corps acier
-            const wg = ctx.createLinearGradient(sx2 - sw / 2, shipCY - sh / 2, sx2 - sw / 2, shipCY + sh / 2);
-            wg.addColorStop(0, '#c8c0b4'); wg.addColorStop(0.28, '#4a4240'); wg.addColorStop(0.72, '#2e2828'); wg.addColorStop(1, '#908070');
-            ctx.fillStyle = wg;
-            ctx.beginPath(); ctx.roundRect(sx2 - sw / 2, shipCY - sh / 2, sw, sh, 7); ctx.fill();
-            // Top neon orange
-            ctx.strokeStyle = 'rgba(255,180,60,.88)'; ctx.lineWidth = 1.8;
-            ctx.beginPath(); ctx.moveTo(sx2 - sw / 2 + 7, shipCY - sh / 2); ctx.lineTo(sx2 + sw / 2 - 7, shipCY - sh / 2); ctx.stroke();
-            // Bottom neon orange dimmer
-            ctx.strokeStyle = 'rgba(160,90,30,.52)'; ctx.lineWidth = 1;
-            ctx.beginPath(); ctx.moveTo(sx2 - sw / 2 + 7, shipCY + sh / 2); ctx.lineTo(sx2 + sw / 2 - 7, shipCY + sh / 2); ctx.stroke();
-            // Hublots orange
-            const wCount = Math.max(1, Math.floor(sw / (CELL_W * 0.56)));
-            for (let wi = 0; wi < wCount; wi++) {
-              const wx2 = sx2 - sw * 0.32 + wi * sw * 0.32;
-              ctx.fillStyle = 'rgba(255,160,60,' + (0.4 + 0.28 * Math.sin(bgT * 0.06 + r + wi)).toFixed(2) + ')';
-              ctx.beginPath(); ctx.roundRect(wx2 - 5, shipCY - 4.5, 10, 8, 3); ctx.fill();
+            ctx.beginPath(); ctx.ellipse(sx2, shipCY, sw * 0.82, sh * 0.88, 0, 0, Math.PI * 2); ctx.fill();
+
+            if (shipType === 0) {
+              // UFO disc vert alien
+              const gr = ctx.createLinearGradient(sx2 - sw/2, shipCY - sh*.35, sx2, shipCY - sh*.7);
+              gr.addColorStop(0, `hsl(${hue},70%,28%)`);
+              gr.addColorStop(1, `hsl(${hue},80%,42%)`);
+              ctx.fillStyle = gr;
+              ctx.beginPath(); ctx.ellipse(sx2, shipCY, sw/2, sh*.35, 0, 0, Math.PI*2); ctx.fill();
+              // Dôme supérieur
+              const dg = ctx.createRadialGradient(sx2-sw*.1, shipCY-sh*.32, 1, sx2, shipCY-sh*.28, sw*.22);
+              dg.addColorStop(0, `rgba(180,255,180,.90)`);
+              dg.addColorStop(0.5, `hsl(${hue},90%,50%)`);
+              dg.addColorStop(1, `hsl(${hue},80%,22%)`);
+              ctx.fillStyle = dg;
+              ctx.beginPath(); ctx.ellipse(sx2, shipCY-sh*.24, sw*.22, sh*.38, 0, 0, Math.PI*2); ctx.fill();
+              // Lumières orbite
+              for (let li = 0; li < 4; li++) {
+                const la = (li/4)*Math.PI*2 + bgT*0.10;
+                const lx2 = sx2 + Math.cos(la)*sw*.38;
+                const ly2 = shipCY + Math.sin(la)*sh*.18;
+                ctx.fillStyle = `hsl(${hue+60},100%,80%)`;
+                ctx.beginPath(); ctx.arc(lx2, ly2, 2.2, 0, Math.PI*2); ctx.fill();
+              }
+            } else if (shipType === 1) {
+              // Vaisseau pointu violet
+              const wg = ctx.createLinearGradient(sx2 - sw/2, shipCY, sx2 + sw/2, shipCY);
+              wg.addColorStop(0, `hsl(${hue},85%,15%)`);
+              wg.addColorStop(0.4, `hsl(${hue},90%,42%)`);
+              wg.addColorStop(1, `hsl(${hue},85%,18%)`);
+              ctx.fillStyle = wg;
+              ctx.beginPath();
+              ctx.moveTo(sx2 - sw/2, shipCY + sh*.22);
+              ctx.lineTo(sx2 - sw/2 + sw*.18, shipCY - sh*.28);
+              ctx.lineTo(sx2, shipCY - sh*.5);
+              ctx.lineTo(sx2 + sw/2 - sw*.18, shipCY - sh*.28);
+              ctx.lineTo(sx2 + sw/2, shipCY + sh*.22);
+              ctx.closePath(); ctx.fill();
+              // Néon violet contour
+              ctx.strokeStyle = `hsla(${hue},100%,70%,${(0.55*pulse).toFixed(2)})`;
+              ctx.lineWidth = 1.5; ctx.stroke();
+              // Hublot central
+              const eg = ctx.createRadialGradient(sx2, shipCY - sh*.08, 2, sx2, shipCY - sh*.08, sw*.14);
+              eg.addColorStop(0, `hsl(${hue+40},100%,85%)`);
+              eg.addColorStop(0.5, `hsl(${hue},100%,55%)`);
+              eg.addColorStop(1, `hsl(${hue},90%,22%)`);
+              ctx.fillStyle = eg;
+              ctx.beginPath(); ctx.ellipse(sx2, shipCY - sh*.08, sw*.14, sh*.22, 0, 0, Math.PI*2); ctx.fill();
+              // Moteurs
+              for (const mx2 of [sx2 - sw*.30, sx2 + sw*.30]) {
+                const fg = ctx.createLinearGradient(mx2, shipCY+sh*.22, mx2, shipCY+sh*.22+sh*.38*pulse);
+                fg.addColorStop(0, `hsla(${hue+30},100%,75%,.90)`);
+                fg.addColorStop(1, `hsla(${hue+60},100%,60%,0)`);
+                ctx.fillStyle = fg;
+                ctx.beginPath(); ctx.ellipse(mx2, shipCY+sh*.22, sw*.055, sh*.38*pulse, 0, 0, Math.PI*2); ctx.fill();
+              }
+            } else {
+              // Croiseur rouge
+              const wg2 = ctx.createLinearGradient(sx2-sw/2, shipCY-sh*.38, sx2-sw/2, shipCY+sh*.38);
+              wg2.addColorStop(0, `hsl(${hue},85%,32%)`);
+              wg2.addColorStop(0.28, `hsl(${hue},90%,18%)`);
+              wg2.addColorStop(0.72, `hsl(${hue},90%,14%)`);
+              wg2.addColorStop(1, `hsl(${hue},80%,28%)`);
+              ctx.fillStyle = wg2;
+              ctx.beginPath(); ctx.roundRect(sx2-sw/2, shipCY-sh*.38, sw, sh*.76, 5); ctx.fill();
+              // Ailes latérales
+              ctx.fillStyle = `hsl(${hue},80%,22%)`;
+              ctx.beginPath();
+              ctx.moveTo(sx2-sw/2, shipCY-sh*.10);
+              ctx.lineTo(sx2-sw/2-sw*.20, shipCY+sh*.28);
+              ctx.lineTo(sx2-sw/2, shipCY+sh*.38);
+              ctx.closePath(); ctx.fill();
+              ctx.beginPath();
+              ctx.moveTo(sx2+sw/2, shipCY-sh*.10);
+              ctx.lineTo(sx2+sw/2+sw*.20, shipCY+sh*.28);
+              ctx.lineTo(sx2+sw/2, shipCY+sh*.38);
+              ctx.closePath(); ctx.fill();
+              // Néon rouge ligne
+              ctx.strokeStyle = `hsla(${hue},100%,64%,${(0.72*pulse).toFixed(2)})`;
+              ctx.lineWidth = 2.2;
+              ctx.beginPath(); ctx.moveTo(sx2-sw*.38, shipCY-sh*.28); ctx.lineTo(sx2+sw*.38, shipCY-sh*.28); ctx.stroke();
+              // Hublots rouges
+              for (let wi = 0; wi < 3; wi++) {
+                const wx2 = sx2 - sw*.28 + wi*sw*.28;
+                ctx.fillStyle = `hsla(${hue},100%,65%,${(0.45+0.30*Math.sin(bgT*0.09+r+wi)).toFixed(2)})`;
+                ctx.beginPath(); ctx.arc(wx2, shipCY-sh*.05, 4.5, 0, Math.PI*2); ctx.fill();
+              }
+              // Jet moteur
+              const fg2 = ctx.createLinearGradient(sx2, shipCY+sh*.38, sx2, shipCY+sh*.38+sh*.44*pulse);
+              fg2.addColorStop(0, `hsla(${hue+30},100%,70%,.88)`);
+              fg2.addColorStop(1, `hsla(${hue+60},100%,55%,0)`);
+              ctx.fillStyle = fg2;
+              ctx.beginPath(); ctx.ellipse(sx2, shipCY+sh*.38, sw*.10, sh*.44*pulse, 0, 0, Math.PI*2); ctx.fill();
             }
           }
         });

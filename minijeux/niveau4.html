@@ -59,6 +59,7 @@ let phase, showIdx, showTimer, showMs;
 let flashIdx, flashTimer, flashMs;
 let crystalRects, bgParts;
 let lastTs, rafId, bgT;
+let cosmoAnim;
 
 function gameReset() {
   cancelAnimationFrame(rafId);
@@ -67,7 +68,7 @@ function gameReset() {
   phase = "showing_lit";
   showIdx = 0; showTimer = 0; showMs = SHOW_MS_START;
   flashIdx = -1; flashTimer = 0; flashMs = 0;
-  crystalRects = null; bgParts = []; lastTs = 0; bgT = 0;
+  crystalRects = null; bgParts = []; lastTs = 0; bgT = 0; cosmoAnim = null;
 }
 window.gameReset = gameReset;
 
@@ -93,6 +94,13 @@ function gameStart() {
     _drawBg(ctx, cv.width, cv.height);
     _drawCrystals(ctx, cv.width, cv.height);
     _drawLabels(ctx, cv.width, cv.height);
+    if (cosmoAnim && cosmoAnim.timer < 550) {
+      const bounce = Math.abs(Math.sin(cosmoAnim.timer * 0.016)) * 14 * (1 - cosmoAnim.timer / 550);
+      const alpha = 1 - cosmoAnim.timer / 550;
+      ctx.globalAlpha = alpha;
+      drawCosmonaut(ctx, cosmoAnim.x, cosmoAnim.y - bounce, 14, 0, 'jump');
+      ctx.globalAlpha = 1;
+    }
   };
   loop(0);
 }
@@ -126,6 +134,11 @@ function _updateHUD() {
 }
 
 function _update(dt, W, H) {
+  // Cosmonaut anim
+  if (cosmoAnim) {
+    cosmoAnim.timer += dt;
+    if (cosmoAnim.timer > 550) cosmoAnim = null;
+  }
   // Particules de fond
   bgParts.forEach(p => { p.y += p.vy; if (p.y < -5) { p.y = H + 5; p.x = Math.random() * W; } });
 
@@ -176,6 +189,8 @@ function _onTap(e) {
   }
   if (hit < 0) return;
   navigator.vibrate && navigator.vibrate(14);
+  const cr = crystalRects[hit];
+  cosmoAnim = { x: cr.x, y: cr.y - cr.s - 16, timer: 0 };
   if (hit === sequence[inputIdx]) {
     flashIdx = hit; flashTimer = 0; flashMs = 190; phase = "flash_ok";
   } else {

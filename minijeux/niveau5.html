@@ -9,7 +9,7 @@
 html,body{height:100%;overflow:hidden;background:#000;font-family:system-ui,sans-serif;color:#fff;touch-action:none;user-select:none}
 #hud{position:relative;z-index:20;display:flex;align-items:center;gap:10px;padding:6px 52px 6px 10px;background:rgba(0,0,0,.78);backdrop-filter:blur(6px);flex-shrink:0}
 #lives{font-size:1.1rem;letter-spacing:2px;min-width:54px}
-#timer{flex:1;text-align:center;font-size:.95rem;font-weight:bold;color:#66aaff}
+#timer{flex:1;text-align:center;font-size:.95rem;font-weight:bold;color:#FFD700}
 #score-hud{font-size:.9rem;color:#FFD700;font-weight:bold;min-width:52px;text-align:right}
 #game-container{position:relative;z-index:1;flex:1;overflow:hidden;display:flex;flex-direction:column}
 canvas{display:block;width:100%;height:100%}
@@ -30,31 +30,42 @@ body{display:flex;flex-direction:column;height:100dvh}
 window.NIVEAU = 5;
 window.GPS0_TIMER_SEC = 150;
 window.GPS0_onTimerExpired = function () { endGame(true); };
-window.TUTO_TEXT = "\ud83e\uddf2 Maintiens = aimant actif · Attire les bleus · Fuis les rouges !<br><small>Maintiens 2:30 pour gagner</small>";
+window.TUTO_TEXT = "☀️ 1-2-3 Soleil ! Avance quand le soleil regarde ailleurs 🔆<br><small>Reste IMMOBILE quand il te regarde ! Atteins-le pour gagner !</small>";
 
 /* ── CONSTANTES ─────────────────────────────────────────────────────────── */
-const COSMO_R    = 26;
-const MAG_R      = 148;
-const COLLECT_R  = COSMO_R + 14;   // 40
-const EXPLODE_R  = COSMO_R + 14;   // 40
-const GOOD_MAX   = 18;
-const TRAP_MAX   = 7;
-const DEBRIS_INT = 108;
-const MAG_FG     = 0.28;  // force attraction bons
-const MAG_FT     = 0.22;  // force attraction pieges
+const SUN_R    = 46;
+const COSMO_R  = 18;
+const STEP_PX  = 22;
+const STARDUST_N = 48;
+const PHASE_GO_MIN   = 1800;
+const PHASE_GO_MAX   = 3800;
+const PHASE_TURN_MS  = 600;
+const PHASE_STOP_MIN = 1400;
+const PHASE_STOP_MAX = 3000;
 
 /* ── ETAT ───────────────────────────────────────────────────────────────── */
-let cv, ctx, W, H, cx, cy;
-let holding = false;
-let goodFrags, trapFrags, debris, particles, bgStars, bgDust;
-let arcPhase, frame, rafId, lastT, expFlash;
+let cv, ctx, W, H;
+let sunX, sunY, pathTop, pathBot;
+let playerY;
+let phase;
+let phaseTimer;
+let bgT;
+let particles, stardust;
+let tapped;
+let lastT, rafId;
+let stopFlash;
 
 /* ── RESET ──────────────────────────────────────────────────────────────── */
 function gameReset() {
   cancelAnimationFrame(rafId);
-  holding = false; arcPhase = 0; frame = 0; lastT = 0; expFlash = 0;
-  goodFrags = []; trapFrags = []; debris = []; particles = [];
-  bgStars = []; bgDust = [];
+  playerY    = 0;
+  phase      = 'go';
+  phaseTimer = _rnd(PHASE_GO_MIN, PHASE_GO_MAX);
+  bgT        = 0;
+  particles  = [];
+  tapped     = false;
+  stopFlash  = 0;
+  _initStardust();
 }
 window.gameReset = gameReset;
 
@@ -63,17 +74,13 @@ function gameStart() {
   cv  = document.getElementById('cv');
   ctx = cv.getContext('2d');
   GPS0_resizeCanvas(cv);
-  // Fallback si le game-container n'a pas encore de taille résolue
   if (!cv.width || !cv.height) {
     const hud = document.getElementById('hud');
     cv.width  = window.innerWidth;
     cv.height = window.innerHeight - (hud ? hud.offsetHeight : 44);
   }
-  W = cv.width; H = cv.height; cx = W / 2; cy = H / 2;
-  _initBg();
-  cv.addEventListener('pointerdown',   _onDown);
-  cv.addEventListener('pointerup',     _onUp);
-  cv.addEventListener('pointercancel', _onUp);
+  _calcLayout();
+  cv.addEventListener('pointerdown', _onTap);
   cv.addEventListener('touchstart', e => e.preventDefault(), { passive: false });
   lastT = performance.now();
   rafId = requestAnimationFrame(_loop);
@@ -82,436 +89,282 @@ window.gameStart = gameStart;
 
 window.onResize = function () {
   GPS0_resizeCanvas(cv);
-  W = cv.width; H = cv.height; cx = W / 2; cy = H / 2;
+  _calcLayout();
 };
 
-/* ── CONTROLES ──────────────────────────────────────────────────────────── */
-function _onDown(e) { e.preventDefault(); if (GPS0_running()) holding = true; }
-function _onUp(e)   { e.preventDefault(); holding = false; }
-
-/* ── INIT DECOR ─────────────────────────────────────────────────────────── */
-function _initBg() {
-  for (let i = 0; i < 90; i++)
-    bgStars.push({ x: Math.random(), y: Math.random(),
-      r: 0.3 + Math.random() * 1.7,
-      tp: Math.random() * Math.PI * 2,
-      ts: 0.3 + Math.random() * 0.9 });
-  for (let i = 0; i < 22; i++)
-    bgDust.push({
-      x: Math.random() * W, y: Math.random() * H,
-      vx: (Math.random() - 0.5) * 0.16,
-      vy: (Math.random() - 0.5) * 0.16,
-      r: 0.4 + Math.random() * 1.4,
-      a: 0.07 + Math.random() * 0.16 });
-  for (let i = 0; i < 13; i++) _spawnGood();
+function _calcLayout() {
+  W = cv.width; H = cv.height;
+  sunX    = W / 2;
+  sunY    = SUN_R + 30;
+  pathTop = sunY + SUN_R + COSMO_R + 22;
+  pathBot = H - COSMO_R - 32;
 }
 
-/* ── HELPERS SPAWN ──────────────────────────────────────────────────────── */
-function _edge() {
-  const side = Math.random() * 4 | 0;
-  if (side === 0) return { x: Math.random() * W, y: -26 };
-  if (side === 1) return { x: W + 26, y: Math.random() * H };
-  if (side === 2) return { x: Math.random() * W, y: H + 26 };
-  return               { x: -26, y: Math.random() * H };
-}
+/* ── HELPERS ────────────────────────────────────────────────────────────── */
+function _rnd(a, b) { return a + Math.random() * (b - a); }
+function _playerPY() { return pathBot - playerY * (pathBot - pathTop); }
 
-function _spawnGood() {
-  if (goodFrags.length >= GOOD_MAX) return;
-  const { x, y } = _edge();
-  const a = Math.atan2(cy - y, cx - x) + (Math.random() - 0.5) * 1.5;
-  const s = 0.5 + Math.random() * 1.3;
-  goodFrags.push({ x, y, vx: Math.cos(a)*s, vy: Math.sin(a)*s,
-                   r: 7 + Math.random() * 4, ph: Math.random() * Math.PI * 2 });
-}
-
-function _spawnTrap() {
-  if (trapFrags.length >= TRAP_MAX) return;
-  const { x, y } = _edge();
-  // Vitesse orbitale pour tourner autour du centre plutot que foncer dessus
-  const toC  = Math.atan2(cy - y, cx - x);
-  const tang = toC + (Math.random() < 0.5 ? 1 : -1) * Math.PI * 0.5;
-  const sv   = 0.85 + Math.random() * 0.85;
-  const iv   = 0.12 + Math.random() * 0.22;
-  trapFrags.push({
-    x, y,
-    vx: Math.cos(tang)*sv + Math.cos(toC)*iv,
-    vy: Math.sin(tang)*sv + Math.sin(toC)*iv,
-    r: 8 + Math.random() * 4, ph: Math.random() * Math.PI * 2 });
-}
-
-function _spawnDebris() {
-  if (debris.length >= 5) return;
-  const { x, y } = _edge();
-  const a = Math.atan2(cy - y, cx - x) + (Math.random() - 0.5) * 0.75;
-  const s = 1.6 + Math.random() * 1.9;
-  const r = 11 + Math.random() * 14;
-  debris.push({ x, y, vx: Math.cos(a)*s, vy: Math.sin(a)*s,
-                r, rot: Math.random() * Math.PI * 2,
-                rv: (Math.random() - 0.5) * 0.055 });
-}
-
-function _burst(x, y, col, n) {
-  for (let i = 0; i < n; i++) {
-    const a = Math.random() * Math.PI * 2;
-    const s = 1.5 + Math.random() * 3.5;
-    particles.push({ x, y, vx: Math.cos(a)*s, vy: Math.sin(a)*s,
-                     r: 1.5 + Math.random() * 3.5, col, al: 1 });
+/* ── STARDUST ────────────────────────────────────────────────────────────── */
+function _initStardust() {
+  stardust = [];
+  for (let i = 0; i < STARDUST_N; i++) {
+    const p = (i + 0.5) / STARDUST_N;
+    const jitter = _rnd(-1, 1) * (W ? W * 0.18 : 40);
+    stardust.push({ t: p, ox: jitter, r: 3.5 + Math.random() * 3.5,
+      ph: Math.random() * Math.PI * 2, collected: false });
   }
+}
+
+/* ── CONTROLES ──────────────────────────────────────────────────────────── */
+function _onTap(e) {
+  e.preventDefault();
+  if (!GPS0_running()) return;
+  if (phase === 'stop' || phase === 'turning') {
+    stopFlash = 1;
+    loseLife();
+    if (navigator.vibrate) navigator.vibrate([80, 40, 160]);
+    return;
+  }
+  tapped = true;
+  playerY = Math.min(1, playerY + STEP_PX / (pathBot - pathTop));
+  if (navigator.vibrate) navigator.vibrate(5);
+  if (playerY >= 1) { endGame(true); }
 }
 
 /* ── BOUCLE ─────────────────────────────────────────────────────────────── */
 function _loop(now) {
   rafId = requestAnimationFrame(_loop);
   if (!GPS0_running()) return;
-  const dt = Math.min((now - lastT) / 16.67, 3);
-  lastT = now; frame++;
+  const dtMs = Math.min(now - lastT, 80);
+  lastT = now;
+  bgT  += dtMs / 16.67;
   W = cv.width || window.innerWidth;
   H = cv.height || (window.innerHeight - 44);
-  cx = W / 2; cy = H / 2;
-  arcPhase += 0.027 * dt;
-  _update(dt);
+  sunX = W / 2; sunY = SUN_R + 30;
+  pathTop = sunY + SUN_R + COSMO_R + 22;
+  pathBot = H - COSMO_R - 32;
+  _updatePhase(dtMs);
+  _collectStardust();
+  _updateParticles(dtMs / 16.67);
   _draw();
+  tapped = false;
 }
 
-/* ── UPDATE ─────────────────────────────────────────────────────────────── */
-function _update(dt) {
-  /* spawns */
-  if (frame % DEBRIS_INT === 0)          _spawnDebris();
-  if (frame % 88  === 0)                 _spawnGood();
-  if (frame > 600 && frame % 185 === 0)  _spawnTrap();
+/* ── PHASE ───────────────────────────────────────────────────────────────── */
+function _updatePhase(dtMs) {
+  phaseTimer -= dtMs;
+  if (phaseTimer > 0) return;
+  if (phase === 'go')      { phase = 'turning'; phaseTimer = PHASE_TURN_MS; }
+  else if (phase === 'turning') { phase = 'stop'; phaseTimer = _rnd(PHASE_STOP_MIN, PHASE_STOP_MAX); }
+  else                     { phase = 'go';  phaseTimer = _rnd(PHASE_GO_MIN, PHASE_GO_MAX); }
+}
 
-  /* bgDust derive */
-  for (const d of bgDust) {
-    d.x = (d.x + d.vx * dt + W) % W;
-    d.y = (d.y + d.vy * dt + H) % H;
-  }
-
-  /* bons fragments */
-  for (let i = goodFrags.length - 1; i >= 0; i--) {
-    const f  = goodFrags[i];
-    f.ph    += 0.042 * dt;
-    const dx = cx - f.x, dy = cy - f.y;
-    const dist = Math.sqrt(dx*dx + dy*dy) || 0.01;
-    if (holding && dist < MAG_R) {
-      const force = MAG_FG * dt * (1 - dist / MAG_R);
-      f.vx += dx / dist * force;
-      f.vy += dy / dist * force;
-    }
-    f.vx *= Math.pow(0.990, dt); f.vy *= Math.pow(0.990, dt);
-    f.x  += f.vx * dt; f.y += f.vy * dt;
-    /* rebond bords */
-    if (f.x < f.r)     { f.x = f.r;     f.vx =  Math.abs(f.vx) * 0.55; }
-    if (f.x > W - f.r) { f.x = W - f.r; f.vx = -Math.abs(f.vx) * 0.55; }
-    if (f.y < f.r)     { f.y = f.r;     f.vy =  Math.abs(f.vy) * 0.55; }
-    if (f.y > H - f.r) { f.y = H - f.r; f.vy = -Math.abs(f.vy) * 0.55; }
-    if (dist < COLLECT_R) {
-      _burst(f.x, f.y, '#88ddff', 9);
-      goodFrags.splice(i, 1);
-      addDust(2);
+/* ── STARDUST COLLECT ────────────────────────────────────────────────────── */
+function _collectStardust() {
+  const py = _playerPY();
+  for (const s of stardust) {
+    if (s.collected) continue;
+    const sy = pathBot - s.t * (pathBot - pathTop);
+    const sx = sunX + s.ox;
+    const dx = sunX - sx, dy = py - sy;
+    if (dx * dx + dy * dy < (COSMO_R + s.r) * (COSMO_R + s.r)) {
+      s.collected = true;
+      addDust(1);
+      for (let i = 0; i < 7; i++) {
+        const a = Math.random() * Math.PI * 2, sp = 1.5 + Math.random() * 3;
+        particles.push({ x: sx, y: sy, vx: Math.cos(a)*sp, vy: Math.sin(a)*sp,
+          r: 2 + Math.random() * 2.5, col: `hsl(${40 + Math.random()*40},100%,80%)`, al: 1 });
+      }
     }
   }
+}
 
-  /* fragments pieges */
-  for (let i = trapFrags.length - 1; i >= 0; i--) {
-    const f  = trapFrags[i];
-    f.ph    += 0.068 * dt;
-    const dx = cx - f.x, dy = cy - f.y;
-    const dist = Math.sqrt(dx*dx + dy*dy) || 0.01;
-    if (holding && dist < MAG_R) {
-      const force = MAG_FT * dt * (1 - dist / MAG_R);
-      f.vx += dx / dist * force;
-      f.vy += dy / dist * force;
-    }
-    f.vx *= Math.pow(0.988, dt); f.vy *= Math.pow(0.988, dt);
-    f.x  += f.vx * dt; f.y += f.vy * dt;
-    /* rebond bords (traps restent a l'ecran) */
-    if (f.x < f.r)     { f.x = f.r;     f.vx =  Math.abs(f.vx) * 0.5; }
-    if (f.x > W - f.r) { f.x = W - f.r; f.vx = -Math.abs(f.vx) * 0.5; }
-    if (f.y < f.r)     { f.y = f.r;     f.vy =  Math.abs(f.vy) * 0.5; }
-    if (f.y > H - f.r) { f.y = H - f.r; f.vy = -Math.abs(f.vy) * 0.5; }
-    if (dist < EXPLODE_R) {
-      expFlash = 1;
-      _burst(f.x, f.y, '#ff4422', 18);
-      _burst(f.x, f.y, '#ffaa00', 10);
-      trapFrags.splice(i, 1);
-      loseLife();
-      if (navigator.vibrate) navigator.vibrate([60, 30, 120]);
-    }
-  }
-
-  /* debris */
-  for (let i = debris.length - 1; i >= 0; i--) {
-    const d = debris[i];
-    d.x += d.vx * dt; d.y += d.vy * dt; d.rot += d.rv * dt;
-    const dx = cx - d.x, dy = cy - d.y;
-    const dist = Math.sqrt(dx*dx + dy*dy);
-    if (dist < COSMO_R + d.r - 5) {
-      _burst(d.x, d.y, '#aabbcc', 10);
-      debris.splice(i, 1);
-      loseLife();
-      if (navigator.vibrate) navigator.vibrate(75);
-      continue;
-    }
-    if (d.x < -130 || d.x > W + 130 || d.y < -130 || d.y > H + 130)
-      debris.splice(i, 1);
-  }
-
-  /* particules */
+/* ── PARTICULES ──────────────────────────────────────────────────────────── */
+function _updateParticles(dt) {
   for (let i = particles.length - 1; i >= 0; i--) {
     const p = particles[i];
     p.x += p.vx * dt; p.y += p.vy * dt;
-    p.vx *= 0.92; p.vy *= 0.92;
-    p.al -= 0.035 * dt;
+    p.vx *= 0.93; p.vy *= 0.93;
+    p.al -= 0.028 * dt;
     if (p.al <= 0) particles.splice(i, 1);
   }
-
-  /* flash explosion */
-  if (expFlash > 0) expFlash = Math.max(0, expFlash - 0.06 * dt);
 }
 
-/* ── DRAW ───────────────────────────────────────────────────────────────── */
+/* ── DRAW ─────────────────────────────────────────────────────────────── */
 function _draw() {
   ctx.clearRect(0, 0, W, H);
 
-  /* fond espace */
-  const bg = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(W, H) * 0.8);
-  bg.addColorStop(0,    '#18082e');
-  bg.addColorStop(0.52, '#0b0720');
-  bg.addColorStop(1,    '#03020e');
-  ctx.fillStyle = bg;
-  ctx.fillRect(0, 0, W, H);
+  // Fond dégradé chaud
+  const bg = ctx.createLinearGradient(0, 0, 0, H);
+  bg.addColorStop(0, '#1a0e00'); bg.addColorStop(0.35, '#2e1800');
+  bg.addColorStop(0.78, '#180f00'); bg.addColorStop(1, '#0d0800');
+  ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
 
-  /* etoiles */
-  const ts = Date.now() * 0.001;
-  for (const s of bgStars) {
-    const br = 0.35 + 0.65 * Math.abs(Math.sin(ts * s.ts + s.tp));
-    ctx.save();
-    ctx.globalAlpha = br * 0.88;
-    ctx.fillStyle   = '#ffffff';
-    ctx.beginPath();
-    ctx.arc(s.x * W, s.y * H, s.r, 0, Math.PI * 2);
-    ctx.fill();
+  // Halo ambiance soleil
+  const hA = phase === 'stop' ? 0.18 : phase === 'turning' ? 0.24 + 0.08 * Math.sin(bgT * 0.55) : 0.11;
+  const hl = ctx.createRadialGradient(sunX, sunY, SUN_R, sunX, sunY, H * 0.80);
+  hl.addColorStop(0, `rgba(255,200,40,${hA.toFixed(2)})`);
+  hl.addColorStop(0.45, `rgba(255,110,10,${(hA * 0.32).toFixed(2)})`);
+  hl.addColorStop(1, 'rgba(255,60,0,0)');
+  ctx.fillStyle = hl; ctx.fillRect(0, 0, W, H);
+
+  // Chemin pointillé
+  ctx.save(); ctx.globalAlpha = 0.26; ctx.strokeStyle = '#ffee99';
+  ctx.lineWidth = 2.5; ctx.setLineDash([6, 11]);
+  ctx.beginPath(); ctx.moveTo(sunX, pathTop); ctx.lineTo(sunX, pathBot); ctx.stroke();
+  ctx.setLineDash([]); ctx.restore();
+
+  // Stardust
+  for (const s of stardust) {
+    if (s.collected) continue;
+    const sy = pathBot - s.t * (pathBot - pathTop);
+    const sx = sunX + s.ox;
+    const pulse = 0.60 + 0.40 * Math.sin(bgT * 0.09 + s.ph);
+    ctx.save(); ctx.globalAlpha = 0.44 * pulse;
+    ctx.fillStyle = `hsl(${45 + Math.sin(s.ph) * 20},100%,78%)`;
+    ctx.beginPath(); ctx.arc(sx, sy, s.r * pulse, 0, Math.PI * 2); ctx.fill();
     ctx.restore();
   }
 
-  /* poussiere de fond (bleuee) */
-  for (const d of bgDust) {
-    ctx.save();
-    ctx.globalAlpha = d.a;
-    ctx.fillStyle   = '#5577cc';
-    ctx.beginPath();
-    ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2);
-    ctx.fill();
+  // Flash stop
+  if (stopFlash > 0) {
+    ctx.save(); ctx.globalAlpha = stopFlash * 0.44;
+    ctx.fillStyle = '#ff0000'; ctx.fillRect(0, 0, W, H);
     ctx.restore();
+    stopFlash = Math.max(0, stopFlash - 0.06);
   }
 
-  /* flash explosion */
-  if (expFlash > 0) {
-    ctx.save();
-    ctx.globalAlpha = expFlash * 0.38;
-    ctx.fillStyle   = '#ff3300';
-    ctx.fillRect(0, 0, W, H);
-    ctx.restore();
-  }
-
-  /* ring zone magnetique (pointille discret) */
-  ctx.save();
-  ctx.globalAlpha = holding ? 0.24 : 0.07;
-  ctx.strokeStyle = '#4499ff';
-  ctx.lineWidth   = 1.5;
-  ctx.setLineDash([5, 9]);
-  ctx.beginPath();
-  ctx.arc(cx, cy, MAG_R, 0, Math.PI * 2);
-  ctx.stroke();
-  ctx.setLineDash([]);
-  ctx.restore();
-
-  /* arcs champ magnetique (quand hold) */
-  if (holding) _drawMagField();
-
-  /* bons fragments */
-  for (const f of goodFrags)  _drawGoodFrag(f);
-
-  /* fragments pieges */
-  for (const f of trapFrags)  _drawTrapFrag(f);
-
-  /* debris */
-  for (const d of debris)     _drawDebris(d);
-
-  /* particules */
+  // Particules
   for (const p of particles) {
     if (p.al <= 0) continue;
-    ctx.save();
-    ctx.globalAlpha = p.al;
-    ctx.fillStyle   = p.col;
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.save(); ctx.globalAlpha = p.al; ctx.fillStyle = p.col;
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill();
     ctx.restore();
   }
 
-  /* cosmonaute centre */
-  drawCosmonaut(ctx, cx, cy, COSMO_R, 0, holding ? 'fly' : 'idle');
+  // Cosmonaute joueur
+  const posY = _playerPY();
+  drawCosmonaut(ctx, sunX, posY, COSMO_R, 0, (phase === 'go') ? 'fly' : 'idle');
 
-  /* halo aimant autour du cosmo */
-  if (holding) {
-    const haloR = COSMO_R + 9 + Math.sin(arcPhase * 5) * 3;
-    ctx.save();
-    ctx.globalAlpha   = 0.55;
-    ctx.strokeStyle   = '#88ccff';
-    ctx.lineWidth     = 2;
-    ctx.shadowColor   = '#4499ff';
-    ctx.shadowBlur    = 12;
-    ctx.beginPath();
-    ctx.arc(cx, cy, haloR, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.restore();
+  // Flèche progression
+  if (phase === 'go' && playerY > 0) {
+    const ay = posY - COSMO_R - 14;
+    ctx.save(); ctx.globalAlpha = 0.62 + 0.28 * Math.sin(bgT * 0.14); ctx.fillStyle = '#ffdd44';
+    ctx.beginPath(); ctx.moveTo(sunX, ay - 7); ctx.lineTo(sunX - 7, ay + 2); ctx.lineTo(sunX + 7, ay + 2);
+    ctx.closePath(); ctx.fill(); ctx.restore();
   }
 
-  /* label hint bas de l'ecran */
-  ctx.save();
-  ctx.globalAlpha = 0.52;
-  ctx.fillStyle   = '#8899ee';
-  ctx.font        = '12px system-ui';
-  ctx.textAlign   = 'center';
-  ctx.fillText(holding ? '\u25a0 AIMANT ACTIF' : 'Hold = aimant', cx, H - 12);
-  ctx.restore();
+  // SOLEIL MALÉFIQUE
+  _drawSun();
+  _drawPhaseLabel();
 }
 
-/* ── CHAMP MAGNETIQUE (arcs) ────────────────────────────────────────────── */
-function _drawMagField() {
-  const N = 8;
-  for (let i = 0; i < N; i++) {
-    const base = (i / N) * Math.PI * 2 + arcPhase * 0.65;
+/* ── SOLEIL ────────────────────────────────────────────────────────────── */
+function _drawSun() {
+  const t = bgT;
+  // Rayons
+  for (let i = 0; i < 12; i++) {
+    const a = (i / 12) * Math.PI * 2 + t * 0.018;
+    const rIn = SUN_R + 6;
+    const rOut = SUN_R + 28 + 10 * Math.sin(t * 0.06 + i);
     ctx.save();
-    ctx.globalAlpha = 0.11 + 0.07 * Math.sin(arcPhase * 2.8 + i * 0.7);
-    ctx.strokeStyle = '#4499ff';
-    ctx.lineWidth   = 1.4;
+    ctx.globalAlpha = (phase === 'stop') ? 0.78 : (phase === 'turning') ? 0.52 + 0.24 * Math.sin(t * 0.45) : 0.32;
+    ctx.strokeStyle = (phase === 'stop') ? '#ff7700' : '#ffdd44';
+    ctx.lineWidth = 4; ctx.lineCap = 'round';
     ctx.beginPath();
-    const steps  = 20;
-    const rInner = COSMO_R + 10;
-    const rOuter = MAG_R;
-    for (let s = 0; s <= steps; s++) {
-      const frac  = s / steps;
-      const r     = rInner + (rOuter - rInner) * frac;
-      const spr   = 0.42 * (1 - frac * 0.5);
-      const angle = base + Math.sin(frac * Math.PI) * spr;
-      const px = cx + Math.cos(angle) * r;
-      const py = cy + Math.sin(angle) * r;
-      s === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    ctx.moveTo(sunX + Math.cos(a) * rIn, sunY + Math.sin(a) * rIn);
+    ctx.lineTo(sunX + Math.cos(a) * rOut, sunY + Math.sin(a) * rOut);
+    ctx.stroke(); ctx.restore();
+  }
+  // Halo
+  const haloR = SUN_R + 22 + 5 * Math.sin(t * 0.08);
+  const hg = ctx.createRadialGradient(sunX, sunY, SUN_R * 0.6, sunX, sunY, haloR);
+  if (phase === 'stop') {
+    hg.addColorStop(0, 'rgba(255,70,0,.72)'); hg.addColorStop(0.5, 'rgba(255,130,0,.30)'); hg.addColorStop(1, 'rgba(255,90,0,0)');
+  } else if (phase === 'turning') {
+    const ia = 0.52 + 0.30 * Math.abs(Math.sin(t * 0.36));
+    hg.addColorStop(0, `rgba(255,180,0,${ia.toFixed(2)})`); hg.addColorStop(0.5, `rgba(255,200,40,${(ia*.4).toFixed(2)})`); hg.addColorStop(1, 'rgba(255,200,0,0)');
+  } else {
+    hg.addColorStop(0, 'rgba(255,240,120,.52)'); hg.addColorStop(0.5, 'rgba(255,220,80,.20)'); hg.addColorStop(1, 'rgba(255,200,0,0)');
+  }
+  ctx.fillStyle = hg; ctx.beginPath(); ctx.arc(sunX, sunY, haloR, 0, Math.PI * 2); ctx.fill();
+
+  // Corps soleil
+  const sunCol = phase === 'stop' ? '#ff5500' : phase === 'turning' ? '#ffaa00' : '#ffdd22';
+  const bodyG = ctx.createRadialGradient(sunX - SUN_R * 0.3, sunY - SUN_R * 0.3, 4, sunX, sunY, SUN_R);
+  bodyG.addColorStop(0, '#fff5a0'); bodyG.addColorStop(0.4, sunCol); bodyG.addColorStop(1, phase === 'stop' ? '#cc3300' : '#e68800');
+  ctx.fillStyle = bodyG; ctx.beginPath(); ctx.arc(sunX, sunY, SUN_R, 0, Math.PI * 2); ctx.fill();
+
+  // Visage
+  if (phase === 'go') {
+    // Yeux fermés souriants
+    ctx.save(); ctx.strokeStyle = '#6B3A00'; ctx.lineWidth = 3; ctx.lineCap = 'round';
+    const eyY0 = sunY - SUN_R * 0.12;
+    for (const ex of [sunX - SUN_R * 0.38, sunX + SUN_R * 0.38]) {
+      ctx.beginPath(); ctx.arc(ex, eyY0, SUN_R * 0.18, Math.PI * 0.1, Math.PI * 0.9); ctx.stroke();
     }
-    ctx.stroke();
+    ctx.beginPath(); ctx.arc(sunX, sunY + SUN_R * 0.10, SUN_R * 0.32, Math.PI * 0.1, Math.PI * 0.9); ctx.stroke();
+    ctx.restore();
+
+  } else if (phase === 'turning') {
+    const warn = Math.abs(Math.sin(t * 0.45));
+    const eyY1 = sunY - SUN_R * 0.15;
+    ctx.save(); ctx.strokeStyle = '#4a2000'; ctx.lineWidth = 3;
+    for (const ex of [sunX - SUN_R * 0.36, sunX + SUN_R * 0.36]) {
+      ctx.fillStyle = '#fff';
+      ctx.beginPath(); ctx.ellipse(ex, eyY1, SUN_R * 0.16, SUN_R * 0.13, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = `rgba(80,20,0,${(0.6 + 0.4 * warn).toFixed(2)})`;
+      ctx.beginPath(); ctx.arc(ex + 2 * Math.cos(t * 0.38), eyY1 + 2 * Math.sin(t * 0.28), SUN_R * 0.07, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.lineWidth = 3.5;
+    ctx.beginPath(); ctx.moveTo(sunX - SUN_R * 0.54, eyY1 - SUN_R * 0.22); ctx.lineTo(sunX - SUN_R * 0.20, eyY1 - SUN_R * 0.10); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(sunX + SUN_R * 0.54, eyY1 - SUN_R * 0.22); ctx.lineTo(sunX + SUN_R * 0.20, eyY1 - SUN_R * 0.10); ctx.stroke();
+    ctx.restore();
+
+  } else {
+    // STOP — yeux méchants
+    const eyY2 = sunY - SUN_R * 0.18;
+    ctx.save();
+    for (const ex of [sunX - SUN_R * 0.36, sunX + SUN_R * 0.36]) {
+      ctx.fillStyle = '#fff'; ctx.strokeStyle = '#330000'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.ellipse(ex, eyY2, SUN_R * 0.18, SUN_R * 0.22, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#cc0000'; ctx.beginPath(); ctx.arc(ex, eyY2 + SUN_R * 0.04, SUN_R * 0.11, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#1a0000'; ctx.beginPath(); ctx.arc(ex, eyY2 + SUN_R * 0.04, SUN_R * 0.055, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.strokeStyle = '#330000'; ctx.lineWidth = 4; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(sunX - SUN_R * 0.58, eyY2 - SUN_R * 0.32); ctx.lineTo(sunX - SUN_R * 0.16, eyY2 - SUN_R * 0.08); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(sunX + SUN_R * 0.58, eyY2 - SUN_R * 0.32); ctx.lineTo(sunX + SUN_R * 0.16, eyY2 - SUN_R * 0.08); ctx.stroke();
+    // Bouche rictus + dents
+    const mY = sunY + SUN_R * 0.32;
+    ctx.strokeStyle = '#1a0000'; ctx.lineWidth = 3.5;
+    ctx.beginPath(); ctx.arc(sunX, mY, SUN_R * 0.30, Math.PI * 1.1, Math.PI * 1.9); ctx.stroke();
+    ctx.fillStyle = '#ffffcc';
+    const tW = SUN_R * 0.085, tH = SUN_R * 0.10;
+    for (let ti = 0; ti < 4; ti++) {
+      ctx.beginPath(); ctx.roundRect(sunX - SUN_R * 0.19 + ti * tW * 1.22, mY - tH * 0.5, tW, tH, 2); ctx.fill();
+    }
     ctx.restore();
   }
-  /* lueur radiale centrale (aimant actif) */
-  ctx.save();
-  ctx.globalAlpha = 0.06 + 0.04 * Math.sin(arcPhase * 4);
-  const glow = ctx.createRadialGradient(cx, cy, COSMO_R, cx, cy, MAG_R);
-  glow.addColorStop(0, 'rgba(68,153,255,0.6)');
-  glow.addColorStop(1, 'rgba(68,153,255,0)');
-  ctx.fillStyle = glow;
-  ctx.beginPath();
-  ctx.arc(cx, cy, MAG_R, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.restore();
 }
 
-/* ── FRAGMENT BON (diamant bleu) ────────────────────────────────────────── */
-function _drawGoodFrag(f) {
-  const pulse = 0.82 + 0.18 * Math.sin(f.ph);
-  /* lueur */
-  ctx.save();
-  ctx.globalAlpha = 0.16 * pulse;
-  const g = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, f.r * 2.8);
-  g.addColorStop(0, '#88ddff'); g.addColorStop(1, 'rgba(68,153,255,0)');
-  ctx.fillStyle = g;
-  ctx.beginPath(); ctx.arc(f.x, f.y, f.r * 2.8, 0, Math.PI * 2); ctx.fill();
-  ctx.restore();
-  /* diamant */
-  ctx.save();
-  ctx.translate(f.x, f.y);
-  ctx.rotate(f.ph * 0.35);
-  const r = f.r * pulse;
-  ctx.fillStyle   = '#88ddff';
-  ctx.strokeStyle = '#ccffff';
-  ctx.lineWidth   = 1.2;
-  ctx.beginPath();
-  ctx.moveTo(0, -r); ctx.lineTo(r * 0.58, 0);
-  ctx.lineTo(0,  r); ctx.lineTo(-r * 0.58, 0);
-  ctx.closePath(); ctx.fill(); ctx.stroke();
-  /* reflet interieur */
-  ctx.globalAlpha = 0.5;
-  ctx.fillStyle   = '#ffffff';
-  ctx.beginPath();
-  ctx.moveTo(0, -r * 0.48); ctx.lineTo(r * 0.24, -r * 0.08);
-  ctx.lineTo(0,  r * 0.22); ctx.lineTo(-r * 0.24, -r * 0.08);
-  ctx.closePath(); ctx.fill();
-  ctx.restore();
-}
-
-/* ── FRAGMENT PIEGE (etoile rouge) ─────────────────────────────────────── */
-function _drawTrapFrag(f) {
-  const pulse = 0.65 + 0.35 * Math.abs(Math.sin(f.ph));
-  /* lueur rouge */
-  ctx.save();
-  ctx.globalAlpha = 0.22 * pulse;
-  const g = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, f.r * 3);
-  g.addColorStop(0, '#ff4422'); g.addColorStop(1, 'rgba(255,0,0,0)');
-  ctx.fillStyle = g;
-  ctx.beginPath(); ctx.arc(f.x, f.y, f.r * 3, 0, Math.PI * 2); ctx.fill();
-  ctx.restore();
-  /* etoile 8 branches */
-  ctx.save();
-  ctx.translate(f.x, f.y);
-  ctx.rotate(f.ph * 0.55);
-  const r = f.r * pulse;
-  ctx.fillStyle   = '#ff4422';
-  ctx.strokeStyle = '#ffaa00';
-  ctx.lineWidth   = 1.5;
-  ctx.beginPath();
-  for (let i = 0; i < 8; i++) {
-    const a  = (i / 8) * Math.PI * 2;
-    const rr = i % 2 === 0 ? r : r * 0.46;
-    i === 0 ? ctx.moveTo(Math.cos(a) * rr, Math.sin(a) * rr)
-            : ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr);
+/* ── LABEL PHASE ─────────────────────────────────────────────────────────── */
+function _drawPhaseLabel() {
+  ctx.textAlign = 'center';
+  if (phase === 'go') {
+    ctx.save(); ctx.globalAlpha = 0.60 + 0.28 * Math.sin(bgT * 0.12);
+    ctx.fillStyle = '#88ff55'; ctx.font = `bold ${Math.floor(W * 0.07)}px system-ui`;
+    ctx.fillText('AVANCE !', W / 2, H - 14); ctx.restore();
+  } else if (phase === 'stop') {
+    ctx.save(); ctx.globalAlpha = 0.72 + 0.28 * Math.abs(Math.sin(bgT * 0.22));
+    ctx.fillStyle = '#ff3300'; ctx.font = `bold ${Math.floor(W * 0.09)}px system-ui`;
+    ctx.shadowColor = '#ff0000'; ctx.shadowBlur = 18;
+    ctx.fillText('STOP !', W / 2, H - 14); ctx.restore();
+  } else {
+    ctx.save(); ctx.globalAlpha = 0.82 + 0.18 * Math.abs(Math.sin(bgT * 0.38));
+    ctx.fillStyle = '#ffcc00'; ctx.font = `bold ${Math.floor(W * 0.075)}px system-ui`;
+    ctx.shadowColor = '#ffaa00'; ctx.shadowBlur = 12;
+    ctx.fillText('⚠️ ATTENTION…', W / 2, H - 14); ctx.restore();
   }
-  ctx.closePath(); ctx.fill(); ctx.stroke();
-  /* croix alerte */
-  ctx.globalAlpha = 0.88;
-  ctx.strokeStyle = '#ffffff';
-  ctx.lineWidth   = 1.4;
-  ctx.beginPath();
-  ctx.moveTo(-r * 0.3, -r * 0.3); ctx.lineTo( r * 0.3,  r * 0.3);
-  ctx.moveTo( r * 0.3, -r * 0.3); ctx.lineTo(-r * 0.3,  r * 0.3);
-  ctx.stroke();
-  ctx.restore();
-}
-
-/* ── DEBRIS (asteroide gris) ────────────────────────────────────────────── */
-function _drawDebris(d) {
-  ctx.save();
-  ctx.translate(d.x, d.y);
-  ctx.rotate(d.rot);
-  /* polygone irregulier */
-  ctx.beginPath();
-  const pts = 7;
-  for (let i = 0; i < pts; i++) {
-    const a  = (i / pts) * Math.PI * 2;
-    const rr = d.r * (0.70 + 0.30 * Math.sin(i * 2.2 + d.rot));
-    i === 0 ? ctx.moveTo(Math.cos(a) * rr, Math.sin(a) * rr)
-            : ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr);
-  }
-  ctx.closePath();
-  ctx.fillStyle   = '#58606e';
-  ctx.strokeStyle = '#8a9aaa';
-  ctx.lineWidth   = 1.5;
-  ctx.fill(); ctx.stroke();
-  /* crateres */
-  ctx.globalAlpha = 0.30;
-  ctx.fillStyle   = '#303540';
-  ctx.beginPath(); ctx.arc(d.r * 0.22, -d.r * 0.17, d.r * 0.21, 0, Math.PI * 2); ctx.fill();
-  ctx.beginPath(); ctx.arc(-d.r * 0.27, d.r * 0.13, d.r * 0.13, 0, Math.PI * 2); ctx.fill();
-  ctx.restore();
 }
 </script>
 </body>

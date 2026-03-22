@@ -197,6 +197,11 @@ function _spawnMeteor(W,H,vague){
 
 function _hitMeteor(m,ovx,ovy){
   m.hp--;
+  if(m.hp>0){
+    m.vx*=0.50; m.vy*=0.50;
+    m.rotSpd=(Math.random()<.5?1:-1)*(0.038+Math.random()*0.046);
+    for(let j=0;j<6;j++) particles.push({x:m.x,y:m.y,vx:(Math.random()-.5)*10,vy:-4-Math.random()*4,life:18,col:'#ffffff'});
+  }
   for(let j=0;j<8;j++) particles.push({x:m.x,y:m.y,vx:(Math.random()-.5)*6,vy:-2-Math.random()*3,life:22,col:m.hp<=0?'#4FC3F7':'#9ab0c4'});
   if(m.hp<=0){
     for(let j=0;j<18;j++) particles.push({x:m.x,y:m.y,vx:(Math.random()-.5)*9,vy:(Math.random()-.5)*9,life:32,col:j%2===0?'#4FC3F7':'#C8A2C8'});

@@ -302,10 +302,10 @@ function _genPlatforms(W, H) {
   const difficulty = Math.min(1, maxHeight / 6500);
 
   while (genTopY > genTarget) {
-    const gap  = 105 + difficulty * 65 + Math.random() * 48;
+    const gap  = 70 + difficulty * 43 + Math.random() * 32;
     genTopY   -= gap;
 
-    const platW = Math.max(52, 78 - difficulty * 26);
+    const platW = Math.max(48, 72 - difficulty * 22);
     const x     = 10 + Math.random() * (W - platW - 20);
 
     // Type : cassable apr\u00e8s 2200m

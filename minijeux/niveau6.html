@@ -18,10 +18,15 @@ body{display:flex;flex-direction:column;height:100dvh}
 </head>
 <body>
 <div id="hud">
-  <span id="lives">&#10084;&#10084;&#10084;</span>
+  <span id="lives">&#10084;</span>
   <span id="timer">3:00</span>
   <span id="score-hud">0 &#10024;</span>
 </div>
+<div id="looser-overlay" style="display:none;position:fixed;inset:0;z-index:999;background:rgba(0,0,0,.88);flex-direction:column;align-items:center;justify-content:center;gap:16px">
+  <div style="font-size:clamp(3rem,15vw,6rem);font-weight:900;color:#ff2222;text-shadow:0 0 40px #ff0000,0 0 80px rgba(255,0,0,.6);animation:losePulse .5s ease-in-out infinite alternate;letter-spacing:.08em">LOOSER !</div>
+  <div style="color:rgba(255,100,100,.8);font-size:1rem">Tu as touché un mur...</div>
+</div>
+<style>@keyframes losePulse{to{transform:scale(1.08);text-shadow:0 0 60px #ff0000,0 0 120px rgba(255,60,60,.8)}}</style>
 <div id="game-container">
   <canvas id="cv"></canvas>
 </div>
@@ -29,6 +34,11 @@ body{display:flex;flex-direction:column;height:100dvh}
 <script>
 window.NIVEAU = 6;
 window.GPS0_TIMER_SEC = 150;
+window.GPS0_MAX_LIVES = 1;
+window.GPS0_onGameOver = function() {
+  const el = document.getElementById('looser-overlay');
+  if (el) { el.style.display = 'flex'; }
+};
 window.GPS0_onTimerExpired = function () { endGame(true); };
 window.TUTO_TEXT = "Niveau 6 \u2014 Glisse le doigt pour bouger \u00b7 Mange les plus petites \u00b7 Fuis les plus grosses \u00b7 \u2726 = +1 poussi\u00e8re"; 
 
