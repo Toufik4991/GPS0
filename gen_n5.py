@@ -1,4 +1,13 @@
-<!doctype html>
+# gen_n5.py -- Genere minijeux/niveau5.html
+# Niveau 5 : Evasion Magnetique
+# QCM: 1=B(hold attire) 2=B(survivre) 3=C(pieges explosent si attires)
+#      4=A(fixe au centre) 5=C(2:30) 6=A(espace violet/bleu arcs magnetiques)
+import pathlib
+
+root = pathlib.Path(__file__).parent
+out  = root / "minijeux" / "niveau5.html"
+
+html = r"""<!doctype html>
 <html lang="fr">
 <head>
 <meta charset="utf-8">
@@ -507,4 +516,7 @@ function _drawDebris(d) {
 }
 </script>
 </body>
-</html>
+</html>"""
+
+out.write_text(html, encoding='utf-8')
+print(f"[OK] {out.name} ({len(html)} chars)")

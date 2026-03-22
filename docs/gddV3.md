@@ -1,11 +1,24 @@
 # 🌙 GPS0 — Game Design Document v3.0
 
-**Version :** 3.30.0 - Niveau 3 Rebond Lunaire — Doodle Jump lunaire
+**Version :** 3.32.0 - Niveau 5 Évasion Magnétique — Aimant + survie
 **Date :** 22/03/2026
 **Auteur :** Toufik49
 **Statut :** Opérationnel — Jeux 1-9 en cours de reconstruction
 
 ---
+
+## Changements v3.32.0 (Niveau 5 — Évasion Magnétique)
+- **niveau5.html** : FULL REBUILD — Aimant spatial (remplace labyrinthe DFS cassé)
+- **Cosmonaute** : Fixe au centre, dessine avec `drawCosmonaut()`, état 'fly' si hold actif
+- **Contrôle** : Hold = aimant actif (attire fragments dans rayon 148px) · Relâche = neutre
+- **Bons fragments** (diamants bleus #88ddff) : Orbitent aléatoirement, collectés si dist < 40 → +2 poussières
+- **Fragments piégés** (étoiles rouges #ff4422) : Orbitent tangentiellement, EXPLOSION si dist < 40 → loseLife()
+- **Débris** (astéroïdes gris) : Traversent l'écran en ligne droite, collision → loseLife()
+- **Difficulté** : Débris tous les ~108 frames · Pièges apparaissent après frame 600 (~10s)
+- **Win** : GPS0_onTimerExpired → endGame(true) · Timer 2:30 (GPS0_TIMER_SEC=150)
+- **Décor** : Espace profond violet/indigo · 90 étoiles scintillantes · 22 particules bluies · Arcs de champ magnétique animés (8 arcs, visible quand hold) · Ring pointillé MAG_R
+- **HUD** : Timer en #66aaff (bleu magnétique) · score-hud = fragments collectés × 2
+- Service Worker gps0-v47 → gps0-v48 / APP_VERSION 3.32.0
 
 ## Changements v3.31.0 (Niveau 4 — Cristaux Mémoire)
 - **niveau4.html** : FULL REBUILD — Simon Says 3×3 lunaire (remplace givre/grappin cassés)
