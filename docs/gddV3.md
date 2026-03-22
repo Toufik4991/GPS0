@@ -73,7 +73,7 @@
 | N | Nom | Mécanique | Nouveautés Bug 14 |
 |---|-----|-----------|------------------|
 | 1 | Verre | Lance-pierre | Drag opposé au vecteur, trajectoire prédictive, blocs HP, caméra suit |
-| 2 | Cendre | Flappy Bird | CSS volcanique: stalactites rocheuses, lave ondulante, halo orange |
+| 2 | Cendre | Flappy Bird | Vitesse progressive (2.4→5.8), colonnes roche+lave animée, cristaux +dust, jetpack glow, ciel volcanique |
 | 3 | Lierre | Doodle Jump | Accéléromètre + swipe, 4 types plateformes, espacement réduit |
 | 4 | Givre | Swing/Pendule | Tap accroche, swipe longueur corde, physique pendule |
 | 5 | Ombre | Labyrinthe | Rayon lumière 70px, lampes +20px (doré +12), D-pad continu 4 boutons, maze 33×33 |
