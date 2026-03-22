@@ -1,13 +1,47 @@
 # 🌙 GPS0 — Game Design Document v3.0
 
-**Version :** 3.25.0 - Jeu 8 Lune de Cristal — Crossy Road glace chrome
+**Version :** 3.30.0 - Niveau 3 Rebond Lunaire — Doodle Jump lunaire
 **Date :** 22/03/2026
 **Auteur :** Toufik49
-**Statut :** Opérationnel — Jeux 1-8 reconstruits et validés
+**Statut :** Opérationnel — Jeux 1-9 en cours de reconstruction
 
 ---
 
-## Changements v3.25.0 (Jeu 8 — Lune de Cristal)
+## Changements v3.30.0 (Niveau 3 — Rebond Lunaire)
+- **niveau3.html** : FULL REBUILD — Doodle Jump lunaire (remplace lianes cassées)
+- **Mécanique** : Rebond automatique sur chaque plateforme (vy = -14.5), caméra suit vers le haut uniquement
+- **Contrôle** : Tap moitié gauche = aller gauche · Tap moitié droite = aller droite (split-screen, suivi pointer ID)
+- **Wrap horizontal** : Le joueur traverse les bords et réapparaît côté opposé
+- **Plateformes** : Normales (grises) · Mobiles (bleues, dès le début ~18%) · Cassables (oranges, dès 2200m)
+- **Plateformes mobiles** : vx aléatoire 1.0–2.6 px/frame, rebond sur les bords
+- **Plateformes cassables** : s'effacent progressivement (alpha -= 0.055/frame) après 1 rebond
+- **Difficulté progressive** : espacement vertical +62%, largeur -26%, mobiles jusqu'à 38%, tout sur 6500m max
+- **Astéroïdes** : tombent depuis le haut toutes les 88 frames, vitesse 1.7+1.8 px/frame + bonus hauteur
+- **Invincibilité** : 90 frames après touché par astéroïde, clignotement visuel
+- **Chute mortelle** : Si joueur tombe >90px sous le bas de l'écran → loseLife() + respawn sur plateforme visible
+- **Décor** : Espace profond (#030310) · 90 étoiles avec parallax lent · Terre en coin haut-droit avec continents/nuages · Surface lunaire grise visible seulement au début (disparaît en montant)
+- **Indicateurs canvas** : Flèches ◄ ► discrètes bas de l'écran (s'illuminent au toucher) · Compteur hauteur en mètres
+- **Timer** : 120s (2:00), GPS0_TIMER_SEC = 120
+- **Reward** : Formulaire chrono shared.js standard
+- Service Worker gps0-v45 → gps0-v46 / APP_VERSION 3.30.0
+
+## Changements v3.29.0 (Niveau 2 — Mécanique Hold)
+- **niveau2.html** : Contrôle "maintenir = monter · relâcher = tomber" (remplace tap-to-jump)
+- **Physique** : `if(holding) vy = max(vy - THRUST, VY_MAX_UP)` chaque frame + GRAV toujours appliqué
+- **Constantes** : GRAV=0.38 · THRUST=0.65 · VY_MAX_UP=-7.5 · WALL_W=48
+- **Événements** : pointerdown → holding=true · pointerup/cancel → holding=false (suivi par pointer ID)
+- **Braises** : lavaEmbers spawns toutes les 2 frames depuis le bas, montent et s'estompent
+- **Fix** : Référence JUMP undefined supprimée (remplacée par vy=-3 en cas de collision mur)
+- Service Worker gps0-v45 / APP_VERSION 3.29.0
+
+## Changements v3.28.0 (Nommage Niveau 1–9)
+- **Suppression totale** des noms de lunes (Lune de Lierre, Givre, etc.) PARTOUT
+- **Remplacement** : "Niveau 1" à "Niveau 9 — Boss Final" dans app.js, index.html, tous les TUTO_TEXT
+- **luneNames** : ['','Niveau 1',...,'Niveau 9 — Boss Final']
+- **luneEmojis** : ['','🚀','🌋','⬆️','🔮','🧲','🌑','🫧','🛸','☄️']
+- Service Worker gps0-v44 / APP_VERSION 3.28.0
+
+## Changements v3.27.0 (Encodage N2, Astéroïde glow, Zones)
 - **niveau8.html** : Crossy Road style, grille 9 colonnes, caméra suit le joueur (scroll vertical)
 - **Contrôles** : Swipe + D-pad 4 directions, déplacement discret case par case
 - **Wagons chrome** : Lignes alternées G/D, vitesse progressive selon distance (1.4→5.0), 2-3 wagons par ligne

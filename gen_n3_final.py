@@ -1,4 +1,8 @@
-<!doctype html>
+# -*- coding: utf-8 -*-
+"""Génère minijeux/niveau3.html - Niveau 3 Rebond Lunaire (Doodle Jump)"""
+import os
+
+HTML = r"""<!doctype html>
 <html lang="fr">
 <head>
 <meta charset="utf-8">
@@ -508,3 +512,10 @@ function _drawControls(ctx, W, H) {
 </script>
 </body>
 </html>
+"""
+
+out = os.path.join(os.path.dirname(__file__), 'minijeux', 'niveau3.html')
+with open(out, 'w', encoding='utf-8') as f:
+    f.write(HTML)
+
+print(f"[OK] {out} écrit ({len(HTML)} chars)")
