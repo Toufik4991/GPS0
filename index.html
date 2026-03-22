@@ -120,7 +120,7 @@
           <span id="energie-pct">100%</span>
         </div>
         <div class="fusee-wrapper hidden" id="fusee-wrapper" aria-hidden="true">
-          <svg viewBox="0 0 80 80" width="70" height="70">
+          <svg viewBox="0 0 80 80" width="88" height="88">
             <defs>
               <radialGradient id="fGrad" cx="50%" cy="28%" r="72%">
                 <stop offset="0%" stop-color="#e8c8e8"/>
@@ -160,9 +160,12 @@
       <span class="objectif-icon" aria-hidden="true">🎯</span>
       <div>
         <div class="objectif-nom" id="objectif-nom">Chargement...</div>
-        <div class="objectif-sub">Prochain objectif</div>
+        <div class="objectif-sub" id="objectif-sub">Prochain objectif</div>
       </div>
-      <div class="objectif-progress"><span id="zones-progress" aria-label="Progression zones">0/9</span></div>
+      <div class="objectif-right">
+        <span id="code-balade-display" class="code-balade-hud" hidden></span>
+        <div class="objectif-progress"><span id="zones-progress" aria-label="Progression zones">0/9</span></div>
+      </div>
     </footer>
   </main>
 
@@ -214,20 +217,43 @@
   <!-- MODAL PARCOURS -->
   <dialog id="modal-parcours" aria-modal="true" aria-labelledby="parc-titre">
     <div class="modal-box">
-      <h2 id="parc-titre">🗺️ Choisis ton parcours</h2>
-      <div class="parcours-grille" role="group" aria-label="Parcours disponibles">
-        <button class="parcours-carte" data-val="parcours_1" aria-pressed="false"><span class="parcours-emoji" aria-hidden="true">🧓</span><span class="parcours-nom">La Promenade du Papy</span><span class="parcours-desc">Tranquille, pépère, pas de stress</span></button>
-        <button class="parcours-carte" data-val="parcours_2" aria-pressed="false"><span class="parcours-emoji" aria-hidden="true">🚶</span><span class="parcours-nom">La Randonnée</span><span class="parcours-desc">Prépare tes jambes, ça marche</span></button>
-        <button class="parcours-carte" data-val="parcours_3" aria-pressed="false"><span class="parcours-emoji" aria-hidden="true">💀</span><span class="parcours-nom">La Marche Funèbre</span><span class="parcours-desc">Peu en reviennent...</span></button>
+      <h2 id="parc-titre">� Choisis ton aventure 🚀</h2>
+
+      <!-- CHOIX PRINCIPAL -->
+      <div id="parcours-choix-principal" class="parcours-choix-principal">
+        <button class="parcours-option-btn" id="btn-balades-predef">
+          <span class="parcours-option-emoji">🗺️</span>
+          <span class="parcours-option-titre">BALADES PRÉDÉFINIES</span>
+          <span class="parcours-option-desc">Parcours solo classique</span>
+        </button>
+        <button class="parcours-option-btn" id="btn-rejoindre-balade">
+          <span class="parcours-option-emoji">👥</span>
+          <span class="parcours-option-titre">REJOINDRE UNE BALADE</span>
+          <span class="parcours-option-desc">Entre un code pour jouer avec d'autres explorateurs</span>
+        </button>
       </div>
-      <div class="code-defi-section">
-        <button class="btn-ghost" id="btn-code-defi">🔑 Entrer un code défi</button>
-        <div id="code-defi-form" hidden style="display:flex;flex-direction:column;gap:6px;width:100%;margin-top:4px">
-          <input id="code-defi-input" type="text" placeholder="LUNE-PP-180326-1430" autocomplete="off" autocapitalize="characters" spellcheck="false" style="text-align:center;letter-spacing:0.08em">
-          <span id="code-defi-err" style="font-size:0.78rem;text-align:center;min-height:1.2em;display:block"></span>
+
+      <!-- SOUS-ÉCRAN : BALADES PRÉDÉFINIES -->
+      <div id="parcours-predef-panel" hidden>
+        <button class="btn-ghost parcours-retour" id="parcours-retour-predef">← Retour</button>
+        <div class="parcours-grille" role="group" aria-label="Parcours disponibles">
+          <button class="parcours-carte" data-val="parcours_1" aria-pressed="false"><span class="parcours-emoji" aria-hidden="true">🧓</span><span class="parcours-nom">La Promenade du Papy</span><span class="parcours-desc">Une balade tranquille et courte</span></button>
+          <button class="parcours-carte" data-val="parcours_2" aria-pressed="false"><span class="parcours-emoji" aria-hidden="true">🥾</span><span class="parcours-nom">La Randonnée</span><span class="parcours-desc">Pour les vrais aventuriers !</span></button>
+          <button class="parcours-carte" data-val="parcours_3" aria-pressed="false"><span class="parcours-emoji" aria-hidden="true">⚰️</span><span class="parcours-nom">La Marche Funèbre</span><span class="parcours-desc">Tu n'en reviendras peut-être pas...</span></button>
+        </div>
+        <button id="parcours-commencer" class="btn-primary" disabled>C'est parti ! 🚀</button>
+      </div>
+
+      <!-- SOUS-ÉCRAN : REJOINDRE UNE BALADE -->
+      <div id="parcours-rejoindre-panel" hidden>
+        <button class="btn-ghost parcours-retour" id="parcours-retour-rejoindre">← Retour</button>
+        <div class="rejoindre-form">
+          <label for="code-balade-input" style="color:rgba(255,255,255,.8);font-size:0.9rem;text-align:center;display:block;margin-bottom:8px">Entre le code balade</label>
+          <input id="code-balade-input" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="000000" autocomplete="off" style="text-align:center;font-size:1.8rem;letter-spacing:0.3em;font-weight:bold;font-family:monospace">
+          <span id="code-balade-err" style="font-size:0.8rem;text-align:center;min-height:1.2em;display:block;margin-top:4px"></span>
+          <button id="btn-rejoindre-go" class="btn-primary" disabled>REJOINDRE 🚀</button>
         </div>
       </div>
-      <button id="parcours-commencer" class="btn-primary" disabled>Commencer 🚀</button>
     </div>
   </dialog>
 
@@ -315,7 +341,7 @@
       <button class="res-btn res-btn-rejouer" id="res-rejouer">&#128260; Rejouer</button>
       <button class="res-btn res-btn-recompense" id="res-recompense">&#127873; Prendre la r&#233;compense</button>
       <button class="res-btn res-btn-suivant" id="res-suivant">&#10145;&#65039; Point suivant</button>
-      <button class="res-btn res-btn-finale" id="res-finale" style="display:none">&#127942; Finir l&#8217;aventure !</button>
+      <button class="res-btn res-btn-finale" id="res-finale" style="display:none">FIN &#127937;</button>
     </div>
   </div>
 

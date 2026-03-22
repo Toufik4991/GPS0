@@ -191,55 +191,74 @@ window.GPS0_App = (() => {
   function _parcours() {
     const m = document.getElementById('modal-parcours'); m.showModal();
     let choix = null;
-    const CODE_MAP = { PP: 'parcours_1', RD: 'parcours_2', MF: 'parcours_3' };
 
-    function _selectionnerParcours(id) {
-      document.querySelectorAll('.parcours-carte').forEach(b => {
-        b.setAttribute('aria-pressed', b.dataset.val === id ? 'true' : 'false');
-      });
-      choix = id;
-      document.getElementById('parcours-commencer').disabled = false;
+    const mainPanel = document.getElementById('parcours-choix-principal');
+    const predefPanel = document.getElementById('parcours-predef-panel');
+    const rejoindrePanel = document.getElementById('parcours-rejoindre-panel');
+
+    function _showMain() {
+      mainPanel.hidden = false; predefPanel.hidden = true; rejoindrePanel.hidden = true;
+    }
+    function _showPredef() {
+      mainPanel.hidden = true; predefPanel.hidden = false; rejoindrePanel.hidden = true;
+    }
+    function _showRejoindre() {
+      mainPanel.hidden = true; predefPanel.hidden = true; rejoindrePanel.hidden = false;
     }
 
+    document.getElementById('btn-balades-predef').addEventListener('click', _showPredef);
+    document.getElementById('btn-rejoindre-balade').addEventListener('click', _showRejoindre);
+    document.getElementById('parcours-retour-predef').addEventListener('click', _showMain);
+    document.getElementById('parcours-retour-rejoindre').addEventListener('click', _showMain);
+
+    // Sélection parcours prédéfini
     document.querySelectorAll('.parcours-carte').forEach(btn => {
       btn.addEventListener('click', () => {
-        _selectionnerParcours(btn.dataset.val);
-        // Si code defi etait entre, le vider pour eviter confusion
-        const inp = document.getElementById('code-defi-input');
-        const err = document.getElementById('code-defi-err');
-        if (inp) inp.value = '';
-        if (err) err.textContent = '';
+        document.querySelectorAll('.parcours-carte').forEach(b => b.setAttribute('aria-pressed', 'false'));
+        btn.setAttribute('aria-pressed', 'true');
+        choix = btn.dataset.val;
+        document.getElementById('parcours-commencer').disabled = false;
       });
     });
 
-    // Code defi : afficher/masquer
-    document.getElementById('btn-code-defi').addEventListener('click', () => {
-      const form = document.getElementById('code-defi-form');
-      if (form) form.hidden = !form.hidden;
-    });
+    // Code balade 6 chiffres
+    const codeInput = document.getElementById('code-balade-input');
+    const codeErr = document.getElementById('code-balade-err');
+    const codeBtn = document.getElementById('btn-rejoindre-go');
+    const PARCOURS_CODES = { '1': 'parcours_1', '2': 'parcours_2', '3': 'parcours_3' };
 
-    // Code defi : parser en temps reel
-    const codeInput = document.getElementById('code-defi-input');
-    const codeErr = document.getElementById('code-defi-err');
     if (codeInput) {
       codeInput.addEventListener('input', function() {
-        const val = this.value.trim().toUpperCase();
-        const match = val.match(/^LUNE-(PP|RD|MF)-\d{6}-\d{4}$/);
-        if (match) {
-          const id = CODE_MAP[match[1]];
-          _selectionnerParcours(id);
-          if (codeErr) { codeErr.textContent = '✅ Code valide ! Parcours chargé.'; codeErr.style.color = '#69FF47'; }
-          localStorage.setItem('gps0_code_defi_entre', val);
-        } else if (val.length > 5) {
-          if (codeErr) { codeErr.textContent = 'Format : LUNE-PP-180326-1430'; codeErr.style.color = '#FF6B6B'; }
+        const val = this.value.replace(/\D/g, '').slice(0, 6);
+        this.value = val;
+        if (val.length === 6) {
+          // Code format: XYYYYY where X=parcours (1-3), YYYYY=seed
+          const pId = PARCOURS_CODES[val[0]];
+          if (pId) {
+            codeErr.textContent = '✅ Code valide !';
+            codeErr.style.color = '#69FF47';
+            codeBtn.disabled = false;
+            choix = pId;
+            localStorage.setItem('gps0_code_balade', val);
+          } else {
+            codeErr.textContent = 'Code invalide';
+            codeErr.style.color = '#FF6B6B';
+            codeBtn.disabled = true;
+            codeInput.classList.add('shake');
+            setTimeout(() => codeInput.classList.remove('shake'), 500);
+          }
         } else {
-          if (codeErr) codeErr.textContent = '';
+          codeErr.textContent = '';
+          codeBtn.disabled = true;
         }
       });
     }
 
     return new Promise(r => {
       document.getElementById('parcours-commencer').addEventListener('click', () => {
+        if (!choix) return; m.close(); r(choix);
+      }, { once: true });
+      if (codeBtn) codeBtn.addEventListener('click', () => {
         if (!choix) return; m.close(); r(choix);
       }, { once: true });
     });
@@ -255,12 +274,18 @@ window.GPS0_App = (() => {
       return GPS0_Boussole.estActif();
     });
 
-    // Code défi
-    const cm = { parcours_1: 'PP', parcours_2: 'RD', parcours_3: 'MF' };
+    // Code balade 6 chiffres (format: X=parcours + 5 chiffres déterministes)
+    const pIdx = { parcours_1: '1', parcours_2: '2', parcours_3: '3' };
     const n = new Date();
-    const code = 'LUNE-' + (cm[_parcoursId]||'PP') + '-' + String(n.getDate()).padStart(2,'0') + String(n.getMonth()+1).padStart(2,'0') + String(n.getFullYear()).slice(-2) + '-' + String(n.getHours()).padStart(2,'0') + String(n.getMinutes()).padStart(2,'0');
+    const seed = String(n.getDate() * 100 + n.getHours() * 37 + n.getMinutes()).padStart(5, '0').slice(0, 5);
+    const codeBalade = (pIdx[_parcoursId] || '1') + seed;
+    localStorage.setItem('gps0_code_balade', codeBalade);
+    // Afficher dans barre du bas
+    const cbDisplay = document.getElementById('code-balade-display');
+    if (cbDisplay) { cbDisplay.textContent = '📍 Code: ' + codeBalade; cbDisplay.hidden = false; }
+    // Toast éphémère
     const toast = document.getElementById('code-toast'), cv = document.getElementById('code-defi-val');
-    if (toast && cv) { cv.textContent = code; toast.hidden = false; setTimeout(() => { toast.hidden = true; }, 6000); }
+    if (toast && cv) { cv.textContent = codeBalade; toast.hidden = false; setTimeout(() => { toast.hidden = true; }, 6000); }
 
     _majObjectif();
     GPS0_GPS.demarrerSuivi();

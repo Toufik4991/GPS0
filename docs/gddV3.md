@@ -1,9 +1,24 @@
 # 🌙 GPS0 — Game Design Document v3.0
 
-**Version :** 3.38.0 - Bug 20 : 10 corrections visuelles/gameplay N1-N9
-**Date :** 23/03/2026
+**Version :** 3.39.0 - Bug 21 : Audio/Visuel + Parcours + Multijoueur + Écran Final + Optimisation
+**Date :** 22/03/2026
 **Auteur :** Toufik49
 **Statut :** Opérationnel — Jeux 1-9 en cours de reconstruction
+
+---
+
+## Changements v3.39.0 (Bug 21 — Refonte Audio/Visuel + Parcours + Écran Final)
+
+- **audio.js SFX synthétisés** : 8 nouveaux sons Web Audio API pur (zéro fichier) : `tap` (clic 880Hz), `perte_vie` (sawtooth desc 440→110), `victoire` (C-E-G-C↑ arpège), `defaite` (G-E-C-G↓ triangle), `countdown` (bip square 660Hz), `countdown_go` (triple bip montant), `confetti` (8 sparkles aléatoires), `boss_ambiance` (drone sawtooth 55→80Hz)
+- **audio.js** : Résumé `_ctx()` avant synth (fix AudioContext suspended sur mobile)
+- **Fusée boussole ×1.25** : SVG width/height 70→88px (proportions conservées, viewBox inchangé)
+- **Écran parcours REFONTE** : 2 options principales ("🗺️ Balades Prédéfinies" / "👥 Rejoindre une Balade") · Sous-écran prédéfinis avec 3 parcours (🧓 Papy / 🧥 Randonnée / ⚰️ Marche Funèbre) + bouton "C'est parti !" · Sous-écran rejoindre avec saisie code 6 chiffres (clavier numérique, validation, shake erreur)
+- **Code balade 6 chiffres** : Format X+5 digits (X=parcours 1-3, 5 digits=seed date/heure) · Affiché en permanence dans la barre objectif (badge doré "📍 Code: XXXXXX")
+- **Écran final REFONTE COMPLÈTE** : Séquence cinématique 5 phases — (1) Zoom progressif selfie cosmonaute (2) 50 confettis étoiles ⭐✨🌟 + 30 particules dorées/argentées tombantes 20s (3) Message "🎉 BRAVO [PSEUDO] !🎉" doré + glow (4) Récap scores (poussières, jeux réussis, temps total) (5) Transition écran noir + 🌝 "BISOUS 💋" + bouton Quitter après 5s
+- **Bouton fin** : "Finir l'aventure" → "FIN 🏁" dans overlay résultats
+- **Optimisation mobile** : `font-size:16px` sur inputs (anti-zoom iOS) · `overflow-x:hidden` global · `min-width:44px` sur tous boutons coarse · `.parcours-option-btn` min-height 80px · `.res-btn` min 48×44
+- **CSS parcours** : `.parcours-choix-principal`, `.parcours-option-btn` (hover/active), `.rejoindre-form`, `.shake` animation, `.code-balade-hud`, `.objectif-right` layout
+- Service Worker gps0-v54 → gps0-v55 / APP_VERSION 3.39.0
 
 ---
 
