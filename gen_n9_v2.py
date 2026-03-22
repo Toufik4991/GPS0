@@ -1,4 +1,7 @@
-<!doctype html>
+# gen_n9_v2.py - Niveau 9 Boss Final - Version visuelle complète
+import os
+
+HTML = r"""<!doctype html>
 <html lang="fr">
 <head>
 <meta charset="utf-8">
@@ -724,4 +727,9 @@ function _drawVictory(ctx, W, H, bx, by) {
 }
 </script>
 </body>
-</html>
+</html>"""
+
+path = os.path.join(os.path.dirname(__file__), 'minijeux', 'niveau9.html')
+with open(path, 'w', encoding='utf-8') as f:
+    f.write(HTML)
+print(f"[OK] niveau9.html écrit ({len(HTML)} chars)")

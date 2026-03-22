@@ -1,11 +1,26 @@
 # 🌙 GPS0 — Game Design Document v3.0
 
-**Version :** 3.35.0 - Niveau 8 Traversée Cosmique — Station spatiale + D-pad supprimé
+**Version :** 3.36.0 - Niveau 9 Boss Final — Lune Maléfique refonte visuelle complète
 **Date :** 22/03/2026
 **Auteur :** Toufik49
 **Statut :** Opérationnel — Jeux 1-9 en cours de reconstruction
 
 ---
+
+## Changements v3.36.0 (Niveau 9 — Boss Final : L'Éclipse)
+- **niveau9.html** : REFONTE VISUELLE COMPLÈTE — concept boss 3 phases conservé
+- **Contrôles** : drag direct du doigt pour positionner le cosmonaute (touchmove) · tap = attaque
+- **Décor** : espace profond avec 95 étoiles scintillantes + filantes · 3 nébuleuses animées dérivent
+- **Lune maléfique** : grande lune en arrière-plan (R=33% écran) · 8 cratères · fissures phase 1+ (lueur rouge phase 2) · ombre eclipse sur limbe droit
+- **Yeux maléfiques** : 2 yeux sur la lune avec pupilles fente verticale (chat/serpent) · clignement naturel · s'ouvrent grand quand boss vulnérable · glow rouge/orange/sang selon phase
+- **Boss Eclipse** : 16 rayons corona (+ rayons fins intermédiaires) · halo large 3.2× · oeil central animé · core orange pulsant quand vulnérable
+- **Laser** : 3 couches (lueur large 26px + faisceau moyen 10px + coeur brillant 2.5px) · flicker · étincelles particules le long du faisceau · avertissement pointillé 40 frames avant activation
+- **Phase HUD** : 3 pilules séparées (Phase I jaune / II cyan / III rouge) · progressent individuellement · ✓ quand phase réussie
+- **Timer** : 2:30 (150s) · expiry → loseLife()
+- **Récompense** : GPS0_rewardOverride = 50 (fixe, boss final)
+- **Vignette** : assombrit les bords à chaque frame
+- **Victoire** : onde de choc arc-en-ciel + étoiles fond · "★ Éclipse Vaincue ! ★"
+- Service Worker gps0-v51 → gps0-v52 / APP_VERSION 3.36.0
 
 ## Changements v3.35.0 (Niveau 8 — Traversée Cosmique)
 - **niveau8.html** : PATCH — Crossy Road spatial conservé, 4 fixes ciblés
