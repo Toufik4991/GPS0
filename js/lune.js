@@ -54,6 +54,12 @@ window.GPS0_Lune = (() => {
       "J'ai vu passer trois cometes pendant ton dernier trajet.",
       "Tu sais que je t'observe depuis 384 400 km ?",
       "Meme les aliens rigolent de tes trajectoires."
+    ],
+    signal_faible: [
+      "Signal GPS trop faible... sous les arbres peut-être ?",
+      "Je te perds dans le brouillard stellaire. Déplace-toi un peu.",
+      "Ton GPS rame. Essaie de t'éloigner des bâtiments.",
+      "Connexion avec la Terre instable... attends quelques secondes."
     ]
   };
   const DISPLAY_MS = 13000; // durée affichage popup
