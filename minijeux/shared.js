@@ -181,11 +181,17 @@
     if (window.GPS0_rewardOverride !== undefined) {
       finalDust = Math.max(1, Math.round(window.GPS0_rewardOverride));
     } else {
-      // Formule chrono : gain = floor((tempsJoué / tempsTotal) * 50)
-      const tempsJoue = timerTotal - timerSec;
-      finalDust = Math.floor((tempsJoue / timerTotal) * 50);
-      if (tempsJoue > 5 && finalDust < 1) finalDust = 1; // min 1 si > 5 secondes
-      finalDust = Math.min(50, finalDust); // max 50
+      // Formule chrono : gain = temps RESTANT → récompense la rapidité
+      // timerSec = secondes restantes (ex: 140 si gagné en 10s sur 150)
+      // Succès rapide → plus de dust ; timeout → 0 dust
+      if (success) {
+        finalDust = Math.floor((timerSec / timerTotal) * 50);
+        if (finalDust < 1) finalDust = 1; // minimum 1 si victoire
+        finalDust = Math.min(50, finalDust);
+      } else {
+        // Échec : consolation fixe (3 poussières max)
+        finalDust = Math.min(3, Math.max(1, Math.floor(timerSec / timerTotal * 5)));
+      }
     }
     setTimeout(() => {
       window.parent.postMessage({
