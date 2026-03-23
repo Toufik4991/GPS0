@@ -1,4 +1,4 @@
-﻿const CACHE = 'gps0-v70';
+﻿const CACHE = 'gps0-v71';
 const APP_VERSION = '3.49.0';
 const CORE = [
   'index.html',

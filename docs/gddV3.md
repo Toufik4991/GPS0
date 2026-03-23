@@ -1,9 +1,17 @@
 # 🌙 GPS0 — Game Design Document v3.0
 
-**Version :** 3.49.0 - Bug 29 : Fix hublot fusée centré sur astéroïde
-**Date :** 22/03/2026
+**Version :** 3.50.0 - Bug 30 : Fix N1 victoire + N7 nettoyage timer
+**Date :** 23/03/2026
 **Auteur :** Toufik49
-**Statut :** Opérationnel — Jeux 1-9 en cours de reconstruction
+**Statut :** Opérationnel — Jeux 1-9 fonctionnels
+
+---
+
+## Changements v3.50.0 (Bug 30 — Fix N1 victoire + N7 nettoyage timer)
+
+- **N1 "Fronde Cosmique" — Bug victoire corrigé** : Quand le timer 150s expirait (fin des 3 vagues), `shared.js` appelait `endGame(false)` par défaut → **défaite alors que le joueur avait survécu**. Fix : ajout de `GPS0_onTimerExpired = () => endGame(true)` et `GPS0_TIMER_SEC = 150` explicite
+- **N7 "Mots Cosmiques" — Nettoyage** : `GPS0_TIMER_SEC = 0` et `GPS0_onTimerExpired = function(){}` supprimés (redondants avec `GPS0_HIDE_TIMER = true` qui empêche déjà le timer de tourner). N7 utilise `GPS0_rewardOverride = 50` quand les 10 mots sont trouvés — la formule temps n'est jamais appliquée
+- Service Worker gps0-v70 → gps0-v71 / APP_VERSION 3.50.0
 
 ---
 
