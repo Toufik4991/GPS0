@@ -18,7 +18,11 @@ window.GPS0_Boussole = (() => {
 
   function updatePosition({ dist, bearing, zone }) {
     const rayon = zone.rayon || 30;
-    if (dist <= rayon) { _setEtat('zone'); return; }
+    if (dist <= rayon) {
+      // Ne setter 'zone' que si on n'y est pas déjà (évite le spam de _render)
+      if (etat !== 'zone') _setEtat('zone');
+      return;
+    }
     if (etat === 'off' || etat === 'epuise') return;
     _halo(dist); _fusee(bearing); _distance(dist);
   }

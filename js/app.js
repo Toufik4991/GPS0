@@ -327,11 +327,16 @@ window.GPS0_App = (() => {
       // (uniquement au point GPS 9 avec final:true) — ne pas lancer ici
     });
     GPS0_GPS.on('erreur', msg => console.warn('[GPS0] GPS:', msg));
+    let _signalFaibleAt = 0;
     GPS0_GPS.on('position_imprecise', ({ accuracy }) => {
-      // Signal trop faible : informer la Lune et griser la boussole
+      // Signal trop faible : informer une fois toutes les 30s max
       const dist = document.getElementById('dist-value');
       if (dist) dist.textContent = '...';
-      GPS0_Lune.parler('signal_faible');
+      const now = Date.now();
+      if (now - _signalFaibleAt > 30000) {
+        _signalFaibleAt = now;
+        GPS0_Lune.parler('signal_faible');
+      }
     });
 
     // Surveiller énergie
