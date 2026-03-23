@@ -1407,9 +1407,9 @@ GPS0/
 
 ---
 
-**📅 GDD v3.5 mis à jour :** 20/03/2026
-**🎯 Status :** 🟢 Opérationnel — SW v16 / APP 3.5.0 en production
-**✍️ Prochaine étape :** Tests GPS terrain + Niveau 9 final
+**📅 GDD mis à jour :** 23/03/2026
+**🎯 Status :** 🟢 Opérationnel — SW v71 / APP 3.50.0 en production
+**✍️ Prochaine étape :** Tests GPS terrain réels
 
 ---
 
@@ -1767,10 +1767,10 @@ function detectPerformance() {
 
 ---
 
-**📅 GDD v3.5 mis à jour :** 20/03/2026
-**🎯 Status :** 🟢 Opérationnel — SW v16 / APP 3.5.0 en production
-**✍️ Prochaine étape :** Tests GPS terrain + Niveau 9 final
+**📅 GDD mis à jour :** 23/03/2026
+**🎯 Status :** 🟢 Opérationnel — SW v71 / APP 3.50.0 en production
+**✍️ Prochaine étape :** Tests GPS terrain réels
 
 ---
 
-*Ce GDD v3.5 reflète l'état EXACT du code en production. Toute modification du code doit être répercutée ici simultanément.*
+*Ce GDD reflète l'état EXACT du code en production. Toute modification du code doit être répercutée ici simultanément.*
