@@ -44,6 +44,7 @@ window.GPS0_GPS = (() => {
   function zoneActuelle() { return zonesActives[zoneIndex] || null; }
   function zoneSuivante() {
     _zoneAtteintePending = false; // reset pour la prochaine zone
+    _confirmationsZone = 0;       // reset compteur de confirmations
     if (zoneIndex < zonesActives.length - 1) {
       zoneIndex++;
       const s = JSON.parse(localStorage.getItem('gps0_zones_actives'));
@@ -56,22 +57,39 @@ window.GPS0_GPS = (() => {
   }
   function progressionStr() { return (zoneIndex + 1) + '/' + zonesActives.length; }
 
+  // Qualité GPS : compteur de confirmations consécutives dans la zone
+  let _confirmationsZone = 0;
+  const CONFIRMATIONS_REQUISES = 3; // 3 lectures consécutives dans la zone pour valider
+  const PRECISION_MAX = 25;         // ignorer les positions avec accuracy > 25m
+
   function demarrerSuivi() {
     if (!navigator.geolocation) { emit('erreur', 'GPS non disponible sur cet appareil'); return; }
     watchId = navigator.geolocation.watchPosition(pos => {
       const zone = zoneActuelle(); if (!zone) return;
       // Zone placeholder (coords 0,0) : ignorer
       if (zone.lat === 0 && zone.lng === 0) { emit('position', { lat: 0, lng: 0, dist: 9999, bearing: 0, zone }); return; }
+      // Filtre qualité : ignorer si précision GPS trop faible
+      const accuracy = pos.coords.accuracy;
+      if (accuracy > PRECISION_MAX) {
+        emit('position_imprecise', { accuracy });
+        return;
+      }
       const dist = Math.round(haversine(pos.coords.latitude, pos.coords.longitude, zone.lat, zone.lng));
       const bear = bearing(pos.coords.latitude, pos.coords.longitude, zone.lat, zone.lng);
-      const spd = pos.coords.speed; // m/s, peut être null
-      emit('position', { lat: pos.coords.latitude, lng: pos.coords.longitude, dist, bearing: bear, zone, speed: spd });
+      const spd = pos.coords.speed;
+      emit('position', { lat: pos.coords.latitude, lng: pos.coords.longitude, dist, bearing: bear, zone, speed: spd, accuracy });
       if (dist <= (zone.rayon || 30)) {
-        if (!_zoneAtteintePending) { _zoneAtteintePending = true; emit('zone_atteinte', zone); }
+        _confirmationsZone++;
+        // Valider la zone seulement après N lectures consécutives dans le rayon
+        if (!_zoneAtteintePending && _confirmationsZone >= CONFIRMATIONS_REQUISES) {
+          _zoneAtteintePending = true;
+          emit('zone_atteinte', zone);
+        }
       } else {
+        _confirmationsZone = 0; // reset si on sort de la zone
         _zoneAtteintePending = false;
       }
-    }, err => emit('erreur', err.message), { enableHighAccuracy: true, maximumAge: 3000, timeout: 12000 });
+    }, err => emit('erreur', err.message), { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 });
   }
   function arreterSuivi() { if (watchId !== null) { navigator.geolocation.clearWatch(watchId); watchId = null; } }
 
