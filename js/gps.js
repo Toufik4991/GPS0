@@ -57,6 +57,11 @@ window.GPS0_GPS = (() => {
     return null;
   }
   function progressionStr() { return (zoneIndex + 1) + '/' + zonesActives.length; }
+  function nomParcours(id) {
+    if (!config) return '';
+    const pid = id || (JSON.parse(localStorage.getItem('gps0_zones_actives') || '{}').parcours);
+    return (pid && config.parcours[pid] && config.parcours[pid].nom) || '';
+  }
 
   // Qualité GPS : compteur de confirmations consécutives dans la zone
   let _confirmationsZone = 0;
@@ -94,5 +99,5 @@ window.GPS0_GPS = (() => {
   }
   function arreterSuivi() { if (watchId !== null) { navigator.geolocation.clearWatch(watchId); watchId = null; } }
 
-  return { chargerConfig, appliquerParcours, chargerProgression, zoneActuelle, zoneSuivante, progressionStr, demarrerSuivi, arreterSuivi, on };
+  return { chargerConfig, appliquerParcours, chargerProgression, zoneActuelle, zoneSuivante, progressionStr, nomParcours, demarrerSuivi, arreterSuivi, on };
 })();

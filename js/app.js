@@ -122,12 +122,12 @@ window.GPS0_App = (() => {
   }
 
   function _pseudo() {
-    // Affiche le pseudo dans l’objectif-nom dès qu’il est connu
+    // Affiche le pseudo dans le menu
     function _afficherPseudo() {
       const p = localStorage.getItem('gps0_pseudo');
       if (p) {
-        const el = document.getElementById('objectif-sub');
-        if (el) el.textContent = '\uD83D\uDC64 ' + p;
+        const el = document.getElementById('menu-joueur');
+        if (el) el.textContent = '\uD83D\uDC64 Joueur : ' + p;
       }
     }
     if (localStorage.getItem('gps0_pseudo')) { _afficherPseudo(); return Promise.resolve(); }
@@ -368,8 +368,9 @@ window.GPS0_App = (() => {
 
   function _majObjectif() {
     const z = GPS0_GPS.zoneActuelle();
-    const ne = document.getElementById('objectif-nom');
-    if (ne) ne.textContent = z ? z.nom : 'Tous les points visités !';
+    // Mise à jour menu : nom balade
+    const menuBalade = document.getElementById('menu-balade');
+    if (menuBalade) menuBalade.textContent = '\uD83D\uDDFA\uFE0F Balade : ' + (GPS0_GPS.nomParcours() || '—');
     // Mise à jour menu : point actuel
     const menuPoint = document.getElementById('menu-point-actuel');
     if (menuPoint) menuPoint.textContent = '\uD83D\uDCCC Point : ' + GPS0_GPS.progressionStr();

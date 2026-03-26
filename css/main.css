@@ -128,12 +128,7 @@ html,body{height:100%;overflow:hidden;font-family:"Trebuchet MS",sans-serif;colo
 .perm-item strong{display:block;font-size:.9rem;color:var(--accent);margin-bottom:2px}
 .perm-item p{font-size:.78rem;color:rgba(255,255,255,.65);margin:0;line-height:1.4}
 
-/* ── OBJECTIF BAR ── */
-.objectif-bar{display:flex;align-items:center;gap:14px;padding:12px 20px;background:rgba(0,0,0,.5);backdrop-filter:blur(6px);border-top:1px solid rgba(200,162,200,.12);flex-shrink:0}
-.objectif-icon{font-size:1.4rem}
-.objectif-nom{font-weight:bold;font-size:.92rem}
-.objectif-sub{font-size:.7rem;color:var(--accent);opacity:.8}
-.objectif-progress{margin-left:auto;font-size:.85rem;color:var(--gold);font-weight:bold}
+/* ── OBJECTIF BAR — supprimé ── */
 
 /* ── MENU ── */
 .hud-menu-wrap{position:relative;margin-left:auto;flex-shrink:0}
@@ -202,7 +197,7 @@ dialog::backdrop{background:rgba(0,0,0,.72);backdrop-filter:blur(4px)}
 }
 /* Safe area pour iPhone avec notch/barre maison */
 .hud { padding-top: max(10px, env(safe-area-inset-top)); padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right)); }
-.objectif-bar { padding-bottom: max(12px, env(safe-area-inset-bottom)); }
+#zone-btns { padding-bottom: max(20px, env(safe-area-inset-bottom)); }
 /* Empêche le double-tap zoom sur mobile */
 button, input { touch-action: manipulation; }
 /* font-size minimum 16px pour éviter le zoom auto iOS */
