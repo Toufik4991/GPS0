@@ -759,22 +759,34 @@ window.GPS0_App = (() => {
     const _frCat = window.GPS0_Economie_FRAGMENTS || {};
     const frags = Object.values(_frCat);
     const poussieres = (typeof GPS0_Economie !== 'undefined' && typeof GPS0_Economie.get === 'function') ? GPS0_Economie.get().poussieres : 0;
-    if (soldeEl) soldeEl.textContent = poussieres + ' ✨';
+    if (soldeEl) soldeEl.textContent = poussieres + ' \u2728';
     container.innerHTML = '';
     frags.forEach(fr => {
-      const btn = document.createElement('button');
-      btn.className = 'fragment-carte';
-      btn.disabled = poussieres < fr.prix;
-      const icone = fr.svg ? '<span class="fragment-icone fragment-svg">' + fr.svg + '</span>' : '<span class="fragment-icone">' + (fr.emoji || '🌟') + '</span>';
-      btn.innerHTML = icone + '<span class="fragment-infos"><span class="fragment-nom">' + fr.nom + '</span><span class="fragment-desc">' + fr.desc + '</span></span><span class="fragment-prix">' + fr.prix + ' ✨</span><span class="fragment-acheter">ACHETER</span>';
-      btn.onclick = () => {
+      // Même structure que l'inventaire : div.inv-fragment-row
+      const row = document.createElement('div');
+      row.className = 'inv-fragment-row' + (poussieres < fr.prix ? ' bq-disabled' : '');
+      const icone = fr.svg
+        ? '<span class="inv-frag-icone inv-frag-svg">' + fr.svg + '</span>'
+        : '<span class="inv-frag-icone">' + (fr.emoji || '\uD83C\uDF1F') + '</span>';
+      row.innerHTML = icone
+        + '<span class="inv-frag-infos">'
+        + '<span class="inv-frag-nom">' + fr.nom + '</span>'
+        + '<span class="inv-frag-qty">' + fr.desc + '</span>'
+        + '<span class="bq-prix">' + fr.prix + ' \u2728</span>'
+        + '</span>';
+      const buyBtn = document.createElement('button');
+      buyBtn.className = 'inv-frag-use';
+      buyBtn.textContent = '\uD83D\uDED2 Acheter';
+      buyBtn.disabled = poussieres < fr.prix;
+      buyBtn.onclick = () => {
         if (typeof GPS0_Economie !== 'undefined' && typeof GPS0_Economie.acheterFragment === 'function') {
           const ok = GPS0_Economie.acheterFragment(fr.id, fr.prix);
           if (ok) { GPS0_Audio.playSFX('achat'); GPS0_Economie.updateHUD(); modal.close(); }
-          else { btn.classList.add('erreur'); setTimeout(() => btn.classList.remove('erreur'), 800); }
+          else { row.classList.add('erreur'); setTimeout(() => row.classList.remove('erreur'), 800); }
         }
       };
-      container.appendChild(btn);
+      row.appendChild(buyBtn);
+      container.appendChild(row);
     });
     modal.showModal();
   }

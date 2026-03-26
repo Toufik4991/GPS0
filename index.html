@@ -279,9 +279,12 @@
     <button class="btn-lunar-close" id="boutique-fermer" aria-label="Fermer"><svg viewBox="0 0 28 28" width="28" height="28" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M14 4C10 4 7 7 7 11C7 15 10 18 14 18C11 18 8.5 15 8.5 11C8.5 7.5 10.5 5 14 4Z" fill="#C0C0C0" opacity="0.2"/><line x1="8" y1="8" x2="20" y2="20" stroke="#C0C0C0" stroke-width="2.5" stroke-linecap="round"/><line x1="20" y1="8" x2="8" y2="20" stroke="#C0C0C0" stroke-width="2.5" stroke-linecap="round"/></svg></button>
     <div class="modal-box">
       <h2 id="boutique-titre">🏪 Boutique Lunaire</h2>
-      <p style="font-size:0.82rem;color:rgba(255,255,255,.7);text-align:center">Dépense tes ✨ pour recharger ton énergie !</p>
-      <div id="boutique-fragments" style="display:flex;flex-direction:column;gap:10px;margin:14px 0"></div>
-      <p style="font-size:0.8rem;text-align:center">Votre solde : <strong id="boutique-solde" style="color:#FFD700">0 ✨</strong></p>
+      <div class="inv-stats">
+        <div class="inv-stat"><span style="color:#FFD700">✨</span> Solde : <strong id="boutique-solde" style="color:#FFD700">0 ✨</strong></div>
+        <div class="inv-stat" style="font-size:.78rem;color:rgba(255,255,255,.55)">Dépense tes ✨ pour recharger ton énergie !</div>
+      </div>
+      <hr class="inv-sep">
+      <div id="boutique-fragments" style="display:flex;flex-direction:column;gap:10px;margin:8px 0"></div>
     </div>
   </dialog>
   <!-- MODAL INVENTAIRE -->
