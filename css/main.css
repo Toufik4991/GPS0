@@ -67,8 +67,8 @@ html,body{height:100%;overflow:hidden;font-family:"Trebuchet MS",sans-serif;colo
 .compass-panel{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:16px;position:relative;z-index:10}
 
 /* ── LUNE BULLE ── */
-.lune-bulle{display:flex;align-items:flex-start;gap:10px;max-width:320px;background:rgba(0,0,0,.85);border:1px solid rgba(255,255,255,.2);border-radius:12px;padding:16px 20px;font-size:1rem;min-height:52px;opacity:0;transform:translateY(-10px);transition:opacity .3s ease,transform .3s ease;pointer-events:none;font-weight:bold}
-.lune-bulle.visible{opacity:1;transform:translateY(0);pointer-events:auto}
+.lune-bulle{position:absolute;top:16px;left:50%;transform:translateX(-50%) translateY(-10px);max-width:320px;width:calc(100% - 40px);z-index:20;display:flex;align-items:flex-start;gap:10px;background:rgba(0,0,0,.85);border:1px solid rgba(255,255,255,.2);border-radius:12px;padding:16px 20px;font-size:1rem;min-height:52px;opacity:0;transition:opacity .3s ease,transform .3s ease;pointer-events:none;font-weight:bold}
+.lune-bulle.visible{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
 .lune-avatar{font-size:1.5rem;flex-shrink:0}
 .lune-texte{color:#fff;line-height:1.45;font-size:1rem;font-weight:bold}
 
@@ -171,6 +171,8 @@ dialog::backdrop{background:rgba(0,0,0,.72);backdrop-filter:blur(4px)}
 .parcours-option-btn{display:flex;flex-direction:column;align-items:center;gap:6px;padding:18px 16px;background:rgba(255,255,255,.04);border:2px solid rgba(200,162,200,.25);border-radius:16px;color:#fff;cursor:pointer;transition:background .2s,border-color .2s,transform .15s;min-height:80px}
 .parcours-option-btn:active{transform:scale(0.97)}
 .parcours-option-btn:hover{background:rgba(200,162,200,.12);border-color:var(--accent)}
+.parcours-option-btn:disabled{opacity:.4;cursor:not-allowed;pointer-events:none}
+.parcours-option-btn:disabled:hover{background:rgba(255,255,255,.04);border-color:rgba(200,162,200,.25);transform:none}
 .parcours-option-emoji{font-size:1.8rem}
 .parcours-option-titre{font-weight:bold;font-size:1rem;letter-spacing:0.04em}
 .parcours-option-desc{font-size:0.78rem;color:rgba(255,255,255,.6);text-align:center}
@@ -258,7 +260,6 @@ dialog{position:relative}
 .btn-lunar-close svg{width:28px;height:28px;transition:filter .2s}
 .btn-lunar-close:hover svg{filter:drop-shadow(0 0 6px rgba(192,192,192,.8))}
 /* ── LUNE BULLE CLOSE ── */
-.lune-bulle{position:relative}
 .lune-close{position:absolute;top:-4px;right:-4px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.4);border:1px solid rgba(200,162,200,.3);border-radius:50%;cursor:pointer;padding:0;z-index:5;flex-shrink:0}
 .lune-close svg{width:14px;height:14px}
 /* ── ASTEROID GLOW BY DISTANCE ── */
@@ -314,7 +315,10 @@ dialog{position:relative}
 .inv-frag-use{background:linear-gradient(135deg,var(--accent),#9a72c8);border:none;border-radius:8px;color:#0A0A1A;font-weight:bold;font-size:.8rem;cursor:pointer;padding:6px 12px;white-space:nowrap}
 .inv-frag-use:disabled{opacity:.35;cursor:not-allowed}
 
-/* ── BOUTIQUE ACHAT — cf. section BOUTIQUE en haut ── */
+/* ── BOUTIQUE CARDS — layout vertical spécifique boutique ── */
+#boutique-fragments .inv-fragment-row{flex-direction:column;align-items:center;text-align:center;gap:10px;padding:16px 14px}
+#boutique-fragments .inv-frag-infos{flex:unset;text-align:center;width:100%}
+#boutique-fragments .inv-frag-use{width:100%;padding:10px 12px;font-size:.85rem}
 
 /* == TUTORIEL (ancien, gardé pour compatibilité) == */
 .tuto-steps{display:flex;flex-direction:column;gap:10px}
