@@ -64,7 +64,7 @@ html,body{height:100%;overflow:hidden;font-family:"Trebuchet MS",sans-serif;colo
 @keyframes hal{0%,100%{opacity:.78}50%{opacity:1}}
 
 /* ── COMPASS PANEL ── */
-.compass-panel{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:16px;position:relative;z-index:10}
+.compass-panel{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:16px;position:relative;z-index:10;margin-top:-40px}
 
 /* ── LUNE BULLE ── */
 .lune-bulle{position:absolute;top:16px;left:50%;transform:translateX(-50%) translateY(-10px);max-width:320px;width:calc(100% - 40px);z-index:20;display:flex;align-items:flex-start;gap:10px;background:rgba(0,0,0,.85);border:1px solid rgba(255,255,255,.2);border-radius:12px;padding:16px 20px;font-size:1rem;min-height:52px;opacity:0;transition:opacity .3s ease,transform .3s ease;pointer-events:none;font-weight:bold}

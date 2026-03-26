@@ -4,6 +4,7 @@ window.GPS0_Avatar = (() => {
 
   function getSelfie() { return localStorage.getItem('gps0_avatar_selfie_base64'); }
   function setSelfie(b64) { localStorage.setItem('gps0_avatar_selfie_base64', b64); }
+  function clearSelfie() { localStorage.removeItem('gps0_avatar_selfie_base64'); }
 
   async function demarrerCamera() {
     try {
@@ -56,5 +57,5 @@ window.GPS0_Avatar = (() => {
     if (hublot) hublot.setAttribute('href', b64);
   }
 
-  return { getSelfie, setSelfie, demarrerCamera, arreterCamera, capturer, injecterDansJeux };
+  return { getSelfie, setSelfie, clearSelfie, demarrerCamera, arreterCamera, capturer, injecterDansJeux };
 })();

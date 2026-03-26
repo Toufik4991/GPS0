@@ -461,6 +461,47 @@ window.GPS0_App = (() => {
       document.getElementById('modal-confirm-reset')?.close();
     });
 
+    document.getElementById('menu-selfie-refaire')?.addEventListener('click', async () => {
+      mp.classList.remove('open');
+      mb.setAttribute('aria-expanded', 'false');
+      GPS0_Avatar.clearSelfie();
+      const m = document.getElementById('modal-selfie'); m.showModal();
+      // Reset UI état initial
+      document.getElementById('selfie-capture').hidden = false;
+      document.getElementById('selfie-retake').hidden = true;
+      document.getElementById('selfie-confirm').hidden = true;
+      document.getElementById('selfie-video').hidden = false;
+      const ok = await GPS0_Avatar.demarrerCamera();
+      if (!ok) {
+        document.getElementById('selfie-capture').hidden = true;
+        const errEl = document.createElement('p');
+        errEl.style.cssText = 'color:#FF6B6B;font-size:0.85rem;text-align:center;margin:8px 0';
+        errEl.textContent = 'Cam\u00e9ra indisponible.';
+        m.querySelector('.selfie-actions').insertAdjacentElement('beforebegin', errEl);
+        return;
+      }
+      let cap = null;
+      const capBtn = document.getElementById('selfie-capture');
+      const retakeBtn = document.getElementById('selfie-retake');
+      const confirmBtn = document.getElementById('selfie-confirm');
+      const skipBtn = document.getElementById('selfie-skip');
+      const finish = b64 => {
+        GPS0_Avatar.arreterCamera(); m.close();
+        if (b64) { GPS0_Avatar.setSelfie(b64); GPS0_Avatar.injecterDansJeux(b64); }
+      };
+      capBtn.addEventListener('click', () => {
+        cap = GPS0_Avatar.capturer();
+        capBtn.hidden = true; retakeBtn.hidden = false; confirmBtn.hidden = false;
+        document.getElementById('selfie-video').hidden = true;
+      }, { once: true });
+      retakeBtn.addEventListener('click', () => {
+        cap = null; capBtn.hidden = false; retakeBtn.hidden = true; confirmBtn.hidden = true;
+        document.getElementById('selfie-video').hidden = false;
+      }, { once: true });
+      confirmBtn.addEventListener('click', () => finish(cap), { once: true });
+      skipBtn.addEventListener('click', () => finish(null), { once: true });
+    });
+
     document.getElementById('menu-debug')?.addEventListener('click', () => {
       const isOn = localStorage.getItem('gps0_debug_on') === '1';
       if (!isOn) {
