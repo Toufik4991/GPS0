@@ -111,11 +111,11 @@ html,body{height:100%;overflow:hidden;font-family:"Trebuchet MS",sans-serif;colo
 .distance-label{position:absolute;bottom:-30px;left:50%;transform:translateX(-50%);font-size:.82rem;color:var(--accent);font-weight:bold;white-space:nowrap;min-height:1.2em}
 #chrono{color:rgba(200,162,200,.85);font-weight:bold;font-size:.8rem;letter-spacing:0.05em}
 .btn-jouer{position:absolute;bottom:-62px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#4FC3F7,#C8A2C8);color:#0A0A1A;font-weight:bold;font-size:1rem;padding:10px 26px;border-radius:24px;border:none;cursor:pointer;animation:pjour .6s ease-in-out infinite alternate;white-space:nowrap}
-/* ── ZONE BLEUE — boutons côte à côte même style ── */
-#zone-btns{position:fixed;top:68px;left:50%;transform:translateX(-50%);display:flex;gap:10px;z-index:150;align-items:center}
-#zone-btns[hidden]{display:none!important}
-#btn-jouer-haut,#btn-prochain-point{background:linear-gradient(135deg,#69FF47,#4FC3F7);color:#0A0A1A;font-weight:bold;font-size:1rem;padding:12px 22px;border-radius:22px;border:none;cursor:pointer;box-shadow:0 0 20px rgba(105,255,71,.45);animation:pjour .65s ease-in-out infinite alternate;white-space:nowrap;min-width:120px;text-align:center}
-#btn-prochain-point{background:linear-gradient(135deg,#4FC3F7,#9B59B6);box-shadow:0 0 20px rgba(79,195,247,.4)}
+/* ── ZONE BLEUE — boutons fixes en bas, toujours visibles ── */
+#zone-btns{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);display:flex;gap:12px;z-index:150;align-items:center}
+#btn-jouer-haut,#btn-prochain-point{font-weight:bold;font-size:1rem;padding:12px 24px;border-radius:12px;cursor:not-allowed;white-space:nowrap;min-width:130px;text-align:center;transition:background .3s,box-shadow .3s,opacity .3s;box-shadow:0 2px 8px rgba(0,0,0,.4);opacity:0.4;background:#555;color:#999;border:1px solid #666}
+#btn-jouer-haut:not([disabled]){background:#4CAF50;color:#fff;border:none;cursor:pointer;opacity:1;box-shadow:0 0 18px rgba(76,175,80,.55);animation:pjour .65s ease-in-out infinite alternate}
+#btn-prochain-point:not([disabled]){background:#2196F3;color:#fff;border:none;cursor:pointer;opacity:1;box-shadow:0 0 18px rgba(33,150,243,.55);animation:pjour .65s ease-in-out infinite alternate}
 @keyframes pjour{to{transform:scale(1.05);box-shadow:0 0 28px rgba(79,195,247,.7)}}
 
 /* ── TOGGLE BOUSSOLE ── */

@@ -2,6 +2,15 @@
 window.GPS0_App = (() => {
   let _parcoursId = null;
   let _zoneAutoTimer = null;
+  let _enZone = false;
+
+  function _setZoneBtnsActif(actif) {
+    const btnJouer = document.getElementById('btn-jouer-haut');
+    const btnSuivant = document.getElementById('btn-prochain-point');
+    if (!btnJouer || !btnSuivant) return;
+    btnJouer.disabled = !actif;
+    btnSuivant.disabled = !actif;
+  }
 
   async function init() {
     GPS0_Economie.rechargePassive();
@@ -311,6 +320,15 @@ window.GPS0_App = (() => {
         }
       }
       _navLastBear = d.bearing;
+      // Zone quittée : désactiver boutons si joueur sort de la zone bleue
+      if (_enZone) {
+        const zone = GPS0_GPS.zoneActuelle();
+        if (zone && d.dist > (zone.rayon || 30) + 15) {
+          _enZone = false;
+          _setZoneBtnsActif(false);
+          _resumeGlobalClock();
+        }
+      }
     });
     GPS0_GPS.on('zone_atteinte', zone => {
       GPS0_Lune.parler('arrivee_zone');
@@ -318,9 +336,8 @@ window.GPS0_App = (() => {
       GPS0_Audio.playSFX('halo_bip');
       GPS0_Boussole.forceEtat('zone');
       _pauseGlobalClock(); // Zone bleue : horloge en pause
-      // Afficher boutons JOUER + POINT SUIVANT côte à côte
-      const wb = document.getElementById('zone-btns');
-      if (wb) wb.hidden = false;
+      _enZone = true;
+      _setZoneBtnsActif(true);
     });
     GPS0_GPS.on('jeu_termine', () => {
       // La finale est déclenchée via le bouton 'Finir l'aventure' dans _afficherResultats
@@ -386,19 +403,17 @@ window.GPS0_App = (() => {
       GPS0_Audio.playSFX(GPS0_Boussole.estActif() ? 'boussole_on' : 'boussole_off');
     });
 
-    // Bouton JOUER en haut (zone atteinte)
+    // Bouton JOUER (toujours visible, actif uniquement en zone bleue)
     document.getElementById('btn-jouer-haut')?.addEventListener('click', () => {
       if (_zoneAutoTimer) { clearTimeout(_zoneAutoTimer); _zoneAutoTimer = null; }
-      const wb = document.getElementById('zone-btns');
-      if (wb) wb.hidden = true;
       const z = GPS0_GPS.zoneActuelle();
       if (z) _lancerMiniJeu(z.mini_jeu);
     });
 
-    // Bouton POINT SUIVANT (zone atteinte, sans jouer)
+    // Bouton SUIVANT (toujours visible, actif uniquement en zone bleue)
     document.getElementById('btn-prochain-point')?.addEventListener('click', () => {
-      const wb = document.getElementById('zone-btns');
-      if (wb) wb.hidden = true;
+      _enZone = false;
+      _setZoneBtnsActif(false);
       GPS0_GPS.zoneSuivante(); _majObjectif();
       GPS0_Boussole.forceEtat('off');
       _resumeGlobalClock();
@@ -485,12 +500,12 @@ window.GPS0_App = (() => {
     });
 
     document.addEventListener('minijeu:complete', e => {
-      _resumeGlobalClock();
+      if (!_enZone) _resumeGlobalClock();
       document.getElementById('app').classList.add('visible');
       _afficherResultats(true, e.detail?.poussieres || 5, e.detail?.niveau);
     });
     document.addEventListener('minijeu:failed', e => {
-      _resumeGlobalClock();
+      if (!_enZone) _resumeGlobalClock();
       document.getElementById('app').classList.add('visible');
       _afficherResultats(false, e.detail?.poussieres || 0, e.detail?.niveau);
     });
@@ -565,7 +580,7 @@ window.GPS0_App = (() => {
       iframe.remove();
       GPS0_Lune.setMiniJeuActif(false);
       document.getElementById('app').classList.add('visible');
-      _resumeGlobalClock();
+      if (!_enZone) _resumeGlobalClock();
       if (e.data.quit) return; // Quitter sans résultat
       document.dispatchEvent(new CustomEvent(e.data.success ? 'minijeu:complete' : 'minijeu:failed', { detail: e.data }));
     };
@@ -720,21 +735,14 @@ window.GPS0_App = (() => {
     };
     if (recompenseBtn) recompenseBtn.onclick = () => {
       overlay.style.display = 'none';
-      // Poussières déjà ajoutées — juste navigation
+      // Poussières déjà ajoutées — retour à la MAP, boutons restent actifs
       if (_resultNiveau) GPS0_Economie.setCooldown(_resultNiveau);
-      const wb = document.getElementById('zone-btns');
-      if (wb) wb.hidden = true;
-      GPS0_GPS.zoneSuivante(); _majObjectif();
-      GPS0_Boussole.forceEtat('off');
-      _resumeGlobalClock();
+      _setZoneBtnsActif(true);
     };
     if (suivantBtn) suivantBtn.onclick = () => {
       overlay.style.display = 'none';
-      const wb2 = document.getElementById('zone-btns');
-      if (wb2) wb2.hidden = true;
-      GPS0_GPS.zoneSuivante(); _majObjectif();
-      GPS0_Boussole.forceEtat('off');
-      _resumeGlobalClock();
+      // Retour à la MAP — le joueur choisit via les boutons fixes
+      _setZoneBtnsActif(true);
     };
     if (finaleBtn) finaleBtn.onclick = () => {
       overlay.style.display = 'none';
