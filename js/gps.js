@@ -6,6 +6,7 @@ window.GPS0_GPS = (() => {
   function on(e, fn) { (_l[e] = _l[e] || []).push(fn); }
   function emit(e, d) { (_l[e] || []).forEach(fn => fn(d)); }
 
+  // ✅ Haversine vérifié : R=6371000m, degrés→radians, résultat en mètres
   function haversine(la1, ln1, la2, ln2) {
     const R = 6371000, dLa = (la2 - la1) * Math.PI / 180, dLn = (ln2 - ln1) * Math.PI / 180;
     const a = Math.sin(dLa/2)**2 + Math.cos(la1*Math.PI/180) * Math.cos(la2*Math.PI/180) * Math.sin(dLn/2)**2;
@@ -89,7 +90,7 @@ window.GPS0_GPS = (() => {
         _confirmationsZone = 0; // reset si on sort de la zone
         _zoneAtteintePending = false;
       }
-    }, err => emit('erreur', err.message), { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 });
+    }, err => emit('erreur', err.message), { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 });
   }
   function arreterSuivi() { if (watchId !== null) { navigator.geolocation.clearWatch(watchId); watchId = null; } }
 

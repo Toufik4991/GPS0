@@ -289,12 +289,9 @@ window.GPS0_App = (() => {
     const seed = String(n.getDate() * 100 + n.getHours() * 37 + n.getMinutes()).padStart(5, '0').slice(0, 5);
     const codeBalade = (pIdx[_parcoursId] || '1') + seed;
     localStorage.setItem('gps0_code_balade', codeBalade);
-    // Afficher dans barre du bas
-    const cbDisplay = document.getElementById('code-balade-display');
-    if (cbDisplay) { cbDisplay.textContent = '📍 Code: ' + codeBalade; cbDisplay.hidden = false; }
-    // Toast éphémère
-    const toast = document.getElementById('code-toast'), cv = document.getElementById('code-defi-val');
-    if (toast && cv) { cv.textContent = codeBalade; toast.hidden = false; setTimeout(() => { toast.hidden = true; }, 6000); }
+    // Afficher dans le menu (plus de toast ni barre basse)
+    const menuCode = document.getElementById('menu-code-balade');
+    if (menuCode) menuCode.textContent = '\uD83D\uDD11 Code : ' + codeBalade;
 
     _majObjectif();
     GPS0_GPS.demarrerSuivi();
@@ -371,9 +368,11 @@ window.GPS0_App = (() => {
 
   function _majObjectif() {
     const z = GPS0_GPS.zoneActuelle();
-    const ne = document.getElementById('objectif-nom'), pe = document.getElementById('zones-progress');
-    if (ne) ne.textContent = z ? z.nom : 'Tous les points visites !';
-    if (pe) pe.textContent = GPS0_GPS.progressionStr();
+    const ne = document.getElementById('objectif-nom');
+    if (ne) ne.textContent = z ? z.nom : 'Tous les points visités !';
+    // Mise à jour menu : point actuel
+    const menuPoint = document.getElementById('menu-point-actuel');
+    if (menuPoint) menuPoint.textContent = '\uD83D\uDCCC Point : ' + GPS0_GPS.progressionStr();
     if (z && z.final) setTimeout(() => GPS0_Lune.parler('avant_boss'), 2000);
   }
 

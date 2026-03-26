@@ -73,6 +73,9 @@
       <div class="hud-menu-wrap">
         <button class="btn-menu" id="menu-btn" aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="menu-panel">☰</button>
         <nav class="menu-panel" id="menu-panel" aria-label="Menu principal">
+          <div class="menu-info-item" id="menu-point-actuel">📌 Point : 0/9</div>
+          <div class="menu-info-item" id="menu-code-balade">🔑 Code : —</div>
+          <hr class="menu-separator">
           <button class="menu-item" id="menu-audio">🔊 Son</button>
           <button class="menu-item" id="menu-difficulte">⚙️ Difficulté</button>
           <button class="menu-item" id="menu-reset">🔄 Réinitialiser</button>
@@ -162,10 +165,7 @@
         <div class="objectif-nom" id="objectif-nom">Chargement...</div>
         <div class="objectif-sub" id="objectif-sub">Prochain objectif</div>
       </div>
-      <div class="objectif-right">
-        <span id="code-balade-display" class="code-balade-hud" hidden></span>
-        <div class="objectif-progress"><span id="zones-progress" aria-label="Progression zones">0/9</span></div>
-      </div>
+      <span id="zones-progress" hidden aria-label="Progression zones">0/9</span>
     </footer>
   </main>
 
@@ -315,12 +315,6 @@
       </div>
     </div>
   </dialog>
-
-  <!-- TOAST CODE DÉFI -->
-  <div class="code-defi-toast" id="code-toast" role="status" aria-live="polite" aria-atomic="true" hidden>
-    <span>Ton code défi :</span>
-    <strong id="code-defi-val"></strong>
-  </div>
 
   <script src="js/gps.js"></script>
   <script src="js/boussole.js"></script>
