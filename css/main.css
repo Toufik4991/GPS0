@@ -64,7 +64,7 @@ html,body{height:100%;overflow:hidden;font-family:"Trebuchet MS",sans-serif;colo
 @keyframes hal{0%,100%{opacity:.78}50%{opacity:1}}
 
 /* ── COMPASS PANEL ── */
-.compass-panel{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:16px;position:relative;z-index:10}
+.compass-panel{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:16px;position:relative;z-index:10}
 
 /* ── LUNE BULLE ── */
 .lune-bulle{position:absolute;top:16px;left:50%;transform:translateX(-50%) translateY(-10px);max-width:320px;width:calc(100% - 40px);z-index:20;display:flex;align-items:flex-start;gap:10px;background:rgba(0,0,0,.85);border:1px solid rgba(255,255,255,.2);border-radius:12px;padding:16px 20px;font-size:1rem;min-height:52px;opacity:0;transition:opacity .3s ease,transform .3s ease;pointer-events:none;font-weight:bold}
@@ -133,7 +133,11 @@ html,body{height:100%;overflow:hidden;font-family:"Trebuchet MS",sans-serif;colo
 /* ── MENU ── */
 .hud-menu-wrap{position:relative;margin-left:auto;flex-shrink:0}
 .btn-menu{width:36px;height:36px;border-radius:50%;background:rgba(200,162,200,.18);border:1px solid var(--accent);color:#fff;font-size:1.1rem;cursor:pointer;z-index:1;transition:background .2s;padding:0;line-height:1}
-.menu-panel{position:absolute;right:0;top:calc(100% + 6px);display:none;flex-direction:column;gap:8px;z-index:300;background:rgba(10,10,26,.96);border:1px solid rgba(200,162,200,.3);border-radius:16px;padding:12px;min-width:200px}.menu-panel.open{display:flex}
+.menu-panel{position:absolute;right:0;top:calc(100% + 6px);display:none;flex-direction:column;gap:8px;z-index:300;background:rgba(10,10,26,.96);border:1px solid rgba(200,162,200,.3);border-radius:16px;padding:12px 12px 16px;min-width:200px;max-height:70dvh;overflow-y:auto;-webkit-overflow-scrolling:touch;scroll-behavior:smooth}.menu-panel.open{display:flex}
+.menu-panel::-webkit-scrollbar{width:3px}
+.menu-panel::-webkit-scrollbar-track{background:transparent}
+.menu-panel::-webkit-scrollbar-thumb{background:rgba(200,162,200,.25);border-radius:4px}
+.menu-panel::-webkit-scrollbar-thumb:hover{background:rgba(200,162,200,.45)}
 .menu-item{background:none;border:1px solid rgba(200,162,200,.2);color:#fff;padding:10px 16px;border-radius:10px;cursor:pointer;text-align:left;font-size:.9rem;transition:background .2s}
 .menu-item:hover{background:rgba(200,162,200,.1)}
 .menu-info-item{color:rgba(255,255,255,.85);font-size:.88rem;padding:8px 14px;border-radius:8px;background:rgba(255,255,255,.04);border:1px solid rgba(200,162,200,.12);line-height:1.4}
