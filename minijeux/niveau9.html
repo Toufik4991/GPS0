@@ -600,6 +600,7 @@ function gameReset(){
 window.gameReset=gameReset;
 
 function gameStart(){
+  gameReset();
   cv=document.getElementById('cv'); GPS0_resizeCanvas(cv); ctx=cv.getContext('2d');
   W=cv.width; H=cv.height;
   player.y=H*GY-_pSize();
