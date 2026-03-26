@@ -39,7 +39,7 @@ canvas{display:block;width:100%;height:100%}
 window.NIVEAU = 9;
 window.GPS0_TIMER_SEC = 150;
 window.GPS0_MAX_LIVES = 3;
-window.TUTO_TEXT = "&#127769; Affronte la Lune Mal&#233;fique !<br>Collecte les <span style='color:#ff4466'>&#128165; poussi&#232;res rouges</span> pour affaiblir le boss.<br>Esquive ses attaques !<br><br><b>TAP = Sauter &nbsp;|&nbsp; SWIPE BAS = Glisser</b>";
+window.TUTO_TEXT = "&#127769; Affronte la Lune Mal&#233;fique !<br>Collecte les <span style='color:#ff4466'>&#128165; poussi&#232;res rouges</span> pour affaiblir le boss.<br><br>&#128066; <b>Touche GAUCHE = Glisser</b><br>&#128065; <b>Touche DROITE = Sauter</b>";
 
 const GY = 0.78;
 const PX = 0.18;
@@ -519,6 +519,22 @@ function _drawParts(){
   ctx.globalAlpha=1;ctx.shadowBlur=0;
 }
 
+function _drawZones(){
+  // Indicateur subtle gauche/droite en bas de l'écran
+  const bh=44, by=H-bh;
+  ctx.globalAlpha=0.18;
+  ctx.fillStyle='#4488ff';
+  ctx.fillRect(0,by,W/2,bh);
+  ctx.fillStyle='#44cc88';
+  ctx.fillRect(W/2,by,W/2,bh);
+  ctx.globalAlpha=0.55;
+  ctx.font='bold 13px system-ui'; ctx.textAlign='center';
+  ctx.fillStyle='#fff';
+  ctx.fillText('&#128583; GLISSER',W/4,by+26);
+  ctx.fillText('&#128640; SAUTER',W*3/4,by+26);
+  ctx.globalAlpha=1;
+}
+
 function _drawWarn(){
   if(warnT<=0)return; warnT--;
   ctx.globalAlpha=Math.min(1,warnT/15);
@@ -605,12 +621,11 @@ function gameStart(){
   W=cv.width; H=cv.height;
   player.y=H*GY-_pSize();
 
-  let tsY=0,tsTime=0;
-  cv.addEventListener('touchstart',e=>{tsY=e.touches[0].clientY;tsTime=Date.now();},{passive:true});
-  cv.addEventListener('touchend',e=>{
-    const dy=e.changedTouches[0].clientY-tsY,dt=Date.now()-tsTime;
-    if(dy>35&&dt<350)_slide();else _jump();
-  },{passive:true});
+  cv.addEventListener('touchstart',e=>{
+    e.preventDefault();
+    const tx=e.touches[0].clientX;
+    if(tx<W/2)_slide();else _jump();
+  },{passive:false});
   document.addEventListener('keydown',e=>{
     if(e.key==='ArrowUp'||e.key===' '){e.preventDefault();_jump();}
     if(e.key==='ArrowDown')_slide();
@@ -638,6 +653,7 @@ function gameStart(){
     if(finalDustSpawned&&!cinema){_updFinalDust();_drawFinalDust();}
     _updParts(); _drawParts();
     _drawWarn();
+    _drawZones();
     _bbar();
     if(cinema)_drawCinema();
     ctx.restore();
