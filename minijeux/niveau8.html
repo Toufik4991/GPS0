@@ -91,6 +91,11 @@ window.gameReset = gameReset;
 function gameStart() {
   const cv = document.getElementById('cv');
   GPS0_resizeCanvas(cv);
+  if (!cv.width || !cv.height) {
+    const hud = document.getElementById('hud');
+    cv.width = window.innerWidth;
+    cv.height = window.innerHeight - (hud ? hud.offsetHeight : 44);
+  }
   CELL_W = cv.width / COLS;
   gameReset();
 

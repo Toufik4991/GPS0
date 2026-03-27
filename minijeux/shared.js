@@ -170,6 +170,13 @@
     if (lives <= 0) window.endGame(false);
   };
 
+  window.GPS0_addLife = function () {
+    const maxL = window.GPS0_MAX_LIVES || 3;
+    if (lives >= maxL) return;
+    lives = Math.min(maxL, lives + 1);
+    _updateLives();
+  };
+
   // ── FIN DE JEU ─────────────────────────────────────────────────────────────
   window.endGame = function (success) {
     if (gameover) return;

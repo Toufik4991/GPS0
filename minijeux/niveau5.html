@@ -38,7 +38,7 @@ window.TUTO_TEXT = "☀️ 1, 2, 3... SOLEIL !<br>TAP quand le soleil a le DOS t
 
 const SUN_R       = 48;
 const COSMO_R     = 20;
-const STEP_BASE   = 0.019;  // map x1.5 vs 0.028
+const STEP_BASE   = 0.0063; // x3 plus long (2min+ pour finir)
 const PENALTY     = 0.15;
 const STAR_COUNT  = 55;
 const DUST_COUNT  = 18;
@@ -86,11 +86,12 @@ function gameReset() {
   nbReculs = 0; arrivee = false;
   laser = { active: false, x: 0, warnT: 0, timer: 0, nextT: 720 };
   competitors = [];
+  var compLanes = [0.06, 0.14, 0.23, 0.50, 0.77, 0.86, 0.94];
   for (var ci = 0; ci < COMP_COUNT; ci++) {
     competitors.push({
-      progress: Math.random() * 0.05,
-      offX: ((ci % 2 === 0 ? 1 : -1) * (0.08 + ci * 0.04)),
-      spd: 0.013 + Math.random() * 0.009,
+      progress: Math.random() * 0.06,
+      lane: compLanes[ci],     // position en fraction de W
+      spd: 0.00016 + Math.random() * 0.00024, // avancement par frame (60fps)
       caught: false, catchT: 0,
       hue: (ci * 52 + 180) % 360
     });
@@ -102,7 +103,9 @@ window.gameReset = gameReset;
 function _countPhaseDur() {
   var t = Math.min(1, progress * 1.5);
   var stepDur = STEP_DUR_START + (STEP_DUR_END - STEP_DUR_START) * t;
-  return stepDur * 4 + _rnd(200, 600);
+  // Après 30% : compte plus vite, soleil se retourne plus fréquemment
+  if (progress > 0.3) { stepDur *= 0.58; }
+  return stepDur * 4 + (progress > 0.3 ? _rnd(0, 120) : _rnd(200, 600));
 }
 
 function gameStart() {
@@ -258,12 +261,12 @@ function _updateCompetitors() {
   competitors.forEach(function(comp) {
     if (comp.caught) { comp.catchT--; if (comp.catchT <= 0) comp.caught = false; return; }
     if (phase === 'count' || phase === 'unturning') {
-      if (Math.random() < 0.38) comp.progress = Math.min(1, comp.progress + comp.spd);
-    } else if (phase === 'stop' || phase === 'turning') {
-      if (Math.random() < 0.28) {
-        comp.progress = Math.max(0, comp.progress - PENALTY * 0.6);
-        comp.caught = true; comp.catchT = 50;
-      }
+      // Avancement continu à vitesse individuelle
+      comp.progress = Math.min(1, comp.progress + comp.spd);
+    } else if ((phase === 'stop' || phase === 'turning') && Math.random() < 0.005) {
+      // Probabilité de se faire attraper à chaque frame (~18% sur 2s de stop)
+      comp.progress = Math.max(0, comp.progress - 0.07);
+      comp.caught = true; comp.catchT = 55;
     }
   });
 }
@@ -462,27 +465,19 @@ function _draw() {
 /* ── DESSIN CONCURRENTS ─────────────────────────────────────────────── */
 function _drawCompetitors() {
   competitors.forEach(function(comp) {
-    var cx = _sunX() + comp.offX * W * 0.45;
+    var cx = comp.lane * W;
     var cy = _pathBot() - comp.progress * (_pathBot() - _pathTop());
+    if (cy > H + 20 || cy < _pathTop() - 20) return;
     ctx.save();
-    ctx.globalAlpha = comp.caught ? 0.38 : 0.72;
-    var g = ctx.createRadialGradient(cx, cy, 2, cx, cy, 14);
-    g.addColorStop(0, 'hsla('+comp.hue+',100%,70%,0.45)');
-    g.addColorStop(1, 'hsla('+comp.hue+',100%,50%,0)');
-    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, 14, 0, Math.PI*2); ctx.fill();
-    ctx.fillStyle = 'hsl('+comp.hue+',60%,35%)';
-    ctx.beginPath(); ctx.arc(cx, cy, 9, 0, Math.PI*2); ctx.fill();
-    ctx.strokeStyle = 'hsl('+comp.hue+',100%,65%)'; ctx.lineWidth=1.4; ctx.stroke();
-    ctx.fillStyle = '#fff';
-    ctx.beginPath(); ctx.arc(cx-3,cy-2,2.4,0,Math.PI*2); ctx.fill();
-    ctx.beginPath(); ctx.arc(cx+3,cy-2,2.4,0,Math.PI*2); ctx.fill();
-    ctx.fillStyle = '#111';
-    ctx.beginPath(); ctx.arc(cx-3,cy-2,1.2,0,Math.PI*2); ctx.fill();
-    ctx.beginPath(); ctx.arc(cx+3,cy-2,1.2,0,Math.PI*2); ctx.fill();
+    ctx.globalAlpha = comp.caught ? 0.35 : 0.85;
+    drawCosmonaut(ctx, cx, cy, 10, 0, 'run');
     if (comp.caught) {
-      ctx.strokeStyle='#ff4400'; ctx.lineWidth=2;
-      ctx.beginPath(); ctx.arc(cx,cy,12,0,Math.PI*2); ctx.stroke();
+      ctx.strokeStyle = '#ff4400'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(cx, cy, 14, 0, Math.PI * 2); ctx.stroke();
     }
+    ctx.globalAlpha = 0.7;
+    ctx.fillStyle = 'hsl(' + comp.hue + ',100%,60%)';
+    ctx.beginPath(); ctx.arc(cx, cy - 16, 3, 0, Math.PI * 2); ctx.fill();
     ctx.restore();
   });
 }
