@@ -66,6 +66,7 @@ let heartPhaseSpawned;
 let metColBusy;
 let rafId;
 let transEl = null;
+let _dt = 1; // deltaTime multiplier (frame-rate independent)
 
 function _bbar() {
   const bar = document.getElementById('boss-hp-bar');
@@ -117,7 +118,7 @@ function _bg(t) {
 
 function _ground() {
   const gy = H*GY;
-  scrollX -= spd; if (scrollX<-W) scrollX+=W;
+  scrollX -= spd * _dt; if (scrollX<-W) scrollX+=W;
   ctx.fillStyle = phase>=3?'#1a0000':(phase===2?'#1a0a00':'#0d0818');
   ctx.fillRect(0,gy,W,H-gy);
   ctx.strokeStyle = phase>=3?'rgba(200,0,0,0.6)':'rgba(200,162,200,0.3)';
@@ -244,7 +245,7 @@ function _onGround() {
 
 function _updPlayer() {
   const ps = _pSize();
-  player.vy += 0.55; player.y += player.vy;
+  player.vy += 0.55 * _dt; player.y += player.vy * _dt;
   if (player.y >= H*GY - ps) { player.y = H*GY - ps; player.vy = 0; }
   if (player.slideT > 0) player.slideT--; else player.sliding = false;
   if (player.invT > 0) player.invT--;
@@ -297,7 +298,7 @@ function _spawnSoleil(xOff) {
 }
 function _updSoleils() {
   for (let i=soleils.length-1;i>=0;i--) {
-    const s=soleils[i]; s.x-=spd*1.1; s.y+=(s.yt-s.y)*0.06; s.t++;
+    const s=soleils[i]; s.x-=spd*1.1*_dt; s.y+=(s.yt-s.y)*0.06*_dt; s.t++;
     if (s.x<-40){soleils.splice(i,1);continue;}
     if (player.invT===0&&_hitC(s.x,s.y,s.r+6)){
       const dmg=phase===1?6:phase===2?5:phase===3?4:3;
@@ -343,7 +344,7 @@ function _spawnMeteorSafe() {
 function _updMeteors() {
   const gy=H*GY;
   for (let i=meteors.length-1;i>=0;i--) {
-    const m=meteors[i]; m.x+=m.vx; m.y+=m.vy; m.t++;
+    const m=meteors[i]; m.x+=m.vx*_dt; m.y+=m.vy*_dt; m.t++;
     if (m.y>gy+m.r+5){metColBusy[m.col]=false;meteors.splice(i,1);continue;}
     if (player.invT===0&&_hitC(m.x,m.y,m.r-5)){
       metColBusy[m.col]=false; _spawnParts(m.x,m.y,'#ff6600',10); meteors.splice(i,1); _dmgPlayer();
@@ -388,7 +389,7 @@ function _updNovas() {
     return;
   }
   for (let i=novas.length-1;i>=0;i--){
-    const n=novas[i]; n.r+=n.vr; n.alpha=Math.max(0,1-n.r/(W*0.95));
+    const n=novas[i]; n.r+=n.vr*_dt; n.alpha=Math.max(0,1-n.r/(W*0.95));
     if (n.r>W*1.1){novas.splice(i,1);continue;}
     if (player.invT===0){
       const px=_pxAbs(),py=player.y+_pSize()*0.5;
@@ -453,7 +454,7 @@ function _spawnParts(x,y,col,n) {
     parts.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-1,life:35+Math.random()*15,maxL:50,r:2+Math.random()*3,col});
   }
 }
-function _updParts(){for(let i=parts.length-1;i>=0;i--){const p=parts[i];p.x+=p.vx;p.y+=p.vy;p.vy+=0.14;p.life--;if(p.life<=0)parts.splice(i,1);}}
+function _updParts(){for(let i=parts.length-1;i>=0;i--){const p=parts[i];p.x+=p.vx*_dt;p.y+=p.vy*_dt;p.vy+=0.14*_dt;p.life--;if(p.life<=0)parts.splice(i,1);}}
 function _drawParts(){
   for(const p of parts){ctx.globalAlpha=Math.max(0,p.life/p.maxL);ctx.fillStyle=p.col;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill();}
   ctx.globalAlpha=1;
@@ -564,14 +565,15 @@ function gameStart(){
     if(e.key==='ArrowUp'||e.key===' '){e.preventDefault();_jump();}
     if(e.key==='ArrowDown')_slide();
   });
-  const loop=()=>{
+  const loop=(ts)=>{
     rafId=requestAnimationFrame(loop);
+    _dt = Math.min((ts - (_loop_lastTs||ts)) / 16.667, 2.5); _loop_lastTs = ts;
     if(!GPS0_running()&&!cinema)return;
     W=cv.width; H=cv.height;
     let ox=0,oy=0;
     if(shakeDur>0){ox=(Math.random()-.5)*shakeAmt*2;oy=(Math.random()-.5)*shakeAmt*2;shakeDur--;}
     ctx.save(); ctx.translate(ox,oy);
-    bgT++;
+    bgT += _dt;
     _bg(bgT); _ground();
     if(!cinema){_updPlayer();_updSoleils();_updMeteors();_updNovas();_updHearts();}
     _updParts();
@@ -602,7 +604,8 @@ function gameStart(){
       if(phaseTimer%(18*60)===0)spd=Math.min(5.5,spd+0.35);
     }
   };
-  loop();
+  let _loop_lastTs = 0;
+  loop(performance.now());
 }
 window.gameStart=gameStart;
 window.GPS0_onTimerExpired=function(){endGame(false);};

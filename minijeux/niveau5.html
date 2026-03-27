@@ -388,7 +388,7 @@ function _draw() {
   ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
 
   var neb = ctx.createRadialGradient(W * 0.3, H * 0.2, 10, W * 0.3, H * 0.2, W * 0.4);
-  neb.addColorStop(0, 'rgba(120,40,180,0.06)'); neb.addColorStop(1, 'rgba(0,0,0,0)');
+  neb.addColorStop(0, 'rgba(120,40,180,0.04)'); neb.addColorStop(1, 'rgba(0,0,0,0)');
   ctx.fillStyle = neb; ctx.fillRect(0, 0, W, H);
 
   /* Étoiles */
@@ -508,9 +508,9 @@ function _drawLaser() {
     grad.addColorStop(1, 'rgba(255,100,0,0)');
     ctx.fillStyle = grad; ctx.fillRect(lx - 28, top, 56, bot - top);
     ctx.save(); ctx.globalAlpha = intensity;
-    ctx.strokeStyle = '#FFD700'; ctx.lineWidth = 7; ctx.shadowColor = '#FF8800'; ctx.shadowBlur = 28;
+    ctx.strokeStyle = '#FFD700'; ctx.lineWidth = 7; ctx.shadowColor = '#FF8800'; ctx.shadowBlur = 10;
     ctx.beginPath(); ctx.moveTo(lx, top); ctx.lineTo(lx, bot); ctx.stroke();
-    ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.shadowBlur = 4;
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.shadowBlur = 0;
     ctx.beginPath(); ctx.moveTo(lx, top); ctx.lineTo(lx, bot); ctx.stroke();
     ctx.shadowBlur = 0; ctx.restore();
   }
@@ -743,13 +743,9 @@ function _drawPhaseLabel() {
     if (txt) {
       var numSize = Math.floor(W * 0.13);
       ctx.save();
-      ctx.globalAlpha = 0.8 + 0.2 * Math.sin(bgT * 0.1);
+      ctx.globalAlpha = 0.9 + 0.1 * Math.sin(bgT * 0.1);
       ctx.fillStyle = '#ffee88';
       ctx.font = 'bold ' + numSize + 'px system-ui';
-      ctx.shadowColor = '#ffcc00'; ctx.shadowBlur = 25;
-      ctx.fillText(txt, cx, y);
-      /* Double glow */
-      ctx.shadowBlur = 50; ctx.globalAlpha = 0.3;
       ctx.fillText(txt, cx, y);
       ctx.restore();
     }
@@ -760,10 +756,6 @@ function _drawPhaseLabel() {
     var pulse = 0.7 + 0.3 * Math.abs(Math.sin(bgT * 0.3));
     ctx.globalAlpha = pulse; ctx.fillStyle = '#ff4400';
     ctx.font = 'bold ' + soleilSize + 'px system-ui';
-    ctx.shadowColor = '#ff0000'; ctx.shadowBlur = 35;
-    ctx.fillText('SOLEIL !', cx, y);
-    /* Glow intense */
-    ctx.shadowBlur = 70; ctx.globalAlpha = pulse * 0.25;
     ctx.fillText('SOLEIL !', cx, y);
     ctx.restore();
 
@@ -773,7 +765,6 @@ function _drawPhaseLabel() {
     var dangerPulse = 0.6 + 0.4 * Math.abs(Math.sin(bgT * 0.25));
     ctx.globalAlpha = dangerPulse; ctx.fillStyle = '#ff6600';
     ctx.font = 'bold ' + Math.floor(W * 0.12) + 'px system-ui';
-    ctx.shadowColor = '#ff0000'; ctx.shadowBlur = 30;
     ctx.fillText('☀️', cx, y);
     ctx.restore();
   }

@@ -116,8 +116,11 @@ function gameStart() {
   });
 
   const ctx = cv.getContext('2d');
-  const loop = () => {
+  let _lastTs8 = 0;
+  const loop = (ts) => {
     rafId = requestAnimationFrame(loop);
+    const _dt8 = _lastTs8 ? Math.min((ts - _lastTs8) / 16.667, 2.5) : 1;
+    _lastTs8 = ts;
     if (!GPS0_running()) return;
     const W = cv.width, H = cv.height;
     frame++; bgT++;
@@ -146,7 +149,7 @@ function gameStart() {
     rows.forEach(row => {
       if (row.safe) return;
       row.ships.forEach(s => {
-        s.x += row.dir * row.spd / CELL_W;
+        s.x += row.dir * row.spd / CELL_W * _dt8;
         if (s.x > COLS + 1.2) s.x -= COLS;
         if (s.x < -1.2) s.x += COLS;
       });
@@ -451,7 +454,8 @@ function gameStart() {
     ctx.fillStyle = '#d0c8e0'; ctx.font = '10px system-ui';
     ctx.fillText('actuel ' + player.row, W - 49, H - 84);
   };
-  loop();
+  _lastTs8 = performance.now();
+  loop(_lastTs8);
 }
 window.gameStart = gameStart;
 
