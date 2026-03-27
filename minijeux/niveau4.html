@@ -54,16 +54,24 @@ const SEQ_START_LEN = 2;    // longueur séquence au round 1
 // ── ÉTAT ───────────────────────────────────────────────────────────────────────────────────────
 // phase : "showing_lit" | "showing_dark" | "input" |
 //         "flash_ok" | "flash_err" | "round_clear" | "done"
-let round, sequence, inputIdx, shieldUsed, totalDust;
+let round, sequence, inputIdx, shieldUsed, totalDust, totalErrors;
 let phase, showIdx, showTimer, showMs;
 let flashIdx, flashTimer, flashMs;
 let crystalRects, bgParts;
 let lastTs, rafId, bgT;
 let cosmoAnim;
 
+window.GPS0_computeDust = function(success) {
+  var niveauAtteint = Math.min(round || 1, 15);
+  var scoreNiveau = (niveauAtteint / 15) * 40;
+  var malusErreurs = Math.min((totalErrors || 0) * 2, 15);
+  var bonusPerfect = niveauAtteint >= 15 ? 10 : 0;
+  return scoreNiveau - malusErreurs + bonusPerfect;
+};
+
 function gameReset() {
   cancelAnimationFrame(rafId);
-  round = 1; sequence = []; inputIdx = 0; shieldUsed = false; totalDust = 0;
+  round = 1; sequence = []; inputIdx = 0; shieldUsed = false; totalDust = 0; totalErrors = 0;
   window.GPS0_rewardOverride = 0;
   phase = "showing_lit";
   showIdx = 0; showTimer = 0; showMs = SHOW_MS_START;
@@ -194,6 +202,7 @@ function _onTap(e) {
   if (hit === sequence[inputIdx]) {
     flashIdx = hit; flashTimer = 0; flashMs = 190; phase = "flash_ok";
   } else {
+    totalErrors++;
     flashIdx = hit; flashTimer = 0; flashMs = 490; phase = "flash_err";
     if (!shieldUsed) {
       shieldUsed = true;

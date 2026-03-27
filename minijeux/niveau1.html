@@ -49,12 +49,23 @@ let slingX,slingY,cosX,cosY,bgT,rafId;
 let orbs,meteors,particles,bonusStars;
 let dragging,dragCX,dragCY;
 let waveIdx,waveTick,spawnTick,starBonusCount;
+let maxOrbDist,orbsLaunched,orbsHit;
+
+window.GPS0_computeDust = function() {
+  const cv = document.getElementById('cv');
+  const distMax = cv ? cv.width * 0.9 : 360;
+  const scoreDistance = Math.min(25, (maxOrbDist / distMax) * 25);
+  const scorePrecision = orbsLaunched > 0 ? Math.min(10, (orbsHit / orbsLaunched) * 10) : 0;
+  const scoreEtoiles = Math.min(starBonusCount * 2, 15);
+  return scoreDistance + scorePrecision + scoreEtoiles;
+};
 
 function gameReset(){
   cancelAnimationFrame(rafId);
   bgT=0; waveIdx=0; waveTick=0; spawnTick=0; starBonusCount=0;
   orbs=[]; meteors=[]; particles=[]; bonusStars=[];
   dragging=false; dragCX=dragCY=0;
+  maxOrbDist=0; orbsLaunched=0; orbsHit=0;
 }
 window.gameReset = gameReset;
 
@@ -88,6 +99,7 @@ function gameStart(){
     if(dist<12)return;
     const spd=Math.min(16,dist*.1);
     orbs.push({x:slingX,y:slingY,vx:dx/dist*spd,vy:dy/dist*spd,r:9,life:240,trail:[]});
+    orbsLaunched++;
     navigator.vibrate&&navigator.vibrate(22);
   });
 

@@ -41,6 +41,18 @@ const CRYSTAL_MAX = 5;
 let bird, walls, ashParts, parts, crystals, lavaEmbers;
 let speed, frame, invincible, rafId, bgT, crystalCount;
 let holding = false;
+let wallsSpawned, wallsHit;
+
+window.GPS0_computeDust = function(success) {
+  const tempsJoue = GPS0_timerTotal() - GPS0_timerSec();
+  const tempsMax = GPS0_timerTotal() || 150;
+  const scoreTemps = (tempsJoue / tempsMax) * 30;
+  const esquives = Math.max(0, wallsSpawned - wallsHit);
+  const scoreObstacles = Math.min(esquives * 0.5, 10);
+  const bonusVies = GPS0_lives() * 3;
+  const bonusFin = success ? 5 : 0;
+  return scoreTemps + scoreObstacles + bonusVies + bonusFin;
+};
 
 function gameReset() {
   cancelAnimationFrame(rafId);
@@ -48,6 +60,7 @@ function gameReset() {
   walls = []; ashParts = []; parts = []; crystals = []; lavaEmbers = [];
   speed = SPEED_START; frame = 0; invincible = 0; bgT = 0; crystalCount = 0;
   holding = false;
+  wallsSpawned = 0; wallsHit = 0;
 }
 window.gameReset = gameReset;
 
@@ -99,6 +112,7 @@ function gameStart() {
         const inGap = bird.y - bird.r > w.gapTop && bird.y + bird.r < w.gapTop + w.gapH;
         if (!inGap) {
           invincible = 90; bird.vy = -3;
+          wallsHit++;
           for (let j = 0; j < 12; j++) parts.push({ x: bird.x, y: bird.y, vx: (Math.random() - .5) * 5, vy: -2 - Math.random() * 3, life: 28, col: '#ff7040' });
           loseLife();
         }
@@ -177,6 +191,7 @@ function _onDown(e) {
 function _onUp() {}
 
 function _spawnWall(W, H) {
+  wallsSpawned++;
   // Gap se rétrécit légèrement avec le temps
   const gapH = Math.max(130, 225 - frame * .038);
   const gapTop = H * .07 + Math.random() * (H * .8 - gapH);

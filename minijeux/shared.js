@@ -177,32 +177,33 @@
     clearInterval(timerInterval);
     if (!success && window.GPS0_onGameOver) window.GPS0_onGameOver();
     let finalDust;
-    // Récompense personnalisée (ex: efficacité N1 ou boss N9)
-    if (window.GPS0_rewardOverride !== undefined) {
+    // Priorité 1: GPS0_computeDust callback (formule custom par jeu)
+    if (typeof window.GPS0_computeDust === 'function') {
+      finalDust = window.GPS0_computeDust(success);
+    // Priorité 2: override direct (legacy)
+    } else if (window.GPS0_rewardOverride !== undefined) {
       finalDust = Math.max(1, Math.round(window.GPS0_rewardOverride));
     } else {
-      // Formule : plus le joueur joue longtemps, plus il gagne de dust
-      // tempsJoue = timerTotal - timerSec (secondes écoulées)
+      // Formule par défaut : survie → plus long = mieux
       const tempsJoue = timerTotal - timerSec;
       if (success) {
-        // Victoire : récompense pleine selon le temps passé (1 à 50)
         finalDust = Math.floor((tempsJoue / timerTotal) * 50);
-        if (finalDust < 1) finalDust = 1; // min 1 si victoire
+        if (finalDust < 1) finalDust = 1;
       } else {
-        // Défaite : même calcul temps mais plafonné à 15 (jamais mieux qu'une victoire longue)
         finalDust = Math.floor((tempsJoue / timerTotal) * 15);
         if (tempsJoue > 10 && finalDust < 1) finalDust = 1;
       }
       finalDust = Math.min(50, finalDust);
     }
-    setTimeout(() => {
-      window.parent.postMessage({
-        source: 'gps0_minijeu',
-        success,
-        niveau: window.NIVEAU || 1,
-        poussieres: finalDust
-      }, '*');
-    }, 800);
+    // Clamp global MIN 5 / MAX 50 sauf si GPS0_NO_CAP
+    if (!window.GPS0_NO_CAP) {
+      finalDust = Math.max(5, Math.min(50, Math.round(finalDust || 5)));
+    } else {
+      finalDust = Math.max(0, Math.round(finalDust || 0));
+    }
+    const livesAtEnd = Math.max(0, lives);
+    const delay = success ? 600 : 1200;
+    setTimeout(() => { _showRecap(success, finalDust, livesAtEnd); }, delay);
   };
 
   // ── QUITTER ─────────────────────────────────────────────────────────────────
@@ -312,8 +313,73 @@
       }
     }, 1000);
   }
-  // Expose timerSec pour les jeux qui en ont besoin (ex: N9 rage mode)
+  // Expose timerSec / timerTotal pour les jeux
   window.GPS0_timerSec = () => timerSec;
+  window.GPS0_timerTotal = () => timerTotal;
+
+  // ── ÉCRAN RÉCAP FIN DE JEU ────────────────────────────────────────────────
+  function _showRecap(success, finalDust, livesLeft) {
+    let totalDust = 0;
+    try {
+      const eco = JSON.parse(localStorage.getItem('gps0_economie') || '{}');
+      totalDust = (eco.poussieres || 0);
+    } catch(e) {}
+    const maxL = window.GPS0_MAX_LIVES || 3;
+    const tempsJoue = timerTotal - timerSec;
+    const mm = Math.floor(tempsJoue / 60), ss = tempsJoue % 60;
+    const timeStr = (mm > 0 ? mm + 'min ' : '') + ss + 's';
+    const maxDust = window.GPS0_NO_CAP ? Math.max(100, finalDust) : 50;
+    const starPct = Math.min(1, finalDust / maxDust);
+    const stars = Math.max(1, Math.min(5, Math.ceil(starPct * 5)));
+    const starStr = '★'.repeat(stars) + '☆'.repeat(5 - stars);
+    const icon = success ? '🏆' : '💀';
+    const ov = document.createElement('div');
+    ov.id = 'recap-overlay';
+    ov.style.cssText = 'position:fixed;inset:0;z-index:1100;background:rgba(0,0,0,0.94);display:flex;align-items:center;justify-content:center;padding:20px;font-family:system-ui,sans-serif;touch-action:none';
+    ov.innerHTML = `
+      <div style="background:linear-gradient(145deg,rgba(18,12,36,.99),rgba(8,6,20,.99));border:1.5px solid rgba(200,162,200,.4);border-radius:22px;padding:28px 22px 24px;max-width:340px;width:100%;text-align:center;box-shadow:0 0 50px rgba(200,162,200,.15)">
+        <div style="font-size:2rem;margin-bottom:4px">${icon}</div>
+        <div style="font-size:1.05rem;font-weight:900;color:#C8A2C8;letter-spacing:3px;text-transform:uppercase;margin-bottom:18px">${success ? 'Victoire !' : 'Game Over'}</div>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;text-align:left">
+          <div style="display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,.05);border-radius:8px;padding:8px 12px">
+            <span style="color:rgba(255,255,255,.7);font-size:.88rem">⏱ Temps survécu</span>
+            <span style="font-weight:bold;color:#4FC3F7">${timeStr}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,.05);border-radius:8px;padding:8px 12px">
+            <span style="color:rgba(255,255,255,.7);font-size:.88rem">🎯 Performance</span>
+            <span style="font-weight:bold;color:#FFD700;font-size:1.1rem;letter-spacing:2px">${starStr}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,.05);border-radius:8px;padding:8px 12px">
+            <span style="color:rgba(255,255,255,.7);font-size:.88rem">❤️ Vies restantes</span>
+            <span style="font-weight:bold;color:#ff7777">${livesLeft} / ${maxL}</span>
+          </div>
+        </div>
+        <div style="background:linear-gradient(135deg,rgba(255,215,0,.12),rgba(200,162,200,.08));border:1px solid rgba(255,215,0,.3);border-radius:14px;padding:16px;margin-bottom:12px">
+          <div id="rdn" style="font-size:2.2rem;font-weight:900;color:#FFD700;text-shadow:0 0 24px rgba(255,215,0,.65);line-height:1">+0</div>
+          <div style="font-size:.8rem;color:rgba(255,215,0,.65);margin-top:4px">poussières d'étoile &nbsp;🌙✨</div>
+        </div>
+        <div id="rtot" style="font-size:.82rem;color:rgba(255,255,255,.4);margin-bottom:16px">Total actuel : ${totalDust.toLocaleString('fr-FR')} ✨</div>
+        <button id="rcont" style="width:100%;padding:14px;border:none;border-radius:14px;font-size:1rem;font-weight:900;cursor:pointer;background:linear-gradient(135deg,#C8A2C8,#7744aa);color:#fff;letter-spacing:2px;text-transform:uppercase;box-shadow:0 4px 20px rgba(200,162,200,.3)">CONTINUER ▶</button>
+      </div>`;
+    document.body.appendChild(ov);
+    let cur = 0;
+    const dustEl = ov.querySelector('#rdn');
+    const totEl = ov.querySelector('#rtot');
+    const step = Math.max(1, Math.ceil(finalDust / 32));
+    const anim = setInterval(() => {
+      cur = Math.min(cur + step, finalDust);
+      if (dustEl) dustEl.textContent = '+' + cur;
+      if (cur >= finalDust) {
+        clearInterval(anim);
+        if (totEl) totEl.textContent = 'Total : ' + (totalDust + finalDust).toLocaleString('fr-FR') + ' ✨';
+      }
+    }, 45);
+    ov.querySelector('#rcont').addEventListener('click', () => {
+      clearInterval(anim);
+      ov.remove();
+      window.parent.postMessage({ source: 'gps0_minijeu', success, niveau: window.NIVEAU || 1, poussieres: finalDust }, '*');
+    }, { once: true });
+  }
 
   async function _boot() {
     // Permettre aux niveaux de définir leur durée : window.GPS0_TIMER_SEC = 180 (3min)

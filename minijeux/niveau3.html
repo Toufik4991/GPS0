@@ -44,6 +44,17 @@ let player, platforms, asteroids, parts, stars;
 let cameraY, genTopY, startPlayerY, maxHeight;
 let frame, bgT, rafId, invincible, bubbleTimer;
 let touching, pointers;
+let platformsLanded;
+
+window.GPS0_computeDust = function(success) {
+  const tempsJoue = GPS0_timerTotal() - GPS0_timerSec();
+  const tempsMax = GPS0_timerTotal() || 120;
+  const hauteurRef = 5000;
+  const scoreHauteur = Math.min(25, (maxHeight / hauteurRef) * 25);
+  const scoreTemps = (tempsJoue / tempsMax) * 15;
+  const scorePlateformes = Math.min(10, platformsLanded * 0.5);
+  return scoreHauteur + scoreTemps + scorePlateformes;
+};
 
 function gameReset() {
   cancelAnimationFrame(rafId);
@@ -62,6 +73,7 @@ function gameReset() {
   bubbleTimer  = 0;
   touching     = { left: false, right: false };
   pointers     = {};
+  platformsLanded = 0;
 }
 window.gameReset = gameReset;
 
@@ -162,6 +174,7 @@ function gameStart() {
         ) {
           player.vy     = BOUNCE_VY;
           player.worldY = p.worldY - PLAYER_R;
+          platformsLanded++;
           navigator.vibrate && navigator.vibrate(10);
           for (let i = 0; i < 6; i++) {
             parts.push({

@@ -110,6 +110,14 @@ var fxParts = [];  // particles for star explosions
 var fxRaf = 0;
 var fxCv, fxCtx;
 
+window.GPS0_computeDust = function(success) {
+  var found = nFound || 0;
+  var total = WORDS.length || 10;
+  var scoreMots = (found / total) * 40;
+  var bonusPerfect = found >= total ? 10 : 0;
+  return scoreMots + bonusPerfect;
+};
+
 /* ── ÉTOILES DE FOND ──────────────────────────────────────────────── */
 function _drawStars(){
   var cv = document.getElementById('stars-bg');
@@ -257,8 +265,7 @@ function _validate(){
     if(navigator.vibrate) navigator.vibrate([8,4,15]);
 
     // All 10 found?
-    if(nFound >= 10){
-      window.GPS0_rewardOverride = 50;
+    if(nFound >= WORDS.length){
       setTimeout(function(){ endGame(true); }, 1200);
     }
 

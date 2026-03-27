@@ -38,7 +38,7 @@ window.TUTO_TEXT = "☀️ 1, 2, 3... SOLEIL !<br>TAP quand le soleil a le DOS t
 
 const SUN_R       = 48;
 const COSMO_R     = 20;
-const STEP_BASE   = 0.028;
+const STEP_BASE   = 0.019;  // map x1.5 vs 0.028
 const PENALTY     = 0.15;
 const STAR_COUNT  = 55;
 const DUST_COUNT  = 18;
@@ -51,6 +51,8 @@ const STEP_DUR_START = 1000;
 const STEP_DUR_END   = 500;
 const MOON_R      = 28;
 const MOON_PAD    = 16;
+const COMP_COUNT  = 7;  // concurrents IA
+const LASER_W     = 32; // largeur beam laser en px
 
 let cv, ctx, W, H;
 let progress, phase, phaseTimer, countStep, countStepTimer;
@@ -58,6 +60,20 @@ let bgT, stars, dustParts, fxParts;
 let sunFlipProg, stopFlash, difficultyMul;
 let moonBlink, moonBlinkTimer;
 let rafId, lastT;
+let playerOffX, touchStartX, touchStartY, touchStartT;
+let nbReculs, arrivee;
+let laser, competitors;
+
+window.GPS0_computeDust = function(success) {
+  var tempsJoue = GPS0_timerTotal() - GPS0_timerSec();
+  var tempsMax  = GPS0_timerTotal() || 150;
+  var distPct   = Math.min(1, progress);
+  var scoreDistance = distPct * 25;
+  var scoreTemps    = (tempsJoue / tempsMax) * 10;
+  var malusRecul    = Math.min(nbReculs * 2, 15);
+  var bonusArrivee  = arrivee ? 15 : 0;
+  return scoreDistance + scoreTemps - malusRecul + bonusArrivee;
+};
 
 function gameReset() {
   cancelAnimationFrame(rafId);
@@ -66,6 +82,19 @@ function gameReset() {
   phaseTimer = _countPhaseDur();
   bgT = 0; sunFlipProg = 0; stopFlash = 0; difficultyMul = 1;
   moonBlink = 0; moonBlinkTimer = 0;
+  playerOffX = 0; touchStartX = 0; touchStartY = 0; touchStartT = 0;
+  nbReculs = 0; arrivee = false;
+  laser = { active: false, x: 0, warnT: 0, timer: 0, nextT: 720 };
+  competitors = [];
+  for (var ci = 0; ci < COMP_COUNT; ci++) {
+    competitors.push({
+      progress: Math.random() * 0.05,
+      offX: ((ci % 2 === 0 ? 1 : -1) * (0.08 + ci * 0.04)),
+      spd: 0.013 + Math.random() * 0.009,
+      caught: false, catchT: 0,
+      hue: (ci * 52 + 180) % 360
+    });
+  }
   fxParts = []; _initStars(); _initDust();
 }
 window.gameReset = gameReset;
@@ -81,7 +110,8 @@ function gameStart() {
   ctx = cv.getContext('2d');
   GPS0_resizeCanvas(cv); _fixSize();
   gameReset();
-  cv.addEventListener('pointerdown', _onTap);
+  cv.addEventListener('pointerdown', _onTouchStart);
+  cv.addEventListener('pointerup',   _onTouchEnd);
   cv.addEventListener('touchstart', function(e){ e.preventDefault(); }, { passive: false });
   lastT = performance.now();
   rafId = requestAnimationFrame(_loop);
@@ -134,14 +164,48 @@ function _initDust() {
   }
 }
 
-/* ── TAP ───────────────────────────────────────────────────────────────── */
-function _onTap(e) {
+/* ── TOUCHER / ESQUIVE ─────────────────────────────────────────────────── */
+function _onTouchStart(e) {
   e.preventDefault();
+  if (!GPS0_running()) return;
+  var src = e.touches ? e.touches[0] : e;
+  touchStartX = src.clientX; touchStartY = src.clientY; touchStartT = Date.now();
+}
+
+function _onTouchEnd(e) {
+  e.preventDefault();
+  if (!GPS0_running()) return;
+  var src = e.changedTouches ? e.changedTouches[0] : e;
+  var dx = src.clientX - touchStartX;
+  var dy = src.clientY - touchStartY;
+  var dt = Date.now() - touchStartT;
+  if (Math.abs(dx) > 28 && Math.abs(dx) > Math.abs(dy) * 1.4 && dt < 450) {
+    _onDodge(dx > 0 ? 1 : -1);
+  } else {
+    _onTap();
+  }
+}
+
+function _onDodge(dir) {
+  playerOffX = Math.max(-W * 0.30, Math.min(W * 0.30, playerOffX + dir * W * 0.16));
+  var py = _playerY();
+  for (var i = 0; i < 6; i++) {
+    fxParts.push({
+      x: _sunX() + playerOffX, y: py,
+      vx: dir * (1.5 + Math.random() * 2.5), vy: (Math.random() - 0.5) * 2.5,
+      r: 2 + Math.random() * 2, col: '#88ccff', al: 0.85
+    });
+  }
+  if (navigator.vibrate) navigator.vibrate(15);
+}
+
+function _onTap() {
   if (!GPS0_running()) return;
 
   if (phase === 'stop' || phase === 'turning') {
     stopFlash = 1;
     progress = Math.max(0, progress - PENALTY);
+    nbReculs++;
     loseLife();
     if (navigator.vibrate) navigator.vibrate([80, 40, 160]);
     return;
@@ -154,7 +218,7 @@ function _onTap(e) {
   var py = _playerY();
   for (var i = 0; i < 3; i++) {
     fxParts.push({
-      x: _sunX() + (Math.random() - 0.5) * 12,
+      x: _sunX() + playerOffX,
       y: py + COSMO_R * 0.5,
       vx: (Math.random() - 0.5) * 2,
       vy: 0.8 + Math.random() * 1.5,
@@ -165,8 +229,7 @@ function _onTap(e) {
   }
 
   if (progress >= 1) {
-    var elapsed = (window.GPS0_TIMER_SEC || 150) - (window.GPS0_timerSec ? window.GPS0_timerSec() : 0);
-    window.GPS0_rewardOverride = elapsed < 90 ? 50 : 30;
+    arrivee = true;
     endGame(true);
   }
 }
@@ -185,7 +248,60 @@ function _loop(now) {
   _updateMoon(dt);
   _collectDust();
   _updateFx(dt / 16.67);
+  _updateCompetitors();
+  _updateLaser();
   _draw();
+}
+
+/* ── CONCURRENTS IA ────────────────────────────────────────────────── */
+function _updateCompetitors() {
+  competitors.forEach(function(comp) {
+    if (comp.caught) { comp.catchT--; if (comp.catchT <= 0) comp.caught = false; return; }
+    if (phase === 'count' || phase === 'unturning') {
+      if (Math.random() < 0.38) comp.progress = Math.min(1, comp.progress + comp.spd);
+    } else if (phase === 'stop' || phase === 'turning') {
+      if (Math.random() < 0.28) {
+        comp.progress = Math.max(0, comp.progress - PENALTY * 0.6);
+        comp.caught = true; comp.catchT = 50;
+      }
+    }
+  });
+}
+
+/* ── LASER ATTAQUE ───────────────────────────────────────────────── */
+function _updateLaser() {
+  if (progress < 0.5) return;
+  if (!laser.active && !laser.warnT) {
+    laser.nextT--;
+    if (laser.nextT <= 0) {
+      laser.warnT = 90;
+      var side = Math.random();
+      laser.x = _sunX() + (side < 0.33 ? -W * 0.18 : side < 0.66 ? 0 : W * 0.18);
+      laser.nextT = progress > 0.8 ? 420 : 600;
+    }
+  }
+  if (laser.warnT > 0) {
+    laser.warnT--;
+    if (laser.warnT === 0) { laser.active = true; laser.timer = 110; }
+    return;
+  }
+  if (laser.active) {
+    laser.timer--;
+    if (laser.timer <= 0) { laser.active = false; return; }
+    var px = _sunX() + playerOffX;
+    if (GPS0_running() && Math.abs(px - laser.x) < LASER_W) {
+      laser.active = false; laser.timer = 0;
+      progress = Math.max(0, progress - PENALTY * 0.6);
+      nbReculs++;
+      var py = _playerY();
+      for (var i = 0; i < 8; i++) fxParts.push({
+        x: px, y: py + Math.random() * 20,
+        vx: (Math.random() - 0.5) * 5, vy: (Math.random() - 0.5) * 4,
+        r: 2.5, col: '#FFD700', al: 1
+      });
+      loseLife();
+    }
+  }
 }
 
 function _updateDifficulty() {
@@ -228,12 +344,12 @@ function _updateMoon(dt) {
 
 /* ── COLLECTE POUSSIÈRES ───────────────────────────────────────────────── */
 function _collectDust() {
-  var py = _playerY(), sx = _sunX();
+  var py = _playerY(), sx = _sunX() + playerOffX;
   for (var i = 0; i < dustParts.length; i++) {
     var d = dustParts[i];
     if (d.collected) continue;
     var dy = _pathBot() - d.t * (_pathBot() - _pathTop());
-    var dx2 = sx + d.ox * W;
+    var dx2 = _sunX() + d.ox * W;
     if (Math.hypot(sx - dx2, py - dy) < COSMO_R + d.r + 8) {
       d.collected = true; addDust(1);
       for (var j = 0; j < 6; j++) {
@@ -325,7 +441,13 @@ function _draw() {
 
   /* Cosmonaute */
   var posY = _playerY();
-  drawCosmonaut(ctx, _sunX(), posY, COSMO_R, 0, (phase === 'count' || phase === 'unturning') ? 'run' : 'idle');
+  drawCosmonaut(ctx, _sunX() + playerOffX, posY, COSMO_R, 0, (phase === 'count' || phase === 'unturning') ? 'run' : 'idle');
+
+  /* Concurrents IA */
+  _drawCompetitors();
+
+  /* Laser beam */
+  _drawLaser();
 
   /* Soleil */
   _drawSun();
@@ -337,7 +459,67 @@ function _draw() {
   _drawProgressBar();
   _drawPhaseLabel();
 }
+/* ── DESSIN CONCURRENTS ─────────────────────────────────────────────── */
+function _drawCompetitors() {
+  competitors.forEach(function(comp) {
+    var cx = _sunX() + comp.offX * W * 0.45;
+    var cy = _pathBot() - comp.progress * (_pathBot() - _pathTop());
+    ctx.save();
+    ctx.globalAlpha = comp.caught ? 0.38 : 0.72;
+    var g = ctx.createRadialGradient(cx, cy, 2, cx, cy, 14);
+    g.addColorStop(0, 'hsla('+comp.hue+',100%,70%,0.45)');
+    g.addColorStop(1, 'hsla('+comp.hue+',100%,50%,0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, 14, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = 'hsl('+comp.hue+',60%,35%)';
+    ctx.beginPath(); ctx.arc(cx, cy, 9, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = 'hsl('+comp.hue+',100%,65%)'; ctx.lineWidth=1.4; ctx.stroke();
+    ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.arc(cx-3,cy-2,2.4,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(cx+3,cy-2,2.4,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#111';
+    ctx.beginPath(); ctx.arc(cx-3,cy-2,1.2,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(cx+3,cy-2,1.2,0,Math.PI*2); ctx.fill();
+    if (comp.caught) {
+      ctx.strokeStyle='#ff4400'; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.arc(cx,cy,12,0,Math.PI*2); ctx.stroke();
+    }
+    ctx.restore();
+  });
+}
 
+/* ── DESSIN LASER ─────────────────────────────────────────────────── */
+function _drawLaser() {
+  if (!laser.warnT && !laser.active) return;
+  var lx = laser.x;
+  var top = _sunY() + SUN_R, bot = _pathBot() + 30;
+  if (laser.warnT > 0) {
+    var blink = (Math.floor(bgT / 5) % 2 === 0);
+    ctx.save(); ctx.globalAlpha = blink ? 0.85 : 0.25;
+    ctx.setLineDash([10, 7]);
+    ctx.strokeStyle = '#FF8800'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(lx, top); ctx.lineTo(lx, bot); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.globalAlpha = 0.9;
+    ctx.fillStyle = '#FF8800'; ctx.font = 'bold 14px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('\u26a1 LASER ! ESQUIVE ! \u26a1', lx, H * 0.52);
+    ctx.restore();
+    return;
+  }
+  if (laser.active) {
+    var intensity = Math.min(1, laser.timer / 25);
+    var grad = ctx.createLinearGradient(lx - 28, 0, lx + 28, 0);
+    grad.addColorStop(0, 'rgba(255,100,0,0)');
+    grad.addColorStop(0.5, 'rgba(255,180,0,' + (0.55 * intensity) + ')');
+    grad.addColorStop(1, 'rgba(255,100,0,0)');
+    ctx.fillStyle = grad; ctx.fillRect(lx - 28, top, 56, bot - top);
+    ctx.save(); ctx.globalAlpha = intensity;
+    ctx.strokeStyle = '#FFD700'; ctx.lineWidth = 7; ctx.shadowColor = '#FF8800'; ctx.shadowBlur = 28;
+    ctx.beginPath(); ctx.moveTo(lx, top); ctx.lineTo(lx, bot); ctx.stroke();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.shadowBlur = 4;
+    ctx.beginPath(); ctx.moveTo(lx, top); ctx.lineTo(lx, bot); ctx.stroke();
+    ctx.shadowBlur = 0; ctx.restore();
+  }
+}
 /* ── CHEMIN D'ÉTOILES ──────────────────────────────────────────────────── */
 function _drawPath() {
   var sx = _sunX(), top = _pathTop(), bot = _pathBot();

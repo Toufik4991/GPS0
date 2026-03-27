@@ -46,7 +46,49 @@ const MAP = 2400, PLAYER_R0 = 22;
 const FOOD_N = 200, ENEMY_N = 45, CRYSTAL_N = 30, CRYSTAL_MAX = 50;
 
 let player, enemies, foods, crystals, particles, stars;
-let joystick, dustCount, bgT, rafId;
+let joystick, dustCount, bgT, rafId, cellulesIAMangees;
+
+window.GPS0_computeDust = function(success) {
+  var tempsJoue = GPS0_timerTotal() - GPS0_timerSec();
+  var tempsMax  = GPS0_timerTotal() || 150;
+  var tailleFin = player ? player.r : PLAYER_R0;
+  var scoreTps   = (tempsJoue / tempsMax) * 20;
+  var scoreTaille = Math.min((tailleFin - PLAYER_R0) * 0.5, 15);
+  var scoreCells  = Math.min(cellulesIAMangees * 3, 15);
+  var bonusWin    = success ? 5 : 0;
+  return scoreTps + scoreTaille + scoreCells + bonusWin;
+};
+
+function _drawHelmet(ctx, cx, cy, r) {
+  var hr = Math.max(20, r);
+  // Rim / bord casque
+  ctx.strokeStyle = 'rgba(160,230,255,0.65)'; ctx.lineWidth = Math.max(2, hr * 0.08);
+  ctx.beginPath(); ctx.arc(cx, cy, hr, 0, Math.PI * 2); ctx.stroke();
+  // Visière sombre centrale
+  var vw = hr * 0.62, vh = hr * 0.48;
+  var vg = ctx.createRadialGradient(cx - vw*0.2, cy - vh*0.25, 2, cx, cy + vh*0.12, Math.max(vw, vh));
+  vg.addColorStop(0, 'rgba(0,20,70,0.82)');
+  vg.addColorStop(0.7, 'rgba(0,50,140,0.60)');
+  vg.addColorStop(1, 'rgba(0,30,100,0.30)');
+  ctx.fillStyle = vg;
+  ctx.beginPath(); ctx.ellipse(cx, cy + hr * 0.05, vw, vh, 0, 0, Math.PI * 2); ctx.fill();
+  // Reflet visière
+  ctx.fillStyle = 'rgba(255,255,255,0.14)';
+  ctx.beginPath(); ctx.ellipse(cx - vw*0.23, cy - vh*0.18, vw*0.28, vh*0.20, -0.35, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,0.07)';
+  ctx.beginPath(); ctx.ellipse(cx + vw*0.18, cy + vh*0.22, vw*0.18, vh*0.12, 0.3, 0, Math.PI*2); ctx.fill();
+  // Petits yeux dans visière
+  var eyeR = Math.max(2, hr * 0.085);
+  ctx.fillStyle = 'rgba(255,255,255,0.88)';
+  ctx.beginPath(); ctx.arc(cx - hr*0.20, cy - hr*0.04, eyeR, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(cx + hr*0.20, cy - hr*0.04, eyeR, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = 'rgba(0,200,255,0.9)';
+  ctx.beginPath(); ctx.arc(cx - hr*0.20, cy - hr*0.04, eyeR*0.5, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(cx + hr*0.20, cy - hr*0.04, eyeR*0.5, 0, Math.PI*2); ctx.fill();
+  // Sourire
+  ctx.strokeStyle = 'rgba(200,240,255,0.65)'; ctx.lineWidth = Math.max(1, eyeR*0.6); ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.arc(cx, cy + hr*0.10, hr*0.14, 0.2, Math.PI - 0.2); ctx.stroke();
+}
 
 function _genStars() {
   stars = [];
@@ -78,7 +120,7 @@ function gameReset() {
   enemies.forEach((_,i) => _spawnEnemy(i));
   foods = Array.from({length:FOOD_N}, _newFood);
   crystals = Array.from({length:CRYSTAL_N}, () => ({ x:50+Math.random()*(MAP-100), y:50+Math.random()*(MAP-100), col:false }));
-  particles = []; dustCount = 0; bgT = 0;
+  particles = []; dustCount = 0; bgT = 0; cellulesIAMangees = 0;
   joystick = { active:false, bx:0, by:0, sx:0, sy:0, id:-1 };
   if (!stars) _genStars();
 }
@@ -195,6 +237,7 @@ function gameStart() {
         if (player.r > en.r*1.1) {
           // Player mange ennemi
           player.r = Math.min(player.r + en.r*.35, 140);
+          cellulesIAMangees++;
           _spawnFx(player.x, player.y, `hsl(${en.hue},80%,65%)`, 12);
           _spawnEnemy(i);
           navigator.vibrate && navigator.vibrate([8,4,15]);
@@ -329,7 +372,7 @@ function gameStart() {
     ctx.fillStyle='rgba(30,110,200,.38)';
     ctx.strokeStyle='rgba(100,210,255,.88)'; ctx.lineWidth=2.5;
     ctx.beginPath(); ctx.arc(W/2,H/2,pr,0,Math.PI*2); ctx.fill(); ctx.stroke();
-    drawCosmonaut(ctx, W/2, H/2, Math.min(14, Math.max(8, pr*.55)), 0);
+    _drawHelmet(ctx, W/2, H/2, pr);
 
     // Mini-map (coin haut-droite)
     _drawMinimap(ctx, W, H);

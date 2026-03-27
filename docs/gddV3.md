@@ -1,9 +1,39 @@
 # 🌙 GPS0 — Game Design Document v3.0
 
-**Version :** 3.50.0 - Bug 30 : Fix N1 victoire + N7 nettoyage timer
+**Version :** 3.58.0 - Refonte formules dust + visuels N5/N6/N8/N9
 **Date :** 23/03/2026
 **Auteur :** Toufik49
 **Statut :** Opérationnel — Jeux 1-9 fonctionnels
+
+---
+
+## Changements v3.58.0 (Refonte complète dust + gameplay N5/N6/N8/N9)
+
+- **Système dust universel** : `GPS0_computeDust(success)` hook prioritaire dans `endGame()` pour chaque jeu. MIN 5 / MAX 50 global sauf N9 (`GPS0_NO_CAP = true`). Écran récap animé avec compteur dust, étoiles ★★★★☆, vies restantes, bouton CONTINUER.
+- **N1 Fronde Céleste** : formule = distance(25) + précision(10) + bonus étoiles(15)
+- **N2 Tunnel de Feu** : formule = temps(30) + obstacles évités(10) + vies(9) + bonus(5)
+- **N3 Rebond Lunaire** : formule = hauteur(25) + temps(15) + plateformes(10)
+- **N4 Cristaux Mémoire** : formule = niveau(40) - erreurs(15) + parfait(10)
+- **N5 1,2,3 Soleil!** — Refonte gameplay :
+  - STEP_BASE 0.028→0.019 (map x1.5), 7 concurrents IA colorés
+  - Swipe latéral = esquive, tap = avancer. Tracking `nbReculs` + `arrivee`
+  - Lasers horizontaux dorés après 50% progression, warning 1.5s
+  - Formule : distance(25) + temps(10) - reculs(15) + arrivée(15)
+- **N6 Cellule Spatiale** — Refonte visuelle :
+  - `drawCosmonaut` → `_drawHelmet()` : visière sombre, reflets, yeux dans la visière
+  - Tracking `cellulesIAMangees`. Formule : temps(20) + taille(15) + cellules(15) + win(5)
+- **N7 Mots Cosmiques** : formule = mots(40) + parfait(10)
+- **N8 Traversée Cosmique** — 5 types de vaisseaux :
+  - UFO vert (lent), Pointu violet (normal), Croiseur rouge (rapide), Moto verte (ultra-rapide), Cargo gris (très lent/large)
+  - Anti-spam : 2 montées < 400ms → prochain couloir = chasseur (type 2)
+  - Formule : temps(20) + traversées(20) + vies(9) + win(5)
+- **N9 Boss Final Éclipse** — Refonte visuelle + 4 phases :
+  - Projs → étoiles filantes rouges 5 branches rotatives avec traînée
+  - Météores → roches grises/brunes irrégulières avec cratères et traînée feu
+  - Ondes → nova blanche circulaire (anneau lumineux)
+  - Phases : ÉVEIL(100→70%), FUREUR(70→40%), CHAOS(40→15%), AGONIE(15→0%)
+  - `GPS0_NO_CAP = true`. Formule : orbes + bossVaincu(50) + vies×5 + phaseMax×5
+- **SW** : gps0-v79 → gps0-v80 / APP_VERSION 3.57.0 → 3.58.0
 
 ---
 

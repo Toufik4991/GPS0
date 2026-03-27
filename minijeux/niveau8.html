@@ -37,17 +37,30 @@ const COLS = 9, ROW_H = 66, IDLE_LIMIT = 600, FLOOR_PCT = 0.82;
 let CELL_W;
 let player, rows, camOffY, idleTimer, invTimer, maxRow, frame, bgT, particles, dpadEl, rafId;
 let swX = null, swY = null;
+let traverseesReussies = 0, lastTapT = 0;
+
+window.GPS0_computeDust = function(success) {
+  var tempsJoue = GPS0_timerTotal() - GPS0_timerSec();
+  var tempsMax  = GPS0_timerTotal() || 120;
+  var scoreTps  = (tempsJoue / tempsMax) * 20;
+  var scoreTrav = Math.min(traverseesReussies * 6, 20);
+  var scoreVies = GPS0_lives() * 3;
+  var bonusWin  = success ? 5 : 0;
+  return scoreTps + scoreTrav + scoreVies + bonusWin;
+};
 
 function rowTop(r, H) {
   return H * FLOOR_PCT - (r + 1) * ROW_H + camOffY;
 }
 
-function _shipWidth(r) {
-  return Math.min(0.65 + r * 0.018, 1.20);
+function _shipWidth(r, type) {
+  const tw = [0.74, 0.60, 0.82, 0.42, 1.38];
+  return Math.min((tw[type] || 0.74) + r * 0.010, 1.80);
 }
 
-function _rowSpeed(r) {
-  return Math.min(0.56 + r * 0.034, 1.98);
+function _rowSpeed(r, type) {
+  const ts = [0.48, 0.90, 1.40, 2.60, 0.26];
+  return Math.min((ts[type] || 0.56) + r * 0.015, 3.20);
 }
 
 function _isSafeRow(r) {
@@ -55,15 +68,12 @@ function _isSafeRow(r) {
 }
 
 function _genRow(r) {
-  if (_isSafeRow(r)) return { ships: [], safe: true, dir: 0, spd: 0 };
+  if (_isSafeRow(r)) return { ships: [], safe: true, dir: 0, spd: 0, type: 0 };
   const dir = (r % 2 === 0) ? 1 : -1;
-  const spd = _rowSpeed(r);
-  const n = 1;
-  const ships = [];
-  for (let i = 0; i < n; i++) {
-    ships.push({ x: (i * COLS / n) + 0.2 + Math.random() * 0.6 });
-  }
-  return { ships, safe: false, dir, spd };
+  const type = Math.floor(Math.random() * 5);
+  const spd = _rowSpeed(r, type);
+  const ships = [{ x: 0.2 + Math.random() * 0.6 }];
+  return { ships, safe: false, dir, spd, type };
 }
 
 function gameReset() {
@@ -74,6 +84,7 @@ function gameReset() {
   camOffY = 0;
   idleTimer = 0; invTimer = 0; maxRow = 0;
   frame = 0; bgT = 0; particles = [];
+  traverseesReussies = 0; lastTapT = 0;
 }
 window.gameReset = gameReset;
 
@@ -139,7 +150,7 @@ function gameStart() {
     // Collision
     if (invTimer === 0 && player.row < rows.length && !rows[player.row].safe) {
       const row = rows[player.row];
-      const sw = _shipWidth(player.row);
+      const sw = _shipWidth(player.row, row.type);
       const pL = player.col + 0.14, pR = player.col + 0.86;
       let hit = false;
       for (const s of row.ships) {
@@ -232,13 +243,13 @@ function gameStart() {
         ctx.beginPath(); ctx.moveTo(0, ty + 3.5); ctx.lineTo(W, ty + 3.5); ctx.stroke();
         ctx.beginPath(); ctx.moveTo(0, ty + ROW_H - 3.5); ctx.lineTo(W, ty + ROW_H - 3.5); ctx.stroke();
 
-        // Ships (redessinés alien fun)
-        const sw = _shipWidth(r) * CELL_W;
+        // Ships (5 types : UFO, pointu, croiseur, moto, cargo)
+        const shipType = row.type || 0;
+        const hues = [115, 280, 0, 120, 0]; // UFO vert, pointu violet, croiseur rouge, moto vert, cargo gris
+        const hue = hues[shipType];
+        const sw = _shipWidth(r, shipType) * CELL_W;
         const sh = ROW_H * 0.56;
         const shipCY = ty + ROW_H / 2;
-        const shipType = r % 3; // 0=UFO disc vert, 1=pointu violet, 2=croiseur rouge
-        const hues = [115, 280, 0]; // vert alien, violet, rouge
-        const hue = hues[shipType];
         row.ships.forEach(s => {
           for (const ox of [0, COLS, -COLS]) {
             const sx2 = (s.x + ox) * CELL_W;
@@ -342,6 +353,47 @@ function gameStart() {
               fg2.addColorStop(1, `hsla(${hue+60},100%,55%,0)`);
               ctx.fillStyle = fg2;
               ctx.beginPath(); ctx.ellipse(sx2, shipCY+sh*.38, sw*.10, sh*.44*pulse, 0, 0, Math.PI*2); ctx.fill();
+            } else if (shipType === 3) {
+              // Moto spatiale verte (rapide, étroite)
+              ctx.fillStyle = `hsl(${hue},80%,28%)`;
+              ctx.beginPath(); ctx.ellipse(sx2, shipCY, sw/2, sh*.20, 0, 0, Math.PI*2); ctx.fill();
+              ctx.fillStyle = `hsl(${hue},100%,55%)`;
+              ctx.beginPath(); ctx.ellipse(sx2 + row.dir*sw*.28, shipCY-sh*.05, sw*.12, sh*.17, 0.3, 0, Math.PI*2); ctx.fill();
+              ctx.strokeStyle = `hsla(${hue},100%,65%,${(0.75*pulse).toFixed(2)})`;
+              ctx.lineWidth = 1.8;
+              ctx.beginPath(); ctx.moveTo(sx2-sw*.36, shipCY); ctx.lineTo(sx2+sw*.36, shipCY); ctx.stroke();
+              const mf3 = ctx.createLinearGradient(sx2-row.dir*sw*.5, shipCY, sx2-row.dir*sw*.88, shipCY);
+              mf3.addColorStop(0, `hsla(${hue+30},100%,75%,.88)`);
+              mf3.addColorStop(1, `hsla(${hue},100%,60%,0)`);
+              ctx.fillStyle = mf3;
+              ctx.beginPath(); ctx.ellipse(sx2-row.dir*sw*.52, shipCY, sw*.27*pulse, sh*.10, 0, 0, Math.PI*2); ctx.fill();
+            } else {
+              // Cargo spatial gris (lent, très large)
+              const wg4 = ctx.createLinearGradient(sx2-sw/2, shipCY-sh*.42, sx2, shipCY+sh*.42);
+              wg4.addColorStop(0, `hsl(${hue},14%,38%)`);
+              wg4.addColorStop(0.5, `hsl(${hue},10%,22%)`);
+              wg4.addColorStop(1, `hsl(${hue},14%,32%)`);
+              ctx.fillStyle = wg4;
+              ctx.beginPath(); ctx.roundRect(sx2-sw/2, shipCY-sh*.40, sw, sh*.80, 4); ctx.fill();
+              ctx.strokeStyle = `rgba(200,200,220,0.20)`; ctx.lineWidth = 0.7;
+              for (let gi=1; gi<4; gi++) {
+                ctx.beginPath();
+                ctx.moveTo(sx2-sw/2+sw*gi/4, shipCY-sh*.40);
+                ctx.lineTo(sx2-sw/2+sw*gi/4, shipCY+sh*.40);
+                ctx.stroke();
+              }
+              for (let li=0; li<3; li++) {
+                const lx4 = sx2-sw*.26+li*sw*.26;
+                ctx.fillStyle = `hsla(200,50%,65%,${(0.30+0.15*Math.sin(bgT*.04+li)).toFixed(2)})`;
+                ctx.beginPath(); ctx.arc(lx4, shipCY-sh*.20, 3.5, 0, Math.PI*2); ctx.fill();
+              }
+              for (const mx4 of [sx2-sw*.36, sx2+sw*.36]) {
+                const fg4 = ctx.createLinearGradient(mx4, shipCY+sh*.40, mx4, shipCY+sh*.68*pulse);
+                fg4.addColorStop(0, `hsla(200,50%,60%,.55)`);
+                fg4.addColorStop(1, `hsla(200,50%,50%,0)`);
+                ctx.fillStyle = fg4;
+                ctx.beginPath(); ctx.ellipse(mx4, shipCY+sh*.40, sw*.07, sh*.26*pulse, 0, 0, Math.PI*2); ctx.fill();
+              }
             }
           }
         });
@@ -404,6 +456,17 @@ function _tryMove(dc, dr) {
   if (nc < 0 || nc >= COLS || nr < 0) return;
   player.col = nc; player.row = nr;
   idleTimer = 0;
+  if (dr > 0) {
+    traverseesReussies++;
+    // Anti-spam: deux montées < 400ms → prochain couloir = chasseur (type 2)
+    const now = Date.now();
+    if (now - lastTapT < 400) {
+      const nextR = player.row + 1;
+      while (rows.length <= nextR + 1) rows.push(_genRow(rows.length));
+      if (rows[nextR] && !rows[nextR].safe) rows[nextR].type = 2;
+    }
+    lastTapT = now;
+  }
   if (player.row > maxRow) maxRow = player.row;
   while (rows.length < player.row + 24) rows.push(_genRow(rows.length));
 }
