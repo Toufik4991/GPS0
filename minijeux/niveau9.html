@@ -43,10 +43,9 @@ window.GPS0_NO_CAP = true;
 window.GPS0_computeDust = function(success) {
   return totalDust + (bossVaincu ? 50 : 0) + GPS0_lives() * 5 + (phaseMax || 1) * 5;
 };
-window.TUTO_TEXT = "&#127769; Affronte la Lune Mal&#233;fique !<br>Collecte les <span style='color:#FFD700'>&#9728;&#65039; mini-soleils</span> pour l'affaiblir.<br>&#9888;&#65039; Saute lors des <b>novas blanches</b> (anneau) !<br><br>&#128066; <b>Touche GAUCHE = Glisser</b><br>&#128065; <b>Touche DROITE = Sauter</b>";
+window.TUTO_TEXT = "&#127769; Affronte la Lune Mal&#233;fique !<br>Collecte les <span style='color:#FFD700'>&#9728;&#65039; mini-soleils</span> pour l'affaiblir.<br>&#9888;&#65039; Saute lors des <b>novas blanches</b> (anneau) !<br><br>&#9664; <b>Gauche / Droite &#9654;</b> = Se déplacer<br>&#128640; <b>Centre</b> = Sauter | &#128737; <b>Double tap</b> = Bouclier";
 
 const GY = 0.78;
-const PX = 0.18;
 const HP_MAX = 100;
 
 let cv, ctx, W, H;
@@ -65,6 +64,7 @@ let novaWarnActive, novaWarnLeft;
 let heartPhaseSpawned;
 let metColBusy;
 let rafId;
+let leftHeld, rightHeld, lastCenterTapT, shieldT, shieldCoolT;
 let transEl = null;
 let _dt = 1; // deltaTime multiplier (frame-rate independent)
 
@@ -238,22 +238,40 @@ function _minions(t) {
 }
 
 function _pSize() { return Math.min(W,H)*0.062; }
-function _pxAbs() { return W*PX; }
+function _pxAbs() { return player.px * W; }
 function _onGround() {
   return player.y >= H*GY - _pSize() - 2;
 }
 
 function _updPlayer() {
   const ps = _pSize();
+  // Mouvement horizontal
+  const moveSpd = 4.5;
+  if (leftHeld) player.vx = Math.max(player.vx - 0.5 * _dt, -moveSpd);
+  else if (rightHeld) player.vx = Math.min(player.vx + 0.5 * _dt, moveSpd);
+  else player.vx *= 0.75;
+  player.px = Math.max(0.06, Math.min(0.94, player.px + (player.vx * _dt) / W));
+  // Vertical
   player.vy += 0.55 * _dt; player.y += player.vy * _dt;
   if (player.y >= H*GY - ps) { player.y = H*GY - ps; player.vy = 0; }
   if (player.slideT > 0) player.slideT--; else player.sliding = false;
   if (player.invT > 0) player.invT--;
+  if (shieldT > 0) shieldT--;
+  if (shieldCoolT > 0) shieldCoolT--;
 }
 
 function _drawPlayer(t) {
   const px = _pxAbs(), ps = _pSize();
   if (player.invT > 0 && Math.floor(player.invT/5)%2 === 0) return;
+  // Dome bouclier
+  if (shieldT > 0) {
+    const invA = 0.38 + 0.22 * Math.sin(bgT * 0.28);
+    ctx.save(); ctx.globalAlpha = invA;
+    ctx.strokeStyle = '#88ccff'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(px, player.y, ps * 1.4, 0, Math.PI * 2); ctx.stroke();
+    ctx.globalAlpha = invA * 0.15; ctx.fillStyle = '#88ccff'; ctx.fill();
+    ctx.restore();
+  }
   ctx.save();
   const st = player.sliding ? 'slide' : (_onGround() ? 'run' : 'jump');
   if (player.sliding) {
@@ -273,6 +291,13 @@ function _jump() {
 function _slide() {
   if (!GPS0_running() && !cinema) return;
   player.sliding = true; player.slideT = 55;
+}
+function _shield() {
+  if (shieldCoolT > 0 || (!GPS0_running() && !cinema)) return;
+  shieldT = 90; shieldCoolT = 480;
+  warnMsg = '\uD83D\uDEE1 BOUCLIER ACTIF !'; warnT = 70;
+  _flash('#88ccff');
+  if (navigator.vibrate) navigator.vibrate([20, 10, 40]);
 }
 
 function _hitC(ox,oy,or_) {
@@ -347,6 +372,11 @@ function _updMeteors() {
     const m=meteors[i]; m.x+=m.vx*_dt; m.y+=m.vy*_dt; m.t++;
     if (m.y>gy+m.r+5){metColBusy[m.col]=false;meteors.splice(i,1);continue;}
     if (player.invT===0&&_hitC(m.x,m.y,m.r-5)){
+      if (shieldT > 0) {
+        // Bouclier absorbe le météore
+        metColBusy[m.col]=false; _spawnParts(m.x,m.y,'#88ccff',10); meteors.splice(i,1);
+        _flash('#88ccff'); _shake(1,5); continue;
+      }
       metColBusy[m.col]=false; _spawnParts(m.x,m.y,'#ff6600',10); meteors.splice(i,1); _dmgPlayer();
     }
   }
@@ -463,10 +493,18 @@ function _drawParts(){
 function _drawZones(){
   const bh=44,by=H-bh;
   ctx.globalAlpha=0.18;
-  ctx.fillStyle='#4488ff'; ctx.fillRect(0,by,W/2,bh);
-  ctx.fillStyle='#44cc88'; ctx.fillRect(W/2,by,W/2,bh);
+  ctx.fillStyle='#4488ff'; ctx.fillRect(0,by,W/3,bh);
+  ctx.fillStyle='#44cc88'; ctx.fillRect(W/3,by,W/3,bh);
+  ctx.fillStyle='#ff8844'; ctx.fillRect(2*W/3,by,W/3,bh);
   ctx.globalAlpha=0.55; ctx.font='bold 13px system-ui'; ctx.textAlign='center'; ctx.fillStyle='#fff';
-  ctx.fillText('⛷ GLISSER',W/4,by+26); ctx.fillText('🚀 SAUTER',W*3/4,by+26);
+  ctx.fillText('\u25C4 GAUCHE',W/6,by+28); ctx.fillText('\uD83D\uDE80 SAUTER',W/2,by+28); ctx.fillText('DROITE \u25BA',W*5/6,by+28);
+  if (shieldT > 0) {
+    ctx.globalAlpha=0.9; ctx.fillStyle='#88ccff'; ctx.font='bold 11px system-ui';
+    ctx.fillText('\uD83D\uDEE1 '+(shieldT/60).toFixed(1)+'s',W/2,by-6);
+  } else if (shieldCoolT > 0) {
+    ctx.globalAlpha=0.5; ctx.fillStyle='#aaa'; ctx.font='11px system-ui';
+    ctx.fillText('\uD83D\uDEE1 CD '+(shieldCoolT/60).toFixed(0)+'s',W/2,by-6);
+  }
   ctx.globalAlpha=1;
 }
 function _drawWarn(){
@@ -496,7 +534,7 @@ function _doTransition(toP,text,col){
     bossScale=(toP===2?1.2:1.44); phase=toP;
     soleils=[]; meteors=[]; novas=[]; hearts=[]; metColBusy=[false,false,false,false];
     if(toP===3)spd=3.5; if(toP===4)spd=2.5;
-    tSoleil=90; tMeteor=150; tNova=(toP===2?720:toP===3?480:300);
+    tSoleil=toP===2?72:toP===3?50:30; tMeteor=toP===2?90:toP===3?60:42; tNova=toP===2?600:toP===3?420:300;
     tHeart=300+Math.floor(Math.random()*300);
     _bbar();
   },300);
@@ -512,7 +550,7 @@ function _drawCinema(){
   const bx=W*.78,by=H*.14;
   if(cinemaT<30){
     for(let i=0;i<5;i++){
-      parts.push({x:W*PX,y:player.y,vx:(bx-W*PX)/18+(Math.random()-.5)*5,vy:(by-player.y)/18+(Math.random()-.5)*5,life:18,maxL:18,r:5,col:'#FFD700'});
+      parts.push({x:player.px*W,y:player.y,vx:(bx-player.px*W)/18+(Math.random()-.5)*5,vy:(by-player.y)/18+(Math.random()-.5)*5,life:18,maxL:18,r:5,col:'#FFD700'});
     }
   }else if(cinemaT===30){bossFlash='#ffffff';_spawnParts(bx,by,'#FFD700',80);_spawnParts(bx,by,'#ff8800',40);}
   else if(cinemaT>30&&cinemaT<90){const a=Math.max(0,1-(cinemaT-30)/28);ctx.fillStyle=`rgba(255,255,255,${a*.65})`;ctx.fillRect(0,0,W,H);}
@@ -535,14 +573,15 @@ function gameReset(){
   cancelAnimationFrame(rafId);
   if(transEl){transEl.remove();transEl=null;}
   phase=1;bossHp=HP_MAX;totalDust=0;phaseMax=1;bossVaincu=false;
-  player={y:0,vy:0,sliding:false,slideT:0,invT:0};
+  player={y:0,vy:0,px:0.18,vx:0,sliding:false,slideT:0,invT:0};
   soleils=[];meteors=[];novas=[];hearts=[];parts=[];
+  leftHeld=false;rightHeld=false;lastCenterTapT=0;shieldT=0;shieldCoolT=0;
   finalDustSpawned=false;phaseTimer=0;transitioning=false;
   p1done=false;p2done=false;p3done=false;
   scrollX=0;bgT=0;bossScale=1;bossFlash=null;
   warnMsg='';warnT=0;cinema=false;cinemaT=0;spd=2.5;
   shakeAmt=0;shakeDur=0;
-  tSoleil=120;tMeteor=240;tNova=720;tHeart=420+Math.floor(Math.random()*360);
+  tSoleil=90;tMeteor=150;tNova=720;tHeart=420+Math.floor(Math.random()*360);
   novaWarnActive=false;novaWarnLeft=0;
   heartPhaseSpawned={1:false,2:false,3:false,4:false};
   metColBusy=[false,false,false,false];
@@ -556,10 +595,37 @@ function gameStart(){
   if(!cv.width||!cv.height){const hud=document.getElementById('hud');cv.width=window.innerWidth;cv.height=window.innerHeight-(hud?hud.offsetHeight:44);}
   ctx=cv.getContext('2d'); W=cv.width; H=cv.height;
   player.y=H*GY-_pSize();
+  const _getRelX = (clientX) => {
+    const rect = cv.getBoundingClientRect();
+    return (clientX - rect.left) / rect.width;
+  };
   cv.addEventListener('touchstart',e=>{
     e.preventDefault();
-    const tx=e.touches[0].clientX;
-    if(tx<W/2)_slide();else _jump();
+    for (const t of e.changedTouches) {
+      const rx = _getRelX(t.clientX);
+      if (rx < 0.33) {
+        leftHeld = true;
+      } else if (rx > 0.67) {
+        rightHeld = true;
+      } else {
+        const now = Date.now();
+        if (now - lastCenterTapT < 330 && shieldCoolT === 0) {
+          _shield();
+        } else {
+          _jump();
+        }
+        lastCenterTapT = now;
+      }
+    }
+  },{passive:false});
+  cv.addEventListener('touchend',e=>{
+    e.preventDefault();
+    for (const t of e.changedTouches) {
+      const rx = _getRelX(t.clientX);
+      if (rx < 0.33) leftHeld = false;
+      else if (rx > 0.67) rightHeld = false;
+    }
+    if (e.touches.length === 0) { leftHeld = false; rightHeld = false; }
   },{passive:false});
   document.addEventListener('keydown',e=>{
     if(e.key==='ArrowUp'||e.key===' '){e.preventDefault();_jump();}
@@ -590,11 +656,11 @@ function gameStart(){
         _spawnSoleil(0);
         if(phase===3){_spawnSoleil(55);_spawnSoleil(110);}
         if(phase===4){_spawnSoleil(45);_spawnSoleil(90);_spawnSoleil(135);}
-        tSoleil=phase===1?120:phase===2?90:phase===3?70:35;
+        tSoleil=phase===1?90:phase===2?72:phase===3?50:25;
       }
       if(--tMeteor<=0){
         _spawnMeteorSafe();
-        tMeteor=phase===1?240:phase===2?150:phase===3?90:58;
+        tMeteor=phase===1?150:phase===2?90:phase===3?60:42;
       }
       if(phase>=2&&!novaWarnActive&&--tNova<=0){
         _triggerNova();

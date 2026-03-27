@@ -324,7 +324,7 @@ function gameStart() {
                 ctx.fillStyle = fg;
                 ctx.beginPath(); ctx.ellipse(mx2, shipCY+sh*.22, sw*.055, sh*.38*pulse, 0, 0, Math.PI*2); ctx.fill();
               }
-            } else {
+            } else if (shipType === 2) {
               // Croiseur rouge
               const wg2 = ctx.createLinearGradient(sx2-sw/2, shipCY-sh*.38, sx2-sw/2, shipCY+sh*.38);
               wg2.addColorStop(0, `hsl(${hue},85%,32%)`);

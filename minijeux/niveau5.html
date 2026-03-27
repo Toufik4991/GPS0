@@ -30,6 +30,7 @@ body{display:flex;flex-direction:column;height:100dvh}
 window.NIVEAU = 5;
 window.GPS0_TIMER_SEC = 150;
 window.GPS0_onTimerExpired = function () { endGame(false); };
+window.GPS0_MAX_LIVES = 3;
 window.TUTO_TEXT = "☀️ 1, 2, 3... SOLEIL !<br>TAP quand le soleil a le DOS tourné 🔆<br><small>STOP quand il se retourne ! 😡 La Lune te guide... 🌙</small>";
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -63,6 +64,7 @@ let rafId, lastT;
 let playerOffX, touchStartX, touchStartY, touchStartT;
 let nbReculs, arrivee;
 let laser, competitors;
+let playerInvT;
 
 window.GPS0_computeDust = function(success) {
   var tempsJoue = GPS0_timerTotal() - GPS0_timerSec();
@@ -84,6 +86,7 @@ function gameReset() {
   moonBlink = 0; moonBlinkTimer = 0;
   playerOffX = 0; touchStartX = 0; touchStartY = 0; touchStartT = 0;
   nbReculs = 0; arrivee = false;
+  playerInvT = 0;
   laser = { active: false, x: 0, warnT: 0, timer: 0, nextT: 720 };
   competitors = [];
   var compLanes = [0.06, 0.14, 0.23, 0.50, 0.77, 0.86, 0.94];
@@ -206,9 +209,11 @@ function _onTap() {
   if (!GPS0_running()) return;
 
   if (phase === 'stop' || phase === 'turning') {
+    if (playerInvT > 0) return;
     stopFlash = 1;
     progress = Math.max(0, progress - PENALTY);
     nbReculs++;
+    playerInvT = 120;
     loseLife();
     if (navigator.vibrate) navigator.vibrate([80, 40, 160]);
     return;
@@ -244,6 +249,7 @@ function _loop(now) {
   var dt = Math.min(now - lastT, 80);
   lastT = now;
   bgT += dt / 16.67;
+  if (playerInvT > 0) playerInvT--;
   _fixSize();
   _updateDifficulty();
   _updatePhase(dt);
@@ -292,10 +298,11 @@ function _updateLaser() {
     laser.timer--;
     if (laser.timer <= 0) { laser.active = false; return; }
     var px = _sunX() + playerOffX;
-    if (GPS0_running() && Math.abs(px - laser.x) < LASER_W) {
+    if (GPS0_running() && playerInvT === 0 && Math.abs(px - laser.x) < LASER_W) {
       laser.active = false; laser.timer = 0;
       progress = Math.max(0, progress - PENALTY * 0.6);
       nbReculs++;
+      playerInvT = 120;
       var py = _playerY();
       for (var i = 0; i < 8; i++) fxParts.push({
         x: px, y: py + Math.random() * 20,
@@ -445,6 +452,17 @@ function _draw() {
   /* Cosmonaute */
   var posY = _playerY();
   drawCosmonaut(ctx, _sunX() + playerOffX, posY, COSMO_R, 0, (phase === 'count' || phase === 'unturning') ? 'run' : 'idle');
+  if (playerInvT > 0) {
+    var invAlpha = 0.28 + 0.22 * Math.sin(bgT * 0.45);
+    ctx.save();
+    ctx.globalAlpha = invAlpha;
+    ctx.strokeStyle = '#88ccff'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(_sunX() + playerOffX, posY, COSMO_R + 14, 0, Math.PI * 2); ctx.stroke();
+    ctx.globalAlpha = invAlpha * 0.18;
+    ctx.fillStyle = '#88ccff';
+    ctx.fill();
+    ctx.restore();
+  }
 
   /* Concurrents IA */
   _drawCompetitors();

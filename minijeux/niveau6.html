@@ -43,7 +43,7 @@ window.GPS0_onTimerExpired = function () { endGame(true); };
 window.TUTO_TEXT = "Niveau 6 \u2014 Glisse le doigt pour bouger \u00b7 Mange les plus petites \u00b7 Fuis les plus grosses \u00b7 \u2726 = +1 poussi\u00e8re"; 
 
 const MAP = 2400, PLAYER_R0 = 22;
-const FOOD_N = 200, ENEMY_N = 45, CRYSTAL_N = 30, CRYSTAL_MAX = 50;
+const FOOD_N = 70, ENEMY_N = 80, CRYSTAL_N = 30, CRYSTAL_MAX = 50;
 
 let player, enemies, foods, crystals, particles, stars;
 let joystick, dustCount, bgT, rafId, cellulesIAMangees;
@@ -192,13 +192,19 @@ function gameStart() {
     player.y = Math.max(player.r, Math.min(MAP-player.r, player.y+player.vy));
 
     // --- ENNEMIS IA ---
+    const diffMul = 1 + Math.min(bgT / 3600, 1.2); // difficulté progressive jusqu'à x2.2
     enemies.forEach((en, i) => {
       if (!en) return;
       en.tTimer--;
-      if (en.tTimer <= 0) {
+      const dp = Math.hypot(player.x-en.x, player.y-en.y);
+      const hunting = en.r > player.r * 1.05 && dp < 550;
+      if (hunting) {
+        // Chasse continue — cible le joueur chaque frame
+        en.tx = player.x + (Math.random()-.5)*10;
+        en.ty = player.y + (Math.random()-.5)*10;
+      } else if (en.tTimer <= 0) {
         en.tTimer = 40 + Math.floor(Math.random()*35);
         let prey = null, pDist = 9999, flee = null, fDist = 9999;
-        const dp = Math.hypot(player.x-en.x, player.y-en.y);
         if (dp < 300) {
           if (player.r < en.r*.88)       { if (dp<pDist) { pDist=dp; prey={x:player.x,y:player.y}; } }
           else if (player.r > en.r*1.12) { if (dp<fDist) { fDist=dp; flee={x:player.x,y:player.y}; } }
@@ -225,7 +231,8 @@ function gameStart() {
         en.tx = Math.max(en.r, Math.min(MAP-en.r, en.tx));
         en.ty = Math.max(en.r, Math.min(MAP-en.r, en.ty));
       }
-      const eSpd = 2.6 / Math.pow(en.r/22, 0.38);
+      const chaseMul = hunting ? 1.65 : 1.0;
+      const eSpd = (2.6 / Math.pow(en.r/22, 0.38)) * chaseMul * diffMul;
       const tdx = en.tx-en.x, tdy = en.ty-en.y, tlen = Math.hypot(tdx,tdy);
       if (tlen > 1) { en.vx = en.vx*.84+(tdx/tlen)*eSpd*.16; en.vy = en.vy*.84+(tdy/tlen)*eSpd*.16; }
       en.x = Math.max(en.r, Math.min(MAP-en.r, en.x+en.vx));
@@ -255,10 +262,16 @@ function gameStart() {
       }
     });
 
+    // Spawn ennemi périodique (toutes les 5s = 300 frames, max 120)
+    if (bgT % 300 === 0 && enemies.filter(Boolean).length < 120) {
+      enemies.push(null);
+      _spawnEnemy(enemies.length - 1);
+    }
+
     // --- NOURRITURE ---
     foods.forEach((f, fi) => {
       if (Math.hypot(player.x-f.x, player.y-f.y) < player.r+f.r-2) {
-        player.r = Math.min(player.r+1.1, 140);
+        player.r = Math.min(player.r+0.25, 140);
         foods[fi] = _newFood();
       }
     });
