@@ -633,6 +633,7 @@ window.GPS0_App = (() => {
   function _ouvrirIframe(niveau) {
     _pauseGlobalClock();
     GPS0_Lune.setMiniJeuActif(true);
+    if (typeof GPS0_GPS !== 'undefined' && GPS0_GPS.arreterSuivi) GPS0_GPS.arreterSuivi();
     document.getElementById('app').classList.remove('visible');
     const iframe = document.createElement('iframe');
     iframe.src = 'minijeux/niveau' + niveau + '.html';
@@ -646,6 +647,7 @@ window.GPS0_App = (() => {
       GPS0_Lune.setMiniJeuActif(false);
       document.getElementById('app').classList.add('visible');
       if (!_enZone) _resumeGlobalClock();
+      if (typeof GPS0_GPS !== 'undefined' && GPS0_GPS.demarrerSuivi) GPS0_GPS.demarrerSuivi();
       if (e.data.quit) return; // Quitter sans résultat
       document.dispatchEvent(new CustomEvent(e.data.success ? 'minijeu:complete' : 'minijeu:failed', { detail: e.data }));
     };

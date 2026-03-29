@@ -174,7 +174,7 @@ function gameStart() {
     bgT++;
 
     // --- INPUT JOUEUR ---
-    const spd = 3.8 / Math.pow(player.r / PLAYER_R0, 0.42);
+    const spd = 3.8 * (1 + 0.3 * (1 - Math.min(player.r, 140) / 140)) / Math.pow(player.r / PLAYER_R0, 0.42);
     let ix = 0, iy = 0;
     if (joystick.active) {
       const ddx = joystick.sx - joystick.bx, ddy = joystick.sy - joystick.by;
@@ -370,18 +370,26 @@ function gameStart() {
       ctx.restore();
     });
 
-    // Cristaux
+    // Cristaux → étoile or (même visuel que bonusGoldStars)
     crystals.forEach(c => {
       if (c.col) return;
       const cx=c.x+offX, cy=c.y+offY;
       if (cx<-22||cx>W+22||cy<-22||cy>H+22) return;
-      ctx.save(); ctx.translate(cx,cy); ctx.rotate(bgT*.022);
-      const hg = ctx.createRadialGradient(0,0,2,0,0,16);
-      hg.addColorStop(0,'rgba(200,136,255,.5)'); hg.addColorStop(1,'rgba(200,136,255,0)');
-      ctx.fillStyle=hg; ctx.beginPath(); ctx.arc(0,0,16,0,Math.PI*2); ctx.fill();
-      ctx.fillStyle='#cc88ff';
-      ctx.beginPath(); ctx.moveTo(0,-9); ctx.lineTo(5,0); ctx.lineTo(0,9); ctx.lineTo(-5,0); ctx.closePath(); ctx.fill();
-      ctx.strokeStyle='rgba(220,180,255,.6)'; ctx.lineWidth=1.2; ctx.stroke();
+      // Halo or
+      const hg = ctx.createRadialGradient(cx,cy,2,cx,cy,20);
+      hg.addColorStop(0,'rgba(255,215,0,.55)'); hg.addColorStop(1,'rgba(255,215,0,0)');
+      ctx.fillStyle=hg; ctx.beginPath(); ctx.arc(cx,cy,20,0,Math.PI*2); ctx.fill();
+      // Étoile 5 branches tournante
+      ctx.save(); ctx.translate(cx,cy); ctx.rotate(bgT*0.04);
+      ctx.fillStyle='#FFD700';
+      ctx.beginPath();
+      for (let si=0;si<10;si++) {
+        const a=(si/10)*Math.PI*2-Math.PI/2;
+        const d = si%2===0 ? 10 : 4.5;
+        si===0 ? ctx.moveTo(Math.cos(a)*d,Math.sin(a)*d) : ctx.lineTo(Math.cos(a)*d,Math.sin(a)*d);
+      }
+      ctx.closePath(); ctx.fill();
+      ctx.strokeStyle='rgba(255,255,120,.8)'; ctx.lineWidth=1; ctx.stroke();
       ctx.restore();
     });
 

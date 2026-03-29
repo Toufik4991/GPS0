@@ -313,6 +313,18 @@ function _drawStalacts(ctx, W, H) {
   });
 }
 
+// ── SELFIE CACHE ─────────────────────────────────────────────────────────────────────────────────
+let _selfieImg = null;
+function _getSelfieImg() {
+  if (_selfieImg) return _selfieImg;
+  try {
+    const b64 = (typeof GPS0_Avatar !== 'undefined') ? GPS0_Avatar.getSelfie() : null;
+    if (!b64) return null;
+    _selfieImg = new Image(); _selfieImg.src = b64;
+  } catch(e) {}
+  return _selfieImg;
+}
+
 // ── DESSIN CRISTAUX ─────────────────────────────────────────────────────────────────────────────────
 // Hue-rotate de chaque couleur CC pour filtre CSS
 const CC_FILTERS = [
@@ -365,20 +377,51 @@ function _drawCrystals(ctx, W, H) {
     ctx.beginPath(); ctx.arc(cr.x, cr.y, cosmoR * 1.08, 0, Math.PI * 2); ctx.stroke();
     ctx.restore();
 
-    // Cosmonaute avec filtre couleur
+    // Casque seul avec selfie dans la visière + couleur CC
     ctx.save();
-    if (isErr) {
-      ctx.filter = 'hue-rotate(0deg) saturate(4) brightness(1.2)';
-    } else if (isLit) {
-      ctx.filter = CC_FILTERS[i] + ' brightness(1.4)';
-    } else {
-      ctx.filter = CC_FILTERS[i] + ' brightness(0.6)';
-    }
-    const scale = isLit ? 1.18 : 1.0;
+    const scale = isLit ? 1.18 : isErr ? 1.05 : 1.0;
     ctx.translate(cr.x, cr.y);
     ctx.scale(scale, scale);
     ctx.translate(-cr.x, -cr.y);
-    drawCosmonaut(ctx, cr.x, cr.y, cosmoR, 0, isLit ? 'jump' : 'idle');
+
+    const hR = cosmoR * 0.90;
+    // Bord casque
+    ctx.strokeStyle = isErr ? '#FF3333' : isLit ? col.l : col.d.replace(')', '').replace('rgb', 'rgb') + '99';
+    ctx.lineWidth = isLit ? 3 : isErr ? 2.5 : 1.5;
+    ctx.beginPath(); ctx.arc(cr.x, cr.y, hR, 0, Math.PI * 2); ctx.stroke();
+    // Corps casque (fond coloré)
+    const helmFill = isErr ? 'rgba(80,10,10,0.88)' : isLit ? col.g.replace('0.62)', '0.38)') : col.g.replace('0.62)', '0.15)');
+    ctx.fillStyle = helmFill;
+    ctx.beginPath(); ctx.arc(cr.x, cr.y, hR, 0, Math.PI * 2); ctx.fill();
+
+    // Visière avec selfie
+    const vW = hR * 0.64, vH = hR * 0.50;
+    const vX = cr.x, vY = cr.y + hR * 0.06;
+    ctx.save();
+    ctx.beginPath(); ctx.ellipse(vX, vY, vW, vH, 0, 0, Math.PI * 2); ctx.clip();
+    const selfie = _getSelfieImg();
+    if (selfie && selfie.complete && selfie.naturalWidth > 0) {
+      ctx.drawImage(selfie, vX - vW, vY - vH, vW * 2, vH * 2);
+    } else {
+      // placeholder : fond sombre avec yeux sympa
+      ctx.fillStyle = isErr ? '#3a0000' : '#001840';
+      ctx.fillRect(vX - vW, vY - vH, vW * 2, vH * 2);
+      const eyeR = Math.max(2, hR * 0.09);
+      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(vX - hR*0.20, vY - hR*0.04, eyeR, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(vX + hR*0.20, vY - hR*0.04, eyeR, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = isErr ? '#ff4444' : 'rgba(0,200,255,0.9)';
+      ctx.beginPath(); ctx.arc(vX - hR*0.20, vY - hR*0.04, eyeR*0.5, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(vX + hR*0.20, vY - hR*0.04, eyeR*0.5, 0, Math.PI*2); ctx.fill();
+    }
+    // Teinte couleur CC sur visière
+    const tintA = isLit ? 0.38 : isErr ? 0.52 : 0.22;
+    ctx.fillStyle = isErr ? `rgba(255,40,40,${tintA})` : col.g.replace('0.62)', tintA + ')');
+    ctx.fillRect(vX - vW, vY - vH, vW * 2, vH * 2);
+    // Reflet visière
+    ctx.fillStyle = 'rgba(255,255,255,0.13)';
+    ctx.beginPath(); ctx.ellipse(vX - vW*0.22, vY - vH*0.20, vW*0.28, vH*0.20, -0.35, 0, Math.PI*2); ctx.fill();
+    ctx.restore();
+
     ctx.filter = 'none';
     ctx.restore();
   }

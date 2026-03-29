@@ -37,10 +37,9 @@ const BOUNCE_VY  = -14.5;
 const PLAYER_R   = 22;
 const PLAT_H     = 12;
 const MOVE_SPEED = 4.4;
-const AST_INTERVAL = 528;
 
 // \u2500\u2500 \u00c9TAT \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
-let player, platforms, asteroids, parts, stars;
+let player, platforms, parts, stars;
 let cameraY, genTopY, startPlayerY, maxHeight;
 let frame, bgT, rafId, invincible, bubbleTimer;
 let touching, pointers;
@@ -61,7 +60,6 @@ function gameReset() {
   cancelAnimationFrame(rafId);
   player       = { x: 0, worldY: 0, vx: 0, vy: 0 };
   platforms    = [];
-  asteroids    = [];
   parts        = [];
   stars        = [];
   cameraY      = 0;
@@ -184,10 +182,10 @@ function gameStart() {
               vx: (Math.random() - 0.5) * 4.5,
               vy: 0.5 + Math.random() * 2,
               life: 20,
-              col: p.type === 'break' ? '#FFB448' : '#aaddff'
+              col: p.type === 'fragile' ? '#FF5548' : '#aaddff'
             });
           }
-          if (p.type === 'break') { p.broken = true; }
+          if (p.type === 'fragile') { p.broken = true; }
           break;
         }
       }
@@ -213,43 +211,6 @@ function gameStart() {
     // Invincibilit\u00e9 apr\u00e8s d\u00e9g\u00e2t
     if (invincible > 0) invincible--;
 
-    // Ast\u00e9ro\u00efdes (tombent depuis le haut de l'\u00e9cran)
-    if (frame % AST_INTERVAL === 0) {
-      const r = 14 + Math.random() * 12;
-      asteroids.push({
-        x: r + Math.random() * (W - r * 2),
-        worldY: cameraY - r - 10,
-        r,
-        vy: 1.7 + Math.random() * 1.8 + Math.min(1.2, maxHeight / 4500),
-        rot: Math.random() * Math.PI * 2,
-        vrot: (Math.random() - 0.5) * 0.07
-      });
-    }
-    asteroids.forEach(a => { a.worldY += a.vy; a.rot += a.vrot; });
-    asteroids = asteroids.filter(a => a.worldY < cameraY + H + 60);
-
-    // Collisions ast\u00e9ro\u00efdes
-    if (invincible === 0) {
-      for (const a of asteroids) {
-        if (Math.hypot(player.x - a.x, player.worldY - a.worldY) < PLAYER_R + a.r - 4) {
-          a.worldY = cameraY + H + 200; // \u00e9liminer
-          for (let i = 0; i < 16; i++) {
-            parts.push({
-              x: player.x, worldY: player.worldY,
-              vx: (Math.random() - 0.5) * 8,
-              vy: -4 - Math.random() * 4,
-              life: 32, col: '#FF5020'
-            });
-          }
-          invincible = 300;
-          bubbleTimer = 300;
-          loseLife();
-          if (GPS0_running()) _respawn(W, H);
-          break;
-        }
-      }
-    }
-
     // Particules
     parts = parts.filter(p => p.life > 0);
     parts.forEach(p => { p.x += p.vx; p.worldY += p.vy; p.vy += 0.12; p.life--; });
@@ -258,7 +219,6 @@ function gameStart() {
     ctx.clearRect(0, 0, W, H);
     _drawBg(ctx, W, H);
     _drawPlatforms(ctx, H);
-    _drawAsteroids(ctx, H);
 
     // Particules
     parts.forEach(p => {
@@ -328,24 +288,22 @@ window.gameStart = gameStart;
 // \u2500\u2500 G\u00c9N\u00c9RATION PLATEFORMES \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 function _genPlatforms(W, H) {
   const genTarget = cameraY - H * 1.6;
-  const difficulty = Math.min(1, maxHeight / 6500);
+  // Paliers de difficulté par temps (frame/60 = secondes depuis le début du jeu)
+  const t = frame / 60;
+  let fragileChance, platW, gap, mobileChance, mobileSpd;
+  if      (t < 30) { fragileChance = 0;    platW = 84; gap = 68;  mobileChance = 0;    mobileSpd = 0;   }
+  else if (t < 45) { fragileChance = 0.20; platW = 68; gap = 80;  mobileChance = 0;    mobileSpd = 0;   }
+  else if (t < 60) { fragileChance = 0.40; platW = 56; gap = 92;  mobileChance = 0.25; mobileSpd = 1.2; }
+  else if (t < 90) { fragileChance = 0.50; platW = 48; gap = 108; mobileChance = 0.38; mobileSpd = 2.0; }
+  else             { fragileChance = 0.60; platW = 38; gap = 124; mobileChance = 0.50; mobileSpd = 2.8; }
 
   while (genTopY > genTarget) {
-    const gap  = 70 + difficulty * 43 + Math.random() * 32;
-    genTopY   -= gap;
-
-    const platW = Math.max(48, 72 - difficulty * 22);
-    const x     = 10 + Math.random() * (W - platW - 20);
-
-    // Type : cassable apr\u00e8s 2200m
-    let type = 'normal';
-    if (maxHeight > 2200 && Math.random() < 0.20 + difficulty * 0.18) type = 'break';
-
-    // Mobile : d\u00e8s le d\u00e9but 18%, monte jusqu'\u00e0 38%
-    const vx = Math.random() < 0.18 + difficulty * 0.20
-      ? (1.0 + Math.random() * 1.6) * (Math.random() < 0.5 ? 1 : -1)
+    genTopY -= gap + Math.random() * 28;
+    const x    = 10 + Math.random() * (W - platW - 20);
+    const type = Math.random() < fragileChance ? 'fragile' : 'normal';
+    const vx   = Math.random() < mobileChance
+      ? (mobileSpd + Math.random() * 0.8) * (Math.random() < 0.5 ? 1 : -1)
       : 0;
-
     platforms.push({ x, worldY: genTopY, w: platW, type, vx, broken: false, alpha: 1 });
   }
 }
@@ -469,10 +427,10 @@ function _drawPlatforms(ctx, H) {
 
     ctx.globalAlpha = p.alpha;
 
-    const isBreak = p.type === 'break';
-    const isMove  = p.vx !== 0;
-    const topCol  = isBreak ? '#c08830' : isMove ? '#4a98d8' : '#8a9eac';
-    const botCol  = isBreak ? '#704810' : isMove ? '#2a5888' : '#4e6070';
+    const isFragile = p.type === 'fragile';
+    const isMove    = p.vx !== 0;
+    const topCol    = isFragile ? '#d04830' : isMove ? '#4a98d8' : '#8a9eac';
+    const botCol    = isFragile ? '#7a1810' : isMove ? '#2a5888' : '#4e6070';
 
     const pg = ctx.createLinearGradient(p.x, sy, p.x, sy + PLAT_H);
     pg.addColorStop(0, topCol);
@@ -488,53 +446,20 @@ function _drawPlatforms(ctx, H) {
       ctx.fillStyle = `rgba(140,220,255,${pulse.toFixed(2)})`;
       ctx.beginPath(); ctx.arc(p.x + p.w * 0.5, sy + PLAT_H * 0.5, 3.5, 0, Math.PI * 2); ctx.fill();
     }
-    if (isBreak) {
-      ctx.strokeStyle = 'rgba(255,190,50,0.42)';
+    if (isFragile) {
+      // Craquelures danger
+      ctx.strokeStyle = 'rgba(255,80,40,0.55)';
       ctx.lineWidth   = 1;
-      ctx.setLineDash([5, 4]);
+      ctx.setLineDash([4, 4]);
       ctx.beginPath(); ctx.roundRect(p.x + 2, sy + 2, p.w - 4, PLAT_H - 4, 3); ctx.stroke();
       ctx.setLineDash([]);
+      // Symbole danger
+      ctx.fillStyle = 'rgba(255,160,40,0.70)';
+      ctx.font = `${Math.min(PLAT_H - 2, 9)}px system-ui`;
+      ctx.textAlign = 'center';
+      ctx.fillText('⚠', p.x + p.w * 0.5, sy + PLAT_H - 2);
     }
     ctx.globalAlpha = 1;
-  });
-}
-
-// \u2500\u2500 AST\u00c9RO\u00cfDES \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
-function _drawAsteroids(ctx, H) {
-  asteroids.forEach(a => {
-    const sy = a.worldY - cameraY;
-    if (sy < -a.r * 3 || sy > H + a.r * 2) return;
-    ctx.save();
-    ctx.translate(a.x, sy);
-    ctx.rotate(a.rot);
-
-    // Tra\u00een\u00e9e
-    const tg = ctx.createLinearGradient(0, 0, 0, -a.r * 3.5);
-    tg.addColorStop(0, 'rgba(255,140,30,0.55)');
-    tg.addColorStop(0.5, 'rgba(255,70,20,0.22)');
-    tg.addColorStop(1, 'rgba(255,50,0,0)');
-    ctx.fillStyle = tg;
-    ctx.beginPath(); ctx.ellipse(0, -a.r * 1.8, a.r * 0.28, a.r * 1.8, 0, 0, Math.PI * 2); ctx.fill();
-
-    // Corps (forme irr\u00e9guli\u00e8re)
-    const ag = ctx.createRadialGradient(-a.r * 0.28, -a.r * 0.28, a.r * 0.08, 0, 0, a.r);
-    ag.addColorStop(0, '#7e8288');
-    ag.addColorStop(0.5, '#505460');
-    ag.addColorStop(1, '#20232a');
-    ctx.fillStyle = ag;
-    ctx.beginPath();
-    for (let i = 0; i < 8; i++) {
-      const ang = (i / 8) * Math.PI * 2;
-      const rr  = a.r * (0.72 + Math.sin(i * 2.7) * 0.26);
-      i === 0
-        ? ctx.moveTo(Math.cos(ang) * rr, Math.sin(ang) * rr)
-        : ctx.lineTo(Math.cos(ang) * rr, Math.sin(ang) * rr);
-    }
-    ctx.closePath(); ctx.fill();
-
-    ctx.fillStyle = 'rgba(255,255,255,0.10)';
-    ctx.beginPath(); ctx.ellipse(-a.r * 0.25, -a.r * 0.3, a.r * 0.22, a.r * 0.14, -0.5, 0, Math.PI * 2); ctx.fill();
-    ctx.restore();
   });
 }
 

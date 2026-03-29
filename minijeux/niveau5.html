@@ -52,7 +52,6 @@ const STEP_DUR_START = 1000;
 const STEP_DUR_END   = 500;
 const MOON_R      = 28;
 const MOON_PAD    = 16;
-const LASER_W     = 32; // largeur beam laser en px
 
 let cv, ctx, W, H;
 let progress, phase, phaseTimer, countStep, countStepTimer;
@@ -62,7 +61,6 @@ let moonBlink, moonBlinkTimer;
 let rafId, lastT;
 let playerOffX, touchStartX, touchStartY, touchStartT;
 let nbReculs, arrivee;
-let laser;
 let holdDown, holdDuration;
 let playerInvT;
 
@@ -87,7 +85,6 @@ function gameReset() {
   playerOffX = 0; touchStartX = 0; touchStartY = 0; touchStartT = 0;
   nbReculs = 0; arrivee = false;
   playerInvT = 0;
-  laser = { active: false, x: 0, warnT: 0, timer: 0, nextT: 720 };
   holdDown = false; holdDuration = 0;
   fxParts = []; _initStars(); _initDust();
 }
@@ -259,48 +256,10 @@ function _loop(now) {
       if (progress >= 1) { arrivee = true; endGame(true); }
     }
   }
-  _updateLaser();
   _draw();
 }
 
 
-
-/* ── LASER ATTAQUE ───────────────────────────────────────────────── */
-function _updateLaser() {
-  if (progress < 0.5) return;
-  if (!laser.active && !laser.warnT) {
-    laser.nextT--;
-    if (laser.nextT <= 0) {
-      laser.warnT = 90;
-      var side = Math.random();
-      laser.x = _sunX() + (side < 0.33 ? -W * 0.18 : side < 0.66 ? 0 : W * 0.18);
-      laser.nextT = progress > 0.8 ? 420 : 600;
-    }
-  }
-  if (laser.warnT > 0) {
-    laser.warnT--;
-    if (laser.warnT === 0) { laser.active = true; laser.timer = 110; }
-    return;
-  }
-  if (laser.active) {
-    laser.timer--;
-    if (laser.timer <= 0) { laser.active = false; return; }
-    var px = _sunX() + playerOffX;
-    if (GPS0_running() && playerInvT === 0 && Math.abs(px - laser.x) < LASER_W) {
-      laser.active = false; laser.timer = 0;
-      progress = Math.max(0, progress - PENALTY * 0.6);
-      nbReculs++;
-      playerInvT = 120;
-      var py = _playerY();
-      for (var i = 0; i < 8; i++) fxParts.push({
-        x: px, y: py + Math.random() * 20,
-        vx: (Math.random() - 0.5) * 5, vy: (Math.random() - 0.5) * 4,
-        r: 2.5, col: '#FFD700', al: 1
-      });
-      loseLife();
-    }
-  }
-}
 
 function _updateDifficulty() {
   difficultyMul = 1 + progress * 0.8;
@@ -456,7 +415,7 @@ function _draw() {
   }
 
   /* Laser beam */
-  _drawLaser();
+  /* (supprimé) */
 
   /* Soleil */
   _drawSun();
@@ -470,41 +429,7 @@ function _draw() {
 }
 
 
-/* ── DESSIN LASER ─────────────────────────────────────────────────── */
-function _drawLaser() {
-  if (!laser.warnT && !laser.active) return;
-  var lx = laser.x;
-  var top = _sunY() + SUN_R, bot = _pathBot() + 30;
-  if (laser.warnT > 0) {
-    var blink = (Math.floor(bgT / 5) % 2 === 0);
-    ctx.save(); ctx.globalAlpha = blink ? 0.85 : 0.25;
-    ctx.setLineDash([10, 7]);
-    ctx.strokeStyle = '#FF8800'; ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.moveTo(lx, top); ctx.lineTo(lx, bot); ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.globalAlpha = 0.9;
-    ctx.fillStyle = '#FF8800'; ctx.font = 'bold 14px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('\u26a1 LASER ! ESQUIVE ! \u26a1', lx, H * 0.52);
-    ctx.restore();
-    return;
-  }
-  if (laser.active) {
-    var intensity = Math.min(1, laser.timer / 25);
-    var grad = ctx.createLinearGradient(lx - 28, 0, lx + 28, 0);
-    grad.addColorStop(0, 'rgba(255,100,0,0)');
-    grad.addColorStop(0.5, 'rgba(255,180,0,' + (0.55 * intensity) + ')');
-    grad.addColorStop(1, 'rgba(255,100,0,0)');
-    ctx.fillStyle = grad; ctx.fillRect(lx - 28, top, 56, bot - top);
-    ctx.save(); ctx.globalAlpha = intensity;
-    ctx.strokeStyle = '#FFD700'; ctx.lineWidth = 7;
-    ctx.beginPath(); ctx.moveTo(lx, top); ctx.lineTo(lx, bot); ctx.stroke();
-    ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(lx, top); ctx.lineTo(lx, bot); ctx.stroke();
-    ctx.restore();
-  }
-}
-/* ── CHEMIN D'ÉTOILES ──────────────────────────────────────────────────── */
-function _drawPath() {
+/* ── DESSIN LASER ───────────────────────────────────────�function _drawPath() {
   var sx = _sunX(), top = _pathTop(), bot = _pathBot();
   for (var i = 0; i <= 28; i++) {
     var t = i / 28;
