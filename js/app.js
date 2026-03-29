@@ -828,6 +828,7 @@ window.GPS0_App = (() => {
     const poussieres = (typeof GPS0_Economie !== 'undefined' && typeof GPS0_Economie.get === 'function') ? GPS0_Economie.get().poussieres : 0;
     if (soldeEl) soldeEl.textContent = poussieres + ' \u2728';
     container.innerHTML = '';
+    const owned = (typeof GPS0_Economie !== 'undefined' && typeof GPS0_Economie.getFragments === 'function') ? GPS0_Economie.getFragments() : {};
     frags.forEach(fr => {
       // Même structure que l'inventaire : div.inv-fragment-row
       const row = document.createElement('div');
@@ -835,10 +836,13 @@ window.GPS0_App = (() => {
       const icone = fr.svg
         ? '<span class="inv-frag-icone inv-frag-svg">' + fr.svg + '</span>'
         : '<span class="inv-frag-icone">' + (fr.emoji || '\uD83C\uDF1F') + '</span>';
+      const qty = owned[fr.id] || 0;
+      const qtyHtml = qty > 0 ? '<span class="bq-possede">\u00d7' + qty + '</span>' : '';
       row.innerHTML = icone
         + '<span class="inv-frag-infos">'
         + '<span class="inv-frag-nom">' + fr.nom + '</span>'
         + '<span class="inv-frag-qty">' + fr.desc + '</span>'
+        + qtyHtml
         + '<span class="bq-prix">' + fr.prix + ' \u2728</span>'
         + '</span>';
       const buyBtn = document.createElement('button');
@@ -848,14 +852,14 @@ window.GPS0_App = (() => {
       buyBtn.onclick = () => {
         if (typeof GPS0_Economie !== 'undefined' && typeof GPS0_Economie.acheterFragment === 'function') {
           const ok = GPS0_Economie.acheterFragment(fr.id, fr.prix);
-          if (ok) { GPS0_Audio.playSFX('achat'); GPS0_Economie.updateHUD(); modal.close(); }
+          if (ok) { GPS0_Audio.playSFX('achat'); GPS0_Economie.updateHUD(); _ouvrirBoutique(); }
           else { row.classList.add('erreur'); setTimeout(() => row.classList.remove('erreur'), 800); }
         }
       };
       row.appendChild(buyBtn);
       container.appendChild(row);
     });
-    modal.showModal();
+    if (!modal.open) modal.showModal();
   }
 
   return { init };

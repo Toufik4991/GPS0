@@ -2,6 +2,13 @@
 window.GPS0_Boussole = (() => {
   let etat = 'off';
   let _deviceHeading = null; // heading téléphone en degrés depuis le Nord magnétique (null = inconnu)
+  const _headingBuf = []; // tampon de lissage (moyenne circulaire sur 5 valeurs)
+  const _HEADING_SMOOTH = 5;
+  function _circularMean(arr) {
+    let sx = 0, sy = 0;
+    arr.forEach(a => { sx += Math.cos(a * Math.PI / 180); sy += Math.sin(a * Math.PI / 180); });
+    return (Math.atan2(sy / arr.length, sx / arr.length) * 180 / Math.PI + 360) % 360;
+  }
   const _l = {};
   function on(e, fn) { (_l[e] = _l[e] || []).push(fn); }
   function emit(e, d) { (_l[e] || []).forEach(fn => fn(d)); }
@@ -47,7 +54,11 @@ window.GPS0_Boussole = (() => {
     const rel = ((bear - h) + 360) % 360;
     f.style.transform = `rotate(${rel}deg)`;
   }
-  function setDeviceHeading(h) { _deviceHeading = h; }
+  function setDeviceHeading(h) {
+    _headingBuf.push(h);
+    if (_headingBuf.length > _HEADING_SMOOTH) _headingBuf.shift();
+    _deviceHeading = _circularMean(_headingBuf);
+  }
   // Pas d'affichage de distance en chiffres (design GPS0 v3.2)
   function _distance() {}
 

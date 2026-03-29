@@ -302,6 +302,7 @@ dialog{position:relative}
 @keyframes go-pop{0%{transform:scale(0.5);opacity:0}60%{transform:scale(1.4)}100%{transform:scale(1);opacity:1}}
 /* ── BOUTIQUE — réutilise les classes inventaire, compléments uniquement ── */
 .bq-prix{font-size:.78rem;color:#FFD700;font-weight:bold;margin-top:3px;display:block}
+.bq-possede{font-weight:800;font-size:1.3em;color:#FFD700;display:block;margin-top:4px;letter-spacing:.02em}
 .bq-disabled{opacity:.45}
 .inv-fragment-row.erreur{border-color:#FF6B6B;animation:shake .4s ease}
 
