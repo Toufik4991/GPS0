@@ -42,7 +42,7 @@ window.GPS0_onTimerExpired = function () { endGame(true); };
 window.TUTO_TEXT = "Niveau 6 \u2014 Glisse le doigt pour bouger \u00b7 Mange les plus petites \u00b7 Fuis les plus grosses \u00b7 \u2726 = +1 poussi\u00e8re"; 
 
 const MAP = 2400, PLAYER_R0 = 22;
-const FOOD_N = 70, ENEMY_N = 40, CRYSTAL_N = 30, CRYSTAL_MAX = 50;
+const FOOD_N = 77, ENEMY_N = 40, CRYSTAL_N = 30, CRYSTAL_MAX = 50;
 
 let player, enemies, foods, crystals, particles, stars, bonusGoldStars;
 let joystick, dustCount, bgT, rafId, cellulesIAMangees;
@@ -193,19 +193,19 @@ function gameStart() {
 
     // --- ENNEMIS IA ---
       const rawDiff = 1 + Math.min(bgT / 3600, 1.2); // difficulté progressive jusqu'à x2.2
-      const startMul = bgT < 1800 ? 0.5 + 0.5 * (bgT / 1800) : 1.0; // 30s de démarrage facile
+      const startMul = bgT < 3600 ? 0.3 + 0.7 * (bgT / 3600) : 1.0; // 60s de démarrage facile
       const diffMul = rawDiff * startMul;
     enemies.forEach((en, i) => {
       if (!en) return;
       en.tTimer--;
       const dp = Math.hypot(player.x-en.x, player.y-en.y);
-      const hunting = en.r > player.r * 1.05 && dp < MAP * 0.3;
+      const hunting = bgT > 300 && en.r > player.r * 1.05 && dp < MAP * 0.3;
       if (hunting) {
         // Chasse continue — cible le joueur chaque frame
         en.tx = player.x + (Math.random()-.5)*10;
         en.ty = player.y + (Math.random()-.5)*10;
       } else if (en.tTimer <= 0) {
-        en.tTimer = 40 + Math.floor(Math.random()*35);
+        en.tTimer = 65 + Math.floor(Math.random()*45);
         let prey = null, pDist = 9999, flee = null, fDist = 9999;
         if (dp < 300) {
           if (player.r < en.r*.88)       { if (dp<pDist) { pDist=dp; prey={x:player.x,y:player.y}; } }
@@ -234,7 +234,7 @@ function gameStart() {
         en.ty = Math.max(en.r, Math.min(MAP-en.r, en.ty));
       }
       const chaseMul = hunting ? 1.1 : 1.0;
-      const eSpd = (2.6 / Math.pow(en.r/22, 0.38)) * chaseMul * diffMul;
+      const eSpd = (2.6 / Math.pow(en.r/22, 0.38)) * 0.75 * chaseMul * diffMul;
       const tdx = en.tx-en.x, tdy = en.ty-en.y, tlen = Math.hypot(tdx,tdy);
       if (tlen > 1) { en.vx = en.vx*.84+(tdx/tlen)*eSpd*.16; en.vy = en.vy*.84+(tdy/tlen)*eSpd*.16; }
       en.x = Math.max(en.r, Math.min(MAP-en.r, en.x+en.vx));
