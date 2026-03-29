@@ -48,12 +48,13 @@ let platformsLanded;
 
 window.GPS0_computeDust = function(success) {
   const tempsJoue = GPS0_timerTotal() - GPS0_timerSec();
-  const tempsMax = GPS0_timerTotal() || 120;
-  const hauteurRef = 5000;
-  const scoreHauteur = Math.min(25, (maxHeight / hauteurRef) * 25);
-  const scoreTemps = (tempsJoue / tempsMax) * 15;
-  const scorePlateformes = Math.min(10, platformsLanded * 0.5);
-  return scoreHauteur + scoreTemps + scorePlateformes;
+  if (tempsJoue < 15) return 0;
+  if (tempsJoue < 30) return 2;
+  if (tempsJoue < 45) return 5;
+  if (tempsJoue < 60) return 10;
+  if (tempsJoue < 90) return 20;
+  if (tempsJoue < 120) return 35;
+  return 50;
 };
 
 function gameReset() {
@@ -292,7 +293,22 @@ function gameStart() {
 
     // Fl\u00e8ches directionnelles
     _drawControls(ctx, W, H);
-
+    // Indicateur de palier poussières (bas droite)
+    const _tempsJ = GPS0_timerTotal() - GPS0_timerSec();
+    const _paliers = [{t:0,d:0},{t:15,d:2},{t:30,d:5},{t:45,d:10},{t:60,d:20},{t:90,d:35},{t:120,d:50}];
+    let _palierActuel = _paliers[0], _palierSuivant = null;
+    for (let _pi = _paliers.length - 1; _pi >= 0; _pi--) {
+      if (_tempsJ >= _paliers[_pi].t) { _palierActuel = _paliers[_pi]; _palierSuivant = _paliers[_pi + 1] || null; break; }
+    }
+    const _palierTxt = _palierActuel.d + ' ✨';
+    const _nextTxt = _palierSuivant ? 'Prochain : ' + _palierSuivant.t + 's → ' + _palierSuivant.d + '✨' : 'MAX 🌟';
+    const _hPalier = 44;
+    ctx.fillStyle = 'rgba(0,0,0,.52)';
+    ctx.beginPath(); ctx.roundRect(W - 122, H - _hPalier - 2, 116, _hPalier, 7); ctx.fill();
+    ctx.fillStyle = '#FFD700'; ctx.font = 'bold 13px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText(_palierTxt, W - 64, H - _hPalier + 14);
+    ctx.fillStyle = 'rgba(255,215,0,.6)'; ctx.font = '9px system-ui';
+    ctx.fillText(_nextTxt, W - 64, H - _hPalier + 28);
     // Compteur hauteur (bas gauche)
     ctx.fillStyle = 'rgba(0,0,0,.52)';
     ctx.beginPath(); ctx.roundRect(6, H - 44, 86, 38, 7); ctx.fill();

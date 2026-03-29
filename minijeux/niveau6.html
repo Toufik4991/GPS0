@@ -44,7 +44,7 @@ window.TUTO_TEXT = "Niveau 6 \u2014 Glisse le doigt pour bouger \u00b7 Mange les
 const MAP = 2400, PLAYER_R0 = 22;
 const FOOD_N = 70, ENEMY_N = 40, CRYSTAL_N = 30, CRYSTAL_MAX = 50;
 
-let player, enemies, foods, crystals, particles, stars;
+let player, enemies, foods, crystals, particles, stars, bonusGoldStars;
 let joystick, dustCount, bgT, rafId, cellulesIAMangees;
 
 window.GPS0_computeDust = function(success) {
@@ -120,6 +120,7 @@ function gameReset() {
   foods = Array.from({length:FOOD_N}, _newFood);
   crystals = Array.from({length:CRYSTAL_N}, () => ({ x:50+Math.random()*(MAP-100), y:50+Math.random()*(MAP-100), col:false }));
   particles = []; dustCount = 0; bgT = 0; cellulesIAMangees = 0;
+  bonusGoldStars = [];
   joystick = { active:false, bx:0, by:0, sx:0, sy:0, id:-1 };
   if (!stars) _genStars();
 }
@@ -185,8 +186,8 @@ function gameStart() {
     if (keys['ArrowUp']||keys['w']) iy -= 1;
     if (keys['ArrowDown']||keys['s']) iy += 1;
     const ilen = Math.sqrt(ix*ix+iy*iy); if (ilen>1) { ix/=ilen; iy/=ilen; }
-    player.vx = player.vx*.78 + ix*spd*.22;
-    player.vy = player.vy*.78 + iy*spd*.22;
+    player.vx = ix * spd;
+    player.vy = iy * spd;
     player.x = Math.max(player.r, Math.min(MAP-player.r, player.x+player.vx));
     player.y = Math.max(player.r, Math.min(MAP-player.r, player.y+player.vy));
 
@@ -269,6 +270,23 @@ function gameStart() {
       _spawnEnemy(enemies.length - 1);
     }
 
+    // --- ÉTOILES OR RARES (max 2, après 60s) ---
+    if (bonusGoldStars.length < 2 && bgT > 0 && bgT % 3600 === 0) {
+      bonusGoldStars.push({ x:80+Math.random()*(MAP-160), y:80+Math.random()*(MAP-160), rot:0, collected:false });
+    }
+    bonusGoldStars = bonusGoldStars.filter(gs => {
+      if (gs.collected) return false;
+      gs.rot += 0.03;
+      if (Math.hypot(player.x-gs.x, player.y-gs.y) < player.r+18) {
+        gs.collected = true;
+        addDust(1);
+        _spawnFx(gs.x, gs.y, '#FFD700', 16);
+        navigator.vibrate && navigator.vibrate([20,10,40]);
+        return false;
+      }
+      return true;
+    });
+
     // --- NOURRITURE ---
     foods.forEach((f, fi) => {
       if (Math.hypot(player.x-f.x, player.y-f.y) < player.r+f.r-2) {
@@ -328,6 +346,28 @@ function gameStart() {
       ctx.globalAlpha = .88;
       ctx.fillStyle = `hsl(${f.hue},80%,68%)`; ctx.beginPath(); ctx.arc(fx,fy,f.r,0,Math.PI*2); ctx.fill();
       ctx.globalAlpha = 1;
+    });
+
+    // Étoiles or bonus
+    bonusGoldStars.forEach(gs => {
+      const gx=gs.x+offX, gy=gs.y+offY;
+      if (gx<-30||gx>W+30||gy<-30||gy>H+30) return;
+      // Halo or
+      const hg = ctx.createRadialGradient(gx,gy,2,gx,gy,28);
+      hg.addColorStop(0,'rgba(255,215,0,.55)'); hg.addColorStop(1,'rgba(255,215,0,0)');
+      ctx.fillStyle=hg; ctx.beginPath(); ctx.arc(gx,gy,28,0,Math.PI*2); ctx.fill();
+      // Étoile 5 branches
+      ctx.save(); ctx.translate(gx,gy); ctx.rotate(gs.rot);
+      ctx.fillStyle='#FFD700';
+      ctx.beginPath();
+      for (let si=0;si<10;si++) {
+        const a=(si/10)*Math.PI*2-Math.PI/2;
+        const d = si%2===0 ? 14 : 6;
+        si===0 ? ctx.moveTo(Math.cos(a)*d,Math.sin(a)*d) : ctx.lineTo(Math.cos(a)*d,Math.sin(a)*d);
+      }
+      ctx.closePath(); ctx.fill();
+      ctx.strokeStyle='rgba(255,255,120,.8)'; ctx.lineWidth=1.2; ctx.stroke();
+      ctx.restore();
     });
 
     // Cristaux

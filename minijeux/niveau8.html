@@ -41,12 +41,12 @@ let traverseesReussies = 0, lastTapT = 0;
 
 window.GPS0_computeDust = function(success) {
   var tempsJoue = GPS0_timerTotal() - GPS0_timerSec();
-  var tempsMax  = GPS0_timerTotal() || 120;
-  var scoreTps  = (tempsJoue / tempsMax) * 20;
-  var scoreTrav = Math.min(traverseesReussies * 6, 20);
-  var scoreVies = GPS0_lives() * 3;
-  var bonusWin  = success ? 5 : 0;
-  return scoreTps + scoreTrav + scoreVies + bonusWin;
+  if (tempsJoue < 20) return 2;
+  if (tempsJoue < 40) return 5;
+  if (tempsJoue < 60) return 10;
+  if (tempsJoue < 90) return 20;
+  if (!success) return 35;
+  return 50; // traversée complète
 };
 
 function rowTop(r, H) {
@@ -235,21 +235,23 @@ function gameStart() {
         }
         ctx.globalAlpha = 1;
       } else {
-        // Obstacle row: couloir danger rails orange
-        ctx.fillStyle = 'rgba(10,8,12,.92)';
+        // Obstacle row: couloir espace style laser
+        ctx.fillStyle = 'rgba(4,2,14,.96)';
         ctx.fillRect(0, ty, W, ROW_H);
-        // Rail glow top
-        const rgt = ctx.createLinearGradient(0, ty, 0, ty + 10);
-        rgt.addColorStop(0, 'rgba(230,120,40,.72)'); rgt.addColorStop(1, 'rgba(230,120,40,0)');
-        ctx.fillStyle = rgt; ctx.fillRect(0, ty, W, 10);
-        // Rail glow bottom
-        const rgb = ctx.createLinearGradient(0, ty + ROW_H - 10, 0, ty + ROW_H);
-        rgb.addColorStop(0, 'rgba(230,120,40,0)'); rgb.addColorStop(1, 'rgba(230,120,40,.72)');
-        ctx.fillStyle = rgb; ctx.fillRect(0, ty + ROW_H - 10, W, 10);
-        // Rail lines danger
-        ctx.strokeStyle = 'rgba(255,160,60,.48)'; ctx.lineWidth = 1.2;
-        ctx.beginPath(); ctx.moveTo(0, ty + 3.5); ctx.lineTo(W, ty + 3.5); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(0, ty + ROW_H - 3.5); ctx.lineTo(W, ty + ROW_H - 3.5); ctx.stroke();
+        // Ligne laser cyan haut
+        const rgt = ctx.createLinearGradient(0, ty, 0, ty + 8);
+        rgt.addColorStop(0, 'rgba(0,230,255,.88)'); rgt.addColorStop(1, 'rgba(0,230,255,0)');
+        ctx.fillStyle = rgt; ctx.fillRect(0, ty, W, 8);
+        // Ligne laser magenta bas
+        const rgb = ctx.createLinearGradient(0, ty + ROW_H - 8, 0, ty + ROW_H);
+        rgb.addColorStop(0, 'rgba(200,0,255,0)'); rgb.addColorStop(1, 'rgba(200,0,255,.88)');
+        ctx.fillStyle = rgb; ctx.fillRect(0, ty + ROW_H - 8, W, 8);
+        // Trait lumineux centre pulsé
+        const pulseA = 0.18 + 0.12 * Math.sin(bgT * 0.07 + r);
+        ctx.strokeStyle = `rgba(80,220,255,${pulseA})`; ctx.lineWidth = 0.8;
+        ctx.setLineDash([8, 6]);
+        ctx.beginPath(); ctx.moveTo(0, ty + ROW_H / 2); ctx.lineTo(W, ty + ROW_H / 2); ctx.stroke();
+        ctx.setLineDash([]);
 
         // Ships (5 types : UFO, pointu, croiseur, moto, cargo)
         const shipType = row.type || 0;
@@ -472,7 +474,7 @@ function _tryMove(dc, dr) {
     if (now - lastTapT < 400) {
       const nextR = player.row + 1;
       while (rows.length <= nextR + 1) rows.push(_genRow(rows.length));
-      if (rows[nextR] && !rows[nextR].safe) rows[nextR].type = 2;
+      if (rows[nextR] && !rows[nextR].safe) rows[nextR].antispam = true;
     }
     lastTapT = now;
   }

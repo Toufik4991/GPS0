@@ -38,10 +38,11 @@ const SPEED_START = 2.2, SPEED_MAX = 5.2;
 const CRYSTAL_MAX = 5;
 
 // ── ÉTAT ──────────────────────────────────────────────────────────────────────
-let bird, walls, ashParts, parts, crystals, lavaEmbers;
+let bird, walls, ashParts, parts, crystals, lavaEmbers, bonusHearts;
 let speed, frame, invincible, rafId, bgT, crystalCount;
 let holding = false;
 let wallsSpawned, wallsHit;
+let lastCrystalFrame, heartsSpawned;
 
 window.GPS0_computeDust = function(success) {
   const tempsJoue = GPS0_timerTotal() - GPS0_timerSec();
@@ -57,10 +58,11 @@ window.GPS0_computeDust = function(success) {
 function gameReset() {
   cancelAnimationFrame(rafId);
   bird = { x: 0, y: 0, vy: 0, r: 22 };
-  walls = []; ashParts = []; parts = []; crystals = []; lavaEmbers = [];
+  walls = []; ashParts = []; parts = []; crystals = []; lavaEmbers = []; bonusHearts = [];
   speed = SPEED_START; frame = 0; invincible = 0; bgT = 0; crystalCount = 0;
   holding = false;
   wallsSpawned = 0; wallsHit = 0;
+  lastCrystalFrame = -9999; heartsSpawned = 0;
 }
 window.gameReset = gameReset;
 
@@ -119,17 +121,37 @@ function gameStart() {
       }
     });
 
-    // Cristaux
+    // Cristaux (étoiles rares — apparaissent seulement après 1min)
     crystals = crystals.filter(c => {
       c.x -= speed * .72; c.rot += .045;
-      if (Math.hypot(bird.x - c.x, bird.y - c.y) < bird.r + 13) {
+      if (Math.hypot(bird.x - c.x, bird.y - c.y) < bird.r + 16) {
         crystalCount++;
         addDust(1);
-        for (let j = 0; j < 10; j++) parts.push({ x: c.x, y: c.y, vx: (Math.random() - .5) * 7, vy: -3 - Math.random() * 3, life: 24, col: '#88EEFF' });
+        for (let j = 0; j < 12; j++) parts.push({ x: c.x, y: c.y, vx: (Math.random() - .5) * 8, vy: -3 - Math.random() * 4, life: 28, col: '#FFD700' });
         navigator.vibrate && navigator.vibrate([15, 8, 30]);
         return false;
       }
       return c.x > -30;
+    });
+
+    // Cœurs bonus (max 2 par partie : après 45s et 90s)
+    if (heartsSpawned < 2) {
+      const nextAt = heartsSpawned === 0 ? 2700 : 5400; // 45s, 90s @ 60fps
+      if (frame >= nextAt) {
+        const cv2 = document.getElementById('cv');
+        bonusHearts.push({ x: (cv2 ? cv2.width : 360) + 10, y: (cv2 ? cv2.height : 640) * (.2 + Math.random() * .5), pulse: 0 });
+        heartsSpawned++;
+      }
+    }
+    bonusHearts = bonusHearts.filter(h => {
+      h.x -= speed * .72; h.pulse += .08;
+      if (Math.hypot(bird.x - h.x, bird.y - h.y) < bird.r + 20) {
+        GPS0_addLife && GPS0_addLife();
+        for (let j = 0; j < 14; j++) parts.push({ x: h.x, y: h.y, vx: (Math.random() - .5) * 8, vy: -3 - Math.random() * 4, life: 32, col: '#FF6699' });
+        navigator.vibrate && navigator.vibrate([20, 10, 40]);
+        return false;
+      }
+      return h.x > -30;
     });
 
     // Cendres
@@ -175,6 +197,7 @@ function gameStart() {
       ctx.fillStyle = 'rgba(255,100,0,.22)';
       ctx.beginPath(); ctx.arc(bird.x, bird.y, bird.r + 14, 0, Math.PI * 2); ctx.fill();
     }
+    _drawBonusHearts(ctx);
     _drawBird(ctx);
     _drawHUD(ctx, W, H);
   };
@@ -206,8 +229,10 @@ function _spawnWall(W, H) {
   }));
   walls.push({ x: W + 50, gapTop, gapH, teeth, crksTop: mkCrk(), crksBot: mkCrk(), dripsTop: mkDrips(), dripsBot: mkDrips() });
   // Cristal dans le gap (38% de chance)
-  if (crystalCount < CRYSTAL_MAX && Math.random() < .38) {
+  // Étoile rare : seulement après 60s (frame 3600), et espacées de 30s (1800 frames)
+  if (crystalCount < CRYSTAL_MAX && frame >= 3600 && (frame - lastCrystalFrame) >= 1800 && Math.random() < .55) {
     crystals.push({ x: W + 85, y: gapTop + gapH / 2, rot: 0 });
+    lastCrystalFrame = frame;
   }
 }
 
@@ -353,41 +378,55 @@ function _drawBlock(ctx, x, y, h, wall, isBot) {
   ctx.fillStyle = eg; ctx.fillRect(x, isBot ? y : y + h - 16, WALL_W, 16);
 }
 
+function _drawBonusStar(ctx, x, y, r, rot) {
+  // Étoile or 5 branches (visuel identique N1)
+  const hg = ctx.createRadialGradient(x, y, 2, x, y, r * 2.2);
+  hg.addColorStop(0, 'rgba(255,215,0,.55)'); hg.addColorStop(1, 'rgba(255,215,0,0)');
+  ctx.fillStyle = hg; ctx.beginPath(); ctx.arc(x, y, r * 2.2, 0, Math.PI * 2); ctx.fill();
+  ctx.save(); ctx.translate(x, y); ctx.rotate(rot);
+  ctx.fillStyle = '#FFD700';
+  ctx.beginPath();
+  for (let i = 0; i < 10; i++) {
+    const a = (i / 10) * Math.PI * 2 - Math.PI / 2;
+    const d = i % 2 === 0 ? r : r * 0.42;
+    i === 0 ? ctx.moveTo(Math.cos(a) * d, Math.sin(a) * d) : ctx.lineTo(Math.cos(a) * d, Math.sin(a) * d);
+  }
+  ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,120,.7)'; ctx.lineWidth = 1; ctx.stroke();
+  ctx.restore();
+}
+
 function _drawCrystals(ctx) {
   crystals.forEach(c => {
-    ctx.save(); ctx.translate(c.x, c.y); ctx.rotate(c.rot);
+    _drawBonusStar(ctx, c.x, c.y, 14, c.rot);
+  });
+}
+
+function _drawBonusHearts(ctx) {
+  bonusHearts.forEach(h => {
+    const pulse = 0.85 + 0.15 * Math.sin(h.pulse);
+    ctx.save(); ctx.translate(h.x, h.y); ctx.scale(pulse, pulse);
     // Halo
-    const hg = ctx.createRadialGradient(0, 0, 3, 0, 0, 22);
-    hg.addColorStop(0, 'rgba(136,238,255,.42)');
-    hg.addColorStop(1, 'rgba(136,238,255,0)');
-    ctx.fillStyle = hg; ctx.beginPath(); ctx.arc(0, 0, 22, 0, Math.PI * 2); ctx.fill();
-    // Losange
-    ctx.fillStyle = '#88EEFF';
-    ctx.beginPath(); ctx.moveTo(0, -13); ctx.lineTo(7, 0); ctx.lineTo(0, 13); ctx.lineTo(-7, 0); ctx.closePath(); ctx.fill();
-    ctx.strokeStyle = 'rgba(200,255,255,.7)'; ctx.lineWidth = 1.2; ctx.stroke();
-    // Reflet
-    ctx.fillStyle = 'rgba(255,255,255,.5)';
-    ctx.beginPath(); ctx.moveTo(0, -11); ctx.lineTo(3, -4); ctx.lineTo(0, -2); ctx.closePath(); ctx.fill();
+    const hg = ctx.createRadialGradient(0, 0, 4, 0, 0, 26);
+    hg.addColorStop(0, 'rgba(255,80,120,.45)'); hg.addColorStop(1, 'rgba(255,60,100,0)');
+    ctx.fillStyle = hg; ctx.beginPath(); ctx.arc(0, 0, 26, 0, Math.PI * 2); ctx.fill();
+    // Cœur
+    ctx.fillStyle = '#FF3366';
+    ctx.beginPath();
+    ctx.moveTo(0, 7);
+    ctx.bezierCurveTo(0, 7, -14, -2, -14, -9);
+    ctx.bezierCurveTo(-14, -17, -7, -20, 0, -12);
+    ctx.bezierCurveTo(7, -20, 14, -17, 14, -9);
+    ctx.bezierCurveTo(14, -2, 0, 7, 0, 7);
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,180,200,.8)'; ctx.lineWidth = 1.5; ctx.stroke();
     ctx.restore();
   });
 }
 
 function _drawBird(ctx) {
   const tilt = Math.max(-1.1, Math.min(1.1, bird.vy * .08));
-  const rising = bird.vy < -2;
-  // Flamme jetpack
-  const fH = rising ? 28 : 16;
-  const fX = bird.x, fY = bird.y + bird.r * .75;
-  const fg = ctx.createRadialGradient(fX, fY, 2, fX, fY + fH * .5, fH);
-  fg.addColorStop(0, 'rgba(255,210,60,.97)');
-  fg.addColorStop(.4, 'rgba(255,80,0,.78)');
-  fg.addColorStop(1, 'rgba(255,30,0,0)');
-  ctx.fillStyle = fg;
-  ctx.beginPath(); ctx.ellipse(fX, fY + fH * .35, bird.r * .38, fH * .52, 0, 0, Math.PI * 2); ctx.fill();
-  // Cœur bleu (flamme froide)
-  ctx.fillStyle = `rgba(180,220,255,${rising ? .68 : .38})`;
-  ctx.beginPath(); ctx.ellipse(fX, fY + 5, bird.r * .16, rising ? 10 : 6, 0, 0, Math.PI * 2); ctx.fill();
-  // Cosmonaute
+  // Cosmonaute (sans flamme jetpack)
   drawCosmonaut(ctx, bird.x, bird.y, bird.r, tilt, 'fly');
 }
 

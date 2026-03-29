@@ -313,11 +313,14 @@ function _updatePhase(dt) {
     if (phase === 'count') {
       var t = Math.min(1, progress * 1.5);
       var stepDur = STEP_DUR_START + (STEP_DUR_END - STEP_DUR_START) * t;
+      if (progress > 0.3) stepDur *= 0.58; // idem countPhaseDur — garantit affichage complet
       countStepTimer += dt;
       if (countStepTimer > stepDur && countStep < 3) { countStep++; countStepTimer = 0; }
     }
     return;
   }
+  // Garantir que les 3 chiffres ont été montrés avant de passer à SOLEIL !
+  if (phase === 'count' && countStep < 3) { countStep = 3; phaseTimer = 250; return; }
   if (phase === 'count')         { countStep = 4; phase = 'turning'; phaseTimer = TURN_MS; }
   else if (phase === 'turning')  { phase = 'stop'; phaseTimer = Math.max(1500, _rnd(STOP_MIN, STOP_MAX) / difficultyMul); }
   else if (phase === 'stop')     { phase = 'unturning'; phaseTimer = TURN_MS; }

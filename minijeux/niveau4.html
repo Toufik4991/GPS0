@@ -314,6 +314,19 @@ function _drawStalacts(ctx, W, H) {
 }
 
 // ── DESSIN CRISTAUX ─────────────────────────────────────────────────────────────────────────────────
+// Hue-rotate de chaque couleur CC pour filtre CSS
+const CC_FILTERS = [
+  'hue-rotate(320deg) saturate(3)', // 0 pink
+  'hue-rotate(160deg) saturate(3)', // 1 cyan
+  'hue-rotate(280deg) saturate(3)', // 2 violet
+  'hue-rotate(50deg)  saturate(3)', // 3 yellow
+  'hue-rotate(25deg)  saturate(3)', // 4 orange
+  'hue-rotate(200deg) saturate(3)', // 5 blue
+  'hue-rotate(100deg) saturate(3)', // 6 green
+  'hue-rotate(0deg)   saturate(3)', // 7 red
+  'hue-rotate(230deg) saturate(3)', // 8 indigo
+];
+
 function _drawCrystals(ctx, W, H) {
   if (!crystalRects) return;
 
@@ -328,39 +341,46 @@ function _drawCrystals(ctx, W, H) {
     const isLit = lit.has(i);
     const isErr = (phase === "flash_err" && i === flashIdx);
     const s = cr.s;
+    const cosmoR = s * 0.92;
 
     // Halo glow
     if (isLit || isErr) {
-      const glowR = s * 2.6;
+      const glowR = s * 2.8;
       const glowG = ctx.createRadialGradient(cr.x, cr.y, s * 0.18, cr.x, cr.y, glowR);
-      glowG.addColorStop(0, isErr ? "rgba(255,50,50,0.70)" : col.g);
+      glowG.addColorStop(0, isErr ? "rgba(255,50,50,0.80)" : col.g);
       glowG.addColorStop(1, "rgba(0,0,0,0)");
       ctx.fillStyle = glowG;
       ctx.beginPath(); ctx.arc(cr.x, cr.y, glowR, 0, Math.PI * 2); ctx.fill();
     }
 
-    // Corps diamant
-    ctx.fillStyle   = isErr ? "#FF3333" : isLit ? col.l : col.d;
-    ctx.strokeStyle = isLit ? col.l     : "rgba(140,80,240,0.30)";
-    ctx.lineWidth   = isLit ? 2.5 : 0.9;
-    ctx.beginPath();
-    ctx.moveTo(cr.x,     cr.y - s);
-    ctx.lineTo(cr.x + s, cr.y    );
-    ctx.lineTo(cr.x,     cr.y + s);
-    ctx.lineTo(cr.x - s, cr.y    );
-    ctx.closePath();
-    ctx.fill();
-    if (isLit || isErr) ctx.stroke();
+    // Fond coloré (dark = sombre, lit = lumineux)
+    ctx.save();
+    const bgAlpha = isLit ? 0.55 : isErr ? 0.45 : 0.20;
+    ctx.fillStyle = isErr ? `rgba(255,50,50,${bgAlpha})` : col.g.replace('0.62)', bgAlpha + ')');
+    ctx.beginPath(); ctx.arc(cr.x, cr.y, cosmoR * 1.08, 0, Math.PI * 2); ctx.fill();
 
-    // Facette interne (reflet)
-    ctx.fillStyle = isLit ? "rgba(255,255,255,0.35)" : "rgba(160,110,240,0.10)";
-    const fs = s * 0.44;
-    ctx.beginPath();
-    ctx.moveTo(cr.x,           cr.y - fs);
-    ctx.lineTo(cr.x + fs,      cr.y     );
-    ctx.lineTo(cr.x,           cr.y + fs * 0.38);
-    ctx.lineTo(cr.x - fs*0.5,  cr.y     );
-    ctx.closePath(); ctx.fill();
+    // Anneau contour
+    ctx.strokeStyle = isErr ? "#FF3333" : isLit ? col.l : "rgba(140,80,240,0.30)";
+    ctx.lineWidth = isLit || isErr ? 2.5 : 0.9;
+    ctx.beginPath(); ctx.arc(cr.x, cr.y, cosmoR * 1.08, 0, Math.PI * 2); ctx.stroke();
+    ctx.restore();
+
+    // Cosmonaute avec filtre couleur
+    ctx.save();
+    if (isErr) {
+      ctx.filter = 'hue-rotate(0deg) saturate(4) brightness(1.2)';
+    } else if (isLit) {
+      ctx.filter = CC_FILTERS[i] + ' brightness(1.4)';
+    } else {
+      ctx.filter = CC_FILTERS[i] + ' brightness(0.6)';
+    }
+    const scale = isLit ? 1.18 : 1.0;
+    ctx.translate(cr.x, cr.y);
+    ctx.scale(scale, scale);
+    ctx.translate(-cr.x, -cr.y);
+    drawCosmonaut(ctx, cr.x, cr.y, cosmoR, 0, isLit ? 'jump' : 'idle');
+    ctx.filter = 'none';
+    ctx.restore();
   }
 }
 

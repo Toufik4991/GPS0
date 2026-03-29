@@ -374,8 +374,23 @@ window.GPS0_App = (() => {
     // Mise à jour menu : point actuel
     const menuPoint = document.getElementById('menu-point-actuel');
     if (menuPoint) menuPoint.textContent = '\uD83D\uDCCC Point : ' + GPS0_GPS.progressionStr();
-    if (z && z.final) setTimeout(() => GPS0_Lune.parler('avant_boss'), 2000);
-  }
+    if (z && z.final) setTimeout(() => GPS0_Lune.parler('avant_boss'), 2000);    // Bouton SUIVANT → FINIR \uD83C\uDFC1 au dernier point GPS
+    const btnSuivant = document.getElementById('btn-prochain-point');
+    if (btnSuivant) {
+      if (z && z.final) {
+        btnSuivant.textContent = 'FINIR \uD83C\uDFC1';
+        btnSuivant.style.background = 'linear-gradient(135deg,#FFD700,#FF8C00)';
+        btnSuivant.style.color = '#0A0A1A';
+        btnSuivant.style.fontWeight = 'bold';
+        btnSuivant.dataset.isFinal = '1';
+      } else {
+        btnSuivant.textContent = 'SUIVANT';
+        btnSuivant.style.background = '';
+        btnSuivant.style.color = '';
+        btnSuivant.style.fontWeight = '';
+        btnSuivant.dataset.isFinal = '0';
+      }
+    }  }
 
   function _bindUI() {
     // toggle-boussole button hidden — tout passe par l'astéroïde
@@ -412,6 +427,15 @@ window.GPS0_App = (() => {
 
     // Bouton SUIVANT (toujours visible, actif uniquement en zone bleue)
     document.getElementById('btn-prochain-point')?.addEventListener('click', () => {
+      const _btn = document.getElementById('btn-prochain-point');
+      if (_btn && _btn.dataset.isFinal === '1') {
+        // Dernier point GPS → lancer la finale
+        _enZone = false;
+        _setZoneBtnsActif(false);
+        _resumeGlobalClock();
+        GPS0_Finale && GPS0_Finale.lancer && GPS0_Finale.lancer();
+        return;
+      }
       _enZone = false;
       _setZoneBtnsActif(false);
       GPS0_GPS.zoneSuivante(); _majObjectif();
