@@ -1,9 +1,36 @@
 # 🌙 GPS0 — Game Design Document v3.0
 
-**Version :** 3.58.0 - Refonte formules dust + visuels N5/N6/N8/N9
-**Date :** 23/03/2026
+**Version :** 3.59.0 - Perf + N5 solo + N6 équilibrage + N9 double saut/bouclier
+**Date :** 29/03/2026
 **Auteur :** Toufik49
 **Statut :** Opérationnel — Jeux 1-9 fonctionnels
+
+---
+
+## Changements v3.59.0 (Corrections urgentes Perf + N5 + N6 + N9)
+
+- **PERF globale** : Suppression `ctx.shadowBlur` dans N5 laser (coût GPU mobile). Tous les jeux confirmés Canvas 2D + requestAnimationFrame (pas de setInterval, pas de DOM dans la boucle).
+- **N5 "1,2,3 Soleil!" — Mode solo complet** :
+  - Suppression des 7 cosmonautes IA / concurrents (`COMP_COUNT`, `competitors`, `_updateCompetitors`, `_drawCompetitors`)
+  - Le joueur joue SEUL contre le Soleil
+  - Nouveau contrôle : **maintien tactile** → avancement continu à `STEP_BASE × 0.55` par frame (si maintien ≥ 4 frames ≈ 67ms). Tap court (<67ms) = comportement tap classique. Les deux modes coexistent sans double-comptage.
+  - TUTO mis à jour : "TAP ou MAINTIENS quand le soleil a le dos tourné"
+- **N6 "Cellule Spatiale" — Rééquilibrage** :
+  - `ENEMY_N` : 80 → 40 (ennemis initiaux divisés par 2)
+  - Spawn limit : 120 → 60 ennemis maximum
+  - Vitesse de chasse : `chaseMul 1.65x` → `1.1x`
+  - Distance de chasse : `dp < 550` → `dp < MAP × 0.3` (= 720px, 30% de la carte)
+  - 30 premières secondes (1800 frames) : `diffMul × startMul` où `startMul` monte de 0.5 à 1.0 → démarrage facile
+  - Message "Tu as touché un mur..." **supprimé** de l'overlay looser
+- **N9 "Boss Éclipse" — Double saut + bouton bouclier fixe** :
+  - `player.jumpsLeft` : 2 à chaque atterrissage, 1 après premier saut, 0 après double saut
+  - `_jump()` : saut normal (sol), met `jumpsLeft = 1`
+  - `_doubleJump()` : saut en l'air si `jumpsLeft > 0`, `player.vy = -14` (+50% hauteur), `jumpsLeft = 0`
+  - Touch centre : simple tap = saut, double-tap EN L'AIR = double saut (remplace ancien double-tap = bouclier)
+  - Clavier : `ArrowUp`/`Space` : sol → jump, air → doubleJump
+  - **Bouton bouclier** : cercle fixe 60px diameter, positionné `(W-44, H-86)` (bas-droite au-dessus des zones tactiles). Rendu sur canvas avec 3 états : prêt (bleu), actif (bleu vif), cooldown (grisé + arc de progression + timer). Zone de tap élargie à 46px de rayon.
+  - TUTO mis à jour : explication double saut + bouton bouclier
+- **SW** : gps0-v82 → gps0-v83 / APP_VERSION 3.58.0 → 3.59.0
 
 ---
 

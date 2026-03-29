@@ -31,7 +31,7 @@ window.NIVEAU = 5;
 window.GPS0_TIMER_SEC = 150;
 window.GPS0_onTimerExpired = function () { endGame(false); };
 window.GPS0_MAX_LIVES = 3;
-window.TUTO_TEXT = "☀️ 1, 2, 3... SOLEIL !<br>TAP quand le soleil a le DOS tourné 🔆<br><small>STOP quand il se retourne ! 😡 La Lune te guide... 🌙</small>";
+window.TUTO_TEXT = "☀️ 1, 2, 3... SOLEIL !<br>TAP ou MAINTIENS quand le soleil a le dos tourné 🔆<br><small>STOP quand il se retourne ! 😡 La Lune te guide... 🌙</small>";
 
 /* ══════════════════════════════════════════════════════════════════════════
    NIVEAU 5 — 1, 2, 3 SOLEIL ! (version cosmique)
@@ -52,7 +52,6 @@ const STEP_DUR_START = 1000;
 const STEP_DUR_END   = 500;
 const MOON_R      = 28;
 const MOON_PAD    = 16;
-const COMP_COUNT  = 7;  // concurrents IA
 const LASER_W     = 32; // largeur beam laser en px
 
 let cv, ctx, W, H;
@@ -63,7 +62,8 @@ let moonBlink, moonBlinkTimer;
 let rafId, lastT;
 let playerOffX, touchStartX, touchStartY, touchStartT;
 let nbReculs, arrivee;
-let laser, competitors;
+let laser;
+let holdDown, holdDuration;
 let playerInvT;
 
 window.GPS0_computeDust = function(success) {
@@ -88,17 +88,7 @@ function gameReset() {
   nbReculs = 0; arrivee = false;
   playerInvT = 0;
   laser = { active: false, x: 0, warnT: 0, timer: 0, nextT: 720 };
-  competitors = [];
-  var compLanes = [0.06, 0.14, 0.23, 0.50, 0.77, 0.86, 0.94];
-  for (var ci = 0; ci < COMP_COUNT; ci++) {
-    competitors.push({
-      progress: Math.random() * 0.06,
-      lane: compLanes[ci],     // position en fraction de W
-      spd: 0.00016 + Math.random() * 0.00024, // avancement par frame (60fps)
-      caught: false, catchT: 0,
-      hue: (ci * 52 + 180) % 360
-    });
-  }
+  holdDown = false; holdDuration = 0;
   fxParts = []; _initStars(); _initDust();
 }
 window.gameReset = gameReset;
@@ -176,20 +166,23 @@ function _onTouchStart(e) {
   if (!GPS0_running()) return;
   var src = e.touches ? e.touches[0] : e;
   touchStartX = src.clientX; touchStartY = src.clientY; touchStartT = Date.now();
+  holdDown = true; holdDuration = 0;
 }
 
 function _onTouchEnd(e) {
   e.preventDefault();
   if (!GPS0_running()) return;
+  holdDown = false;
   var src = e.changedTouches ? e.changedTouches[0] : e;
   var dx = src.clientX - touchStartX;
   var dy = src.clientY - touchStartY;
   var dt = Date.now() - touchStartT;
   if (Math.abs(dx) > 28 && Math.abs(dx) > Math.abs(dy) * 1.4 && dt < 450) {
     _onDodge(dx > 0 ? 1 : -1);
-  } else {
-    _onTap();
+  } else if (holdDuration < 4) {
+    _onTap(); // tap rapide : avance d'un cran
   }
+  // si holdDuration >= 4 : le maintien a déjà géré l'avancement
 }
 
 function _onDodge(dir) {
@@ -257,25 +250,20 @@ function _loop(now) {
   _updateMoon(dt);
   _collectDust();
   _updateFx(dt / 16.67);
-  _updateCompetitors();
+  // Maintien tactile : avancement continu
+  if (holdDown) {
+    holdDuration++;
+    if (holdDuration >= 4 && (phase === 'count' || phase === 'unturning')) {
+      var holdStep = STEP_BASE * 0.55 * (dt / 16.67);
+      progress = Math.min(1, progress + holdStep);
+      if (progress >= 1) { arrivee = true; endGame(true); }
+    }
+  }
   _updateLaser();
   _draw();
 }
 
-/* ── CONCURRENTS IA ────────────────────────────────────────────────── */
-function _updateCompetitors() {
-  competitors.forEach(function(comp) {
-    if (comp.caught) { comp.catchT--; if (comp.catchT <= 0) comp.caught = false; return; }
-    if (phase === 'count' || phase === 'unturning') {
-      // Avancement continu à vitesse individuelle
-      comp.progress = Math.min(1, comp.progress + comp.spd);
-    } else if ((phase === 'stop' || phase === 'turning') && Math.random() < 0.005) {
-      // Probabilité de se faire attraper à chaque frame (~18% sur 2s de stop)
-      comp.progress = Math.max(0, comp.progress - 0.07);
-      comp.caught = true; comp.catchT = 55;
-    }
-  });
-}
+
 
 /* ── LASER ATTAQUE ───────────────────────────────────────────────── */
 function _updateLaser() {
@@ -464,9 +452,6 @@ function _draw() {
     ctx.restore();
   }
 
-  /* Concurrents IA */
-  _drawCompetitors();
-
   /* Laser beam */
   _drawLaser();
 
@@ -480,25 +465,7 @@ function _draw() {
   _drawProgressBar();
   _drawPhaseLabel();
 }
-/* ── DESSIN CONCURRENTS ─────────────────────────────────────────────── */
-function _drawCompetitors() {
-  competitors.forEach(function(comp) {
-    var cx = comp.lane * W;
-    var cy = _pathBot() - comp.progress * (_pathBot() - _pathTop());
-    if (cy > H + 20 || cy < _pathTop() - 20) return;
-    ctx.save();
-    ctx.globalAlpha = comp.caught ? 0.35 : 0.85;
-    drawCosmonaut(ctx, cx, cy, 10, 0, 'run');
-    if (comp.caught) {
-      ctx.strokeStyle = '#ff4400'; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.arc(cx, cy, 14, 0, Math.PI * 2); ctx.stroke();
-    }
-    ctx.globalAlpha = 0.7;
-    ctx.fillStyle = 'hsl(' + comp.hue + ',100%,60%)';
-    ctx.beginPath(); ctx.arc(cx, cy - 16, 3, 0, Math.PI * 2); ctx.fill();
-    ctx.restore();
-  });
-}
+
 
 /* ── DESSIN LASER ─────────────────────────────────────────────────── */
 function _drawLaser() {
@@ -526,11 +493,11 @@ function _drawLaser() {
     grad.addColorStop(1, 'rgba(255,100,0,0)');
     ctx.fillStyle = grad; ctx.fillRect(lx - 28, top, 56, bot - top);
     ctx.save(); ctx.globalAlpha = intensity;
-    ctx.strokeStyle = '#FFD700'; ctx.lineWidth = 7; ctx.shadowColor = '#FF8800'; ctx.shadowBlur = 10;
+    ctx.strokeStyle = '#FFD700'; ctx.lineWidth = 7;
     ctx.beginPath(); ctx.moveTo(lx, top); ctx.lineTo(lx, bot); ctx.stroke();
-    ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.shadowBlur = 0;
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(lx, top); ctx.lineTo(lx, bot); ctx.stroke();
-    ctx.shadowBlur = 0; ctx.restore();
+    ctx.restore();
   }
 }
 /* ── CHEMIN D'ÉTOILES ──────────────────────────────────────────────────── */

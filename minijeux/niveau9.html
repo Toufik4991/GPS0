@@ -43,7 +43,7 @@ window.GPS0_NO_CAP = true;
 window.GPS0_computeDust = function(success) {
   return totalDust + (bossVaincu ? 50 : 0) + GPS0_lives() * 5 + (phaseMax || 1) * 5;
 };
-window.TUTO_TEXT = "&#127769; Affronte la Lune Mal&#233;fique !<br>Collecte les <span style='color:#FFD700'>&#9728;&#65039; mini-soleils</span> pour l'affaiblir.<br>&#9888;&#65039; Saute lors des <b>novas blanches</b> (anneau) !<br><br>&#9664; <b>Gauche / Droite &#9654;</b> = Se déplacer<br>&#128640; <b>Centre</b> = Sauter | &#128737; <b>Double tap</b> = Bouclier";
+window.TUTO_TEXT = "&#127769; Affronte la Lune Mal&#233;fique !<br>Collecte les <span style='color:#FFD700'>&#9728;&#65039; mini-soleils</span> pour l'affaiblir.<br>&#9888;&#65039; Saute lors des <b>novas blanches</b> !<br><br>&#9664; <b>Gauche / Droite &#9654;</b> = D&#233;placer &nbsp;|&nbsp; &#9650; <b>Centre</b> = Saut / 2&#215; Double saut<br>&#128737; Bouton <b>bouclier</b> (bas-droite) = Prot&#233;ger 1.5s &mdash; 8s recharge";
 
 const GY = 0.78;
 const HP_MAX = 100;
@@ -253,7 +253,7 @@ function _updPlayer() {
   player.px = Math.max(0.06, Math.min(0.94, player.px + (player.vx * _dt) / W));
   // Vertical
   player.vy += 0.55 * _dt; player.y += player.vy * _dt;
-  if (player.y >= H*GY - ps) { player.y = H*GY - ps; player.vy = 0; }
+  if (player.y >= H*GY - ps) { player.y = H*GY - ps; player.vy = 0; player.jumpsLeft = 2; }
   if (player.slideT > 0) player.slideT--; else player.sliding = false;
   if (player.invT > 0) player.invT--;
   if (shieldT > 0) shieldT--;
@@ -287,6 +287,14 @@ function _jump() {
   if (!GPS0_running() && !cinema) return;
   if (!_onGround()) return;
   player.vy = -11;
+  player.jumpsLeft = 1; // 1 saut restant pour double-saut
+}
+function _doubleJump() {
+  if (!GPS0_running() && !cinema) return;
+  if (_onGround() || player.jumpsLeft <= 0) return;
+  player.vy = Math.min(player.vy, -14); // +50% hauteur supplémentaire
+  player.jumpsLeft = 0;
+  _spawnParts(player.px * W, player.y, '#88ccff', 8);
 }
 function _slide() {
   if (!GPS0_running() && !cinema) return;
@@ -497,15 +505,40 @@ function _drawZones(){
   ctx.fillStyle='#44cc88'; ctx.fillRect(W/3,by,W/3,bh);
   ctx.fillStyle='#ff8844'; ctx.fillRect(2*W/3,by,W/3,bh);
   ctx.globalAlpha=0.55; ctx.font='bold 13px system-ui'; ctx.textAlign='center'; ctx.fillStyle='#fff';
-  ctx.fillText('\u25C4 GAUCHE',W/6,by+28); ctx.fillText('\uD83D\uDE80 SAUTER',W/2,by+28); ctx.fillText('DROITE \u25BA',W*5/6,by+28);
-  if (shieldT > 0) {
-    ctx.globalAlpha=0.9; ctx.fillStyle='#88ccff'; ctx.font='bold 11px system-ui';
-    ctx.fillText('\uD83D\uDEE1 '+(shieldT/60).toFixed(1)+'s',W/2,by-6);
-  } else if (shieldCoolT > 0) {
-    ctx.globalAlpha=0.5; ctx.fillStyle='#aaa'; ctx.font='11px system-ui';
-    ctx.fillText('\uD83D\uDEE1 CD '+(shieldCoolT/60).toFixed(0)+'s',W/2,by-6);
-  }
+  ctx.fillText('\u25C4 GAUCHE',W/6,by+28); ctx.fillText('\u25B2 SAUTER',W/2,by+28); ctx.fillText('DROITE \u25BA',W*5/6,by+28);
   ctx.globalAlpha=1;
+  // Bouton bouclier fixe bas-droite
+  const sbR=30, sbX=W-44, sbY=H-86;
+  ctx.save();
+  if (shieldT > 0) {
+    // Actif — bleu lumineux
+    ctx.fillStyle='rgba(40,80,255,0.88)';
+    ctx.beginPath(); ctx.arc(sbX,sbY,sbR,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle='#88ccff'; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.arc(sbX,sbY,sbR,0,Math.PI*2); ctx.stroke();
+    ctx.font='22px system-ui'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillStyle='#fff'; ctx.globalAlpha=1; ctx.fillText('\uD83D\uDEE1',sbX,sbY);
+  } else if (shieldCoolT > 0) {
+    // Recharge — grisé + arc de progression
+    ctx.globalAlpha=0.45;
+    ctx.fillStyle='#222';
+    ctx.beginPath(); ctx.arc(sbX,sbY,sbR,0,Math.PI*2); ctx.fill();
+    ctx.globalAlpha=0.9;
+    const frac = 1 - shieldCoolT/480;
+    ctx.strokeStyle='#88ccff'; ctx.lineWidth=4;
+    ctx.beginPath(); ctx.arc(sbX,sbY,sbR-3,-Math.PI/2,-Math.PI/2+frac*Math.PI*2); ctx.stroke();
+    ctx.globalAlpha=0.7; ctx.font='bold 11px system-ui'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillStyle='#aaa'; ctx.fillText(Math.ceil(shieldCoolT/60)+'s',sbX,sbY);
+  } else {
+    // Prêt
+    ctx.fillStyle='rgba(20,60,180,0.82)';
+    ctx.beginPath(); ctx.arc(sbX,sbY,sbR,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle='#88ccff'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.arc(sbX,sbY,sbR,0,Math.PI*2); ctx.stroke();
+    ctx.font='22px system-ui'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillStyle='#fff'; ctx.globalAlpha=1; ctx.fillText('\uD83D\uDEE1',sbX,sbY);
+  }
+  ctx.textBaseline='alphabetic'; ctx.restore();
 }
 function _drawWarn(){
   if(warnT<=0)return; warnT--;
@@ -573,7 +606,7 @@ function gameReset(){
   cancelAnimationFrame(rafId);
   if(transEl){transEl.remove();transEl=null;}
   phase=1;bossHp=HP_MAX;totalDust=0;phaseMax=1;bossVaincu=false;
-  player={y:0,vy:0,px:0.18,vx:0,sliding:false,slideT:0,invT:0};
+  player={y:0,vy:0,px:0.18,vx:0,sliding:false,slideT:0,invT:0,jumpsLeft:2};
   soleils=[];meteors=[];novas=[];hearts=[];parts=[];
   leftHeld=false;rightHeld=false;lastCenterTapT=0;shieldT=0;shieldCoolT=0;
   finalDustSpawned=false;phaseTimer=0;transitioning=false;
@@ -602,6 +635,12 @@ function gameStart(){
   cv.addEventListener('touchstart',e=>{
     e.preventDefault();
     for (const t of e.changedTouches) {
+      const rect = cv.getBoundingClientRect();
+      const cx_px = (t.clientX - rect.left) / rect.width * W;
+      const cy_px = (t.clientY - rect.top) / rect.height * H;
+      // Bouton bouclier (bas-droite)
+      const sbX = W - 44, sbY = H - 86;
+      if (Math.hypot(cx_px - sbX, cy_px - sbY) < 46) { _shield(); continue; }
       const rx = _getRelX(t.clientX);
       if (rx < 0.33) {
         leftHeld = true;
@@ -609,8 +648,8 @@ function gameStart(){
         rightHeld = true;
       } else {
         const now = Date.now();
-        if (now - lastCenterTapT < 330 && shieldCoolT === 0) {
-          _shield();
+        if (now - lastCenterTapT < 330 && !_onGround()) {
+          _doubleJump(); // double tap en l'air = double saut
         } else {
           _jump();
         }
@@ -628,7 +667,7 @@ function gameStart(){
     if (e.touches.length === 0) { leftHeld = false; rightHeld = false; }
   },{passive:false});
   document.addEventListener('keydown',e=>{
-    if(e.key==='ArrowUp'||e.key===' '){e.preventDefault();_jump();}
+    if(e.key==='ArrowUp'||e.key===' '){e.preventDefault(); if(_onGround()) _jump(); else _doubleJump();}
     if(e.key==='ArrowDown')_slide();
   });
   const loop=(ts)=>{
